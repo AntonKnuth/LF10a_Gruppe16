@@ -51,18 +51,30 @@ export function PauseScreen({
         </span>
       </div>
 
-      {fertig ? (
-        <button onClick={onWeiter} className="taste bg-rasen text-white shadow-lg active:scale-95">
-          Weiter
-        </button>
-      ) : (
+      <div className="flex gap-4">
+        {fertig ? (
+          <button onClick={onWeiter} className="taste bg-rasen text-white shadow-lg active:scale-95">
+            Weiter
+          </button>
+        ) : (
+          <button
+            onClick={() => setLaeuft((l) => !l)}
+            className="taste bg-white text-slate-600 shadow active:scale-95"
+          >
+            {laeuft ? 'Anhalten' : 'Weiterlaufen'}
+          </button>
+        )}
+        {/* Neu starten verlängert die Pause, kürzt sie aber nie ab — B3 bleibt gewahrt. */}
         <button
-          onClick={() => setLaeuft((l) => !l)}
+          onClick={() => {
+            setRest(dauerSek)
+            setLaeuft(true)
+          }}
           className="taste bg-white text-slate-600 shadow active:scale-95"
         >
-          {laeuft ? 'Anhalten' : 'Weiterlaufen'}
+          Neu starten
         </button>
-      )}
+      </div>
     </div>
   )
 }
