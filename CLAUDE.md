@@ -1,4 +1,4 @@
-# Ballkünstler (Repo: TravelKickers)
+# TravelKickers
 
 Ergotherapie-Lernapp für **Ben, 7 J., ADHS + feinmotorische Störung**. Ziel: Heimübungen zur
 Schreibmotorik in ein kurzes Spielerlebnis überführen und dem Therapeuten **Thomas, 38 J.**

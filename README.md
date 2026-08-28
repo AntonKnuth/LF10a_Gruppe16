@@ -1,4 +1,4 @@
-# Ballkünstler / TravelKickers
+# TravelKickers
 
 Ergotherapie-Lernapp zur Schreibmotorik. LF10a, Gruppe 16.
 Fachlicher Hintergrund und Anforderungs-IDs: siehe `CLAUDE.md`.
