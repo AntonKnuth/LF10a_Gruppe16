@@ -1,0 +1,66 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-himmel: #7ec8f0;
+  --color-himmel-hell: #c6e9fb;
+  --color-rasen: #4caf50;
+  --color-rasen-dunkel: #2f7d33;
+  --color-gold: #f6b81c;
+  --color-karte: #d5dbe2;
+  --color-karte-rand: #b9c3cd;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  overscroll-behavior: none;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+body {
+  /* Kein Textmarkieren, kein Kontextmenü beim Zeichnen mit dem Stift. */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Mindestklickzielgröße 48 px aus LN1 / DIN EN ISO 9241. Alle Bedienelemente
+   im Kindmodus benutzen diese Klasse, damit die Größe an einer Stelle steht. */
+@utility taste {
+  min-height: 4rem;
+  min-width: 4rem;
+  padding: 1rem 2.5rem;
+  border-radius: 9999px;
+  font-size: 1.75rem;
+  font-weight: 800;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+@keyframes pulsieren {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.55;
+    transform: scale(0.96);
+  }
+}
+
+@utility pulsiert {
+  animation: pulsieren 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
