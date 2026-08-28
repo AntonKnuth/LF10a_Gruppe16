@@ -27,7 +27,10 @@ export const hsv = {
 
   // Tag 1 beginnt mit Ankommen, Tag 5 endet mit dem Abschiedsgeschenk.
   tage: [
-    { spiele: ['aufwaermen', 'linie', 'autogramme'] },
+    // TESTSTAND Phase 1: „ballhochhalten" steht vorn, weil es das einzige gebaute
+    // Minispiel ist — sonst kommt man nur über zwei Platzhalter und zwei Pausen hin.
+    // Zurücksetzen auf ['aufwaermen', 'linie', 'autogramme'], sobald mehr fertig ist.
+    { spiele: ['ballhochhalten', 'linie', 'autogramme'] },
     { spiele: ['aufwaermen', 'linie', 'rasenmaehen'] },
     { spiele: ['aufwaermen', 'stationentour', 'linie'] },
     { spiele: ['aufwaermen', 'startelf', 'elfmeter'] },
@@ -49,8 +52,13 @@ export const hsv = {
     'Die Stadionuhr zählt seit 2001 die Jahre in der Bundesliga.',
   ],
 
+  // Werden im Spiel als Jubelrufe gezeigt — je mehr, desto weniger wiederholt es sich.
   sprueche: [
     { text: 'Nur der HSV!', sprache: 'Deutsch', uebersetzung: 'Nur der HSV!' },
     { text: 'Hamburg mein Perle', sprache: 'Plattdeutsch', uebersetzung: 'Hamburg, meine Perle' },
+    { text: 'Moin!', sprache: 'Plattdeutsch', uebersetzung: 'Hallo!' },
+    { text: 'Dat löppt!', sprache: 'Plattdeutsch', uebersetzung: 'Das läuft!' },
+    { text: 'Rothosen vor!', sprache: 'Deutsch', uebersetzung: 'Rothosen vor!' },
+    { text: 'Immer weiter, nie aufgeben!', sprache: 'Deutsch', uebersetzung: 'Immer weiter, nie aufgeben!' },
   ],
 } satisfies Verein

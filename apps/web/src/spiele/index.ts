@@ -1,6 +1,7 @@
 import type { ComponentType } from 'react'
 import type { SpielErgebnis } from '../engine/segmente'
 import type { Verein } from '../content/typen'
+import { BallHochhalten } from './ballhochhalten'
 import { Platzhalter } from './Platzhalter'
 
 /**
@@ -95,9 +96,9 @@ export const SPIELE: Record<string, Minispiel> = {
   },
   ballhochhalten: {
     titel: 'Ball hochhalten',
-    anweisung: 'Tippe den Ball immer wieder in die grüne Zone.',
-    tags: ['hand-auge'],
-    Komponente: Platzhalter,
+    anweisung: 'Tippe den Ball an und drücke so fest auf, dass er im violetten Band umkehrt.',
+    tags: ['hand-auge', 'druckdosierung'],
+    Komponente: BallHochhalten,
   },
   abschiedsgeschenk: {
     titel: 'Abschiedsgeschenk',

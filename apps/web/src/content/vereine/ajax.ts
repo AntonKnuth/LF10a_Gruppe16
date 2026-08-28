@@ -41,8 +41,13 @@ export const ajax = {
     'Ajax wurde 1900 gegründet.',
   ],
 
+  // Werden im Spiel als Jubelrufe gezeigt — je mehr, desto weniger wiederholt es sich.
   sprueche: [
     { text: 'Wij zijn Ajax!', sprache: 'Niederländisch', uebersetzung: 'Wir sind Ajax!' },
     { text: 'Kom op, jongens!', sprache: 'Niederländisch', uebersetzung: 'Los, Jungs!' },
+    { text: 'Goed zo!', sprache: 'Niederländisch', uebersetzung: 'Gut so!' },
+    { text: 'Wat een bal!', sprache: 'Niederländisch', uebersetzung: 'Was für ein Ball!' },
+    { text: 'Prachtig!', sprache: 'Niederländisch', uebersetzung: 'Wunderbar!' },
+    { text: 'Doorgaan!', sprache: 'Niederländisch', uebersetzung: 'Weitermachen!' },
   ],
 } satisfies Verein
