@@ -19,9 +19,10 @@ npm run build
 apps/web/src/
   engine/      Segment-Engine: Tagesablauf als lineare Liste + Reducer
   content/     Vereine als Datenpakete (ein Verein = eine Datei)
-  spiele/      Minispiele, je eines pro Datei, hinter einer gemeinsamen Schnittstelle
+  spiele/      Minispiele, je eines pro Ordner, hinter einer gemeinsamen Schnittstelle
   screens/     Bildschirme des Kindmodus
   ui/          Figuren, Vorlesen (Web Speech)
+  eingabe.ts   Stift, Maus und Tastatur-Ersatzdruck — von allen Spielen genutzt
 ```
 
 **Der Trainingstag ist eine Liste, kein Zustandsautomat.** `engine/tagesplan.ts` baut sie,
@@ -38,9 +39,27 @@ zwei Personen arbeiten dadurch nie in derselben Datei.
 Die Zahlen in `SpielErgebnis` sind **unmaßgeblich**: sie erzeugen das Sofortfeedback aus A1.
 Die Kennzahlen für den Bericht rechnet später C# aus der Rohdaten-Punktfolge.
 
+### Vorlage: „Ball hochhalten"
+
+Das erste fertige Spiel liegt in `src/spiele/ballhochhalten/` und ist bewusst in vier Dateien
+geteilt, damit man jede einzeln erklären kann:
+
+| Datei | Inhalt |
+|---|---|
+| `welt.ts` | Zustand, Physik, Bewertung. Kennt **kein** Canvas und **kein** React — deshalb mit vitest testbar |
+| `zeichnen.ts` | Nur Zeichnen. Liest die Welt, verändert sie nie |
+| `klang.ts` | Töne über WebAudio, keine Audiodateien im Offline-Cache (A4: abschaltbar) |
+| `index.tsx` | Hält Canvas, Eingabe und Bildschleife zusammen |
+
+Gespielt wird mit dem Stift: Ball antippen, der Andruck **beim Loslassen** bestimmt die Höhe,
+die Lage des Stifts zur Ballmitte die Richtung. Ohne Stift greift der Ersatz aus `eingabe.ts`
+(Maustaste = Stift auf Papier, Ziffern 1–9 = 10–90 % Druck, 0 = 100 %); solche Werte werden als
+`synthetisch` markiert, sonst mischen sie sich mit echten Pencil-Druckkurven.
+
 ## Noch offen
 
-- Minispiel „Linie malen" (Phase 1, Punkt 5) — alle Spiele zeigen bis dahin `Platzhalter`
+- Minispiele „Linie malen", Aufwärmparcours, Autogrammstunde, Platzwart — zeigen bis dahin `Platzhalter`
 - Rohdatenaufzeichnung (Punktfolge als Float32-Blob) und Dexie/IndexedDB statt localStorage
-- Therapeutenmodus: Einstellungen und Verlauf (PIN, Löschen und Speicherwarnung stehen)
+- Therapeuteneinstellungen wirken noch nicht auf den Tagesplan (B1): `standardEinstellungen` in `App.tsx`
 - Onboarding beim ersten Spiel, Abschiedsgeschenk per Kamera, Sync-Server
+- Vereinsassets sind Platzhalter mit echten Bezügen und müssen vor einer Veröffentlichung ersetzt werden
