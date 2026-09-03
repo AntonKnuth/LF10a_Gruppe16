@@ -27,6 +27,16 @@ damit nicht dieselben Fragen erneut aufgemacht werden.
 
 **Design-Referenz:** `docs/mockup-startbildschirm.png` (vom User erstellt).
 
+### Stand (04.09.2026)
+
+Gebaut und im Zusammenspiel geprüft: Server mit Anmeldung, Gerätekopplung, Datenannahme und
+Auswertung · Therapeuten-App mit Klientenauswahl, Einstellungen, Verlauf, Wochenbericht und
+Gerätesperre · Kind-App mit Kopplung, Rohdatenaufzeichnung, Upload und Pausenmenü.
+Zwei Minispiele fertig: **Ball hochhalten** und **Platzwart**.
+
+Starten: `powershell -File start.ps1` → Kindmodus `http://localhost:5099/`,
+Therapeutenbereich `/therapeut/`. Demo-Konto `thomas@praxis.test` / `travelkickers`.
+
 **Wichtig für die Umsetzung:** Jedes Gruppenmitglied muss seinen Code in der Prüfungssituation
 erklären können. Einfacher Code, den man verteidigen kann, schlägt cleveren Code. Keine
 Abstraktionen ohne konkreten Anlass, keine Bibliothek für etwas, das 20 Zeilen sind.
@@ -55,26 +65,47 @@ Abstraktionen ohne konkreten Anlass, keine Bibliothek für etwas, das 20 Zeilen 
 | D3 | Wochenbericht auf 1 Seite | Druckbar; Gesprächsgrundlage für Thomas, nicht für Eltern |
 | D4 | Datenschutz | Nur Vorname + Jahrgang, lokal, **Profil löschbar (Art. 17 DSGVO)** |
 
+Die Tabelle ist der Wortlaut aus LN1 und bleibt so stehen. Zwei Punkte sind bewusst anders
+umgesetzt und müssen **im Bericht begründet werden** (Details in `docs/entscheidungen.md`):
+
+- **D1** — die zwei Ansichten sind Kind-App und **eigene Therapeuten-App**, nicht mehr ein
+  PIN-Bereich in der Kind-App. Die Trennung ist dadurch stärker (echte Anmeldung statt
+  Kindersicherung). Ohne diesen Satz liest sich die verschwundene PIN wie eine nicht erfüllte
+  Anforderung.
+- **D4** — es gibt ein Backend, die Lehrkraft verlangt es. Gespeichert werden Vor- **und**
+  Nachname (gleichnamige Kinder müssen unterscheidbar bleiben), kein Jahrgang.
+
 ## Techstack (entschieden, nicht neu aufrollen)
 
 | Ebene | Wahl |
 |---|---|
-| Kindmodus | **PWA**: TypeScript + React + Vite, `vite-plugin-pwa` |
+| Kindmodus | TypeScript + React + Vite, `apps/web`. **Manifest für Homescreen und Vollbild, kein Service Worker** |
+| Therapeuten-App | TypeScript + React + Vite, `apps/therapeut`, ausgeliefert unter `/therapeut/` |
 | Spiele | **Canvas 2D**, kein Pixi/Three (erst wenn Partikel messbar ruckeln) |
 | Eingabe | Pointer Events + `getCoalescedEvents()` (volle 120 Hz vom Pencil) |
 | Styling | Tailwind, **kein CSS-Framework mit Komponenten** (Bootstrap explizit verworfen) |
 | Ablaufsteuerung | Reducer + Segmentliste. **Kein XState, kein Router** — der Trainingstag ist eine lineare Liste |
-| Lokal | **Dexie (IndexedDB)** als Puffer + Outbox |
-| Server | ASP.NET Core Minimal API, **.NET 8** (Visual Studio 2022 kann nicht mehr), EF Core + SQLite |
-| Auswertung | **C#**, aus den Rohdaten |
-| Bericht | Razor-View + CSS `@media print` |
-| Tests | xUnit für die Auswertungslogik |
-| Verträge | OpenAPI → `openapi-typescript` |
-| Layout | `apps/web/`, `apps/api/`, Content in `apps/web/src/content/` |
+| Lokal | `localStorage`: Gerätetoken, Fortschritt, Schnappschuss `tk.lauf`, Bedienung. **Kein Dexie** |
+| Server | ASP.NET Core Minimal API, **.NET 8** (Visual Studio 2022 kann nicht mehr), EF Core + SQLite, `apps/api` |
+| Auswertung | **C#**, aus den Rohdaten (`apps/api/Auswertung/Kennzahlen.cs`) |
+| Bericht | React + CSS `@media print` |
+| Tests | xUnit (`apps/api.tests`) und vitest (`apps/web`) |
+| Verträge | handgeschriebene `api.ts` je Frontend, **kein Codegenerator** |
+| Betrieb | **Ein Prozess, eine Origin**: der Server liefert beide Frontends aus `wwwroot`. `start.ps1` baut und startet |
+| Layout | `apps/web/`, `apps/therapeut/`, `apps/api/`, `apps/api.tests/`, Content in `apps/web/src/content/` |
 
-**Verworfen und warum:** ASP.NET MVC + Razor für den Kindmodus (verletzt A1 und Offline —
-ein iPad kann keinen .NET-Prozess hosten), Blazor WASM (Interop-Latenz gegen A1),
-SQLite-WASM im Browser (löst kein Problem, das wir haben), Unity, Cloud-DB.
+**Verworfen und warum:** ASP.NET MVC + Razor für den Kindmodus (verletzt A1 — ein iPad kann
+keinen .NET-Prozess hosten), Razor auch für die Therapeuten-App (die Gruppe kann React, eine
+Technologie genügt), Blazor WASM (Interop-Latenz gegen A1), SQLite-WASM im Browser, Unity,
+Cloud-DB, Dexie/IndexedDB (ohne Offline kein Puffer nötig), Service Worker (war nur für Offline
+da und liefert sonst veraltete Builds aus), OpenAPI-Codegenerator (zwölf Endpunkte sind von Hand
+kürzer als die Werkzeugkette), CORS (entfällt bei einer Origin), Docker (ein Ausfallrisiko am
+Prüfungstag ohne Punktgewinn).
+
+**Zwei Fallen, die im Code je einen Kommentar haben und beide wie ein kaputter Build aussehen:**
+`UseRouting()` muss ausdrücklich **nach** `UseStaticFiles()` stehen, sonst liefert jede `.js` die
+`index.html` aus · zwei verschachtelte `SelectMany` übersetzt EF Core in SQL `APPLY`, das SQLite
+nicht kennt.
 
 ### Zweistufige Auswertung — der Kern der Architektur
 
@@ -83,7 +114,11 @@ SQLite-WASM im Browser (löst kein Problem, das wir haben), Unity, Cloud-DB.
   wird **nie in einem Bericht verwendet**; im Code als unmaßgeblich markieren.
 - **C#:** die maßgeblichen Kennzahlen, gerechnet aus der Rohdaten-Punktfolge. Getestet mit xUnit.
 
-Das erfüllt A1, B4, Offline und die Zusage „Auswertung in C#" gleichzeitig.
+Das erfüllt A1, B4 und die Zusage „Auswertung in C#" gleichzeitig.
+
+**Blob-Format, verbindlich für beide Seiten:** vier `Float32` je Abtastung — `t` (Millisekunden
+seit **Segmentstart**), `x`, `y`, `druck`. Little-endian, ohne Kopf, auf ~60 Hz ausgedünnt.
+Geschrieben in `apps/web/src/rohdaten.ts`, gelesen in `apps/api/Auswertung/Kennzahlen.cs`.
 
 ## Eingabe
 
@@ -117,8 +152,10 @@ Schriftzug, Wolken auf hellblauem Himmel, **Europakarte unten gerundet** (Globus
 aktuellen Verein. Nicht besuchte Vereine sind blasse, leere Pins — dadurch ist die Karte zugleich
 die Fortschrittsanzeige aus C4. Dazu ein **Maskottchen** (Fußball-Figur mit Cap).
 
-Bedienelemente Phase 1: pulsierender weißer **„Drücke zum Start"**, Menü oben rechts
-(2 s Langdruck → PIN → Therapeutenbereich). Sonst nichts — A2 begrenzt auf 5 Elemente.
+Bedienelemente: pulsierender weißer **„Drücke zum Start"** und der **Anhalte-Knopf oben rechts**.
+Sonst nichts — A2 begrenzt auf 5 Elemente. Der Langdruck ins Therapeutenmenü ist entfallen; der
+Anhalte-Knopf liegt in `App.tsx` über allen Bildschirmen und gehört zum Gerät, nicht zu diesem
+Bildschirm.
 
 ## Ablauf
 
@@ -138,13 +175,28 @@ keine Sonderfälle. Tag 5 endet mit dem Abschiedsgeschenk (Foto einer auf Papier
 Aufgabe, per Kamera aufgenommen — **nur speichern und Thomas anzeigen, nicht auswerten**).
 
 **Namensabfrage per Stift nur beim allerersten Start überhaupt**, nicht bei jedem neuen Verein.
+Gefragt wird nach einem **selbstgewählten Spielnamen** („Benno") — den bürgerlichen Namen vergibt
+der Therapeut, und im Kindmodus wird ausschließlich der Spielname ausgesprochen (C5). Das Getippte
+ist nötig, weil sich Handschrift nicht auslesen lässt; das Schreiben ist die Übung. Die Zeichnung
+wird **nicht** gespeichert, solange es keinen Empfänger dafür gibt — ein abgelegtes Bild ohne
+Zweck verstößt gegen D4.
 
 ### Timer und Pause
 
 - Sichtbarer Timer **im Spiel** (A3).
-- Danach **Zwangspause**: kann **angehalten** werden (falls zu Hause etwas dazwischenkommt) und
-  wird danach fortgesetzt — aber **nicht übersprungen**.
+- Danach **Zwangspause**. Sie lässt sich **nicht überspringen**; „Weiter" erscheint erst bei 0.
 - Inhalt und Dauer der Pause stellt Thomas ein (z. B. 10 Hampelmänner, Stifthaltung, Hand lockern).
+
+**Anhalten geht überall über denselben Knopf oben rechts** (`ui/PausenMenue.tsx`) — im
+Startbildschirm, im Spiel und in der Zwangspause. Dahinter: Ton, Lautstärke, Bildschirm dunkler,
+Weiterspielen. Vier Elemente, damit A2 gewahrt bleibt.
+
+Angehalten stehen **beide Uhren und die Bildschleifen der Spiele** (`angehalten` in `SpielProps`).
+Sonst fiele der Ball, während Ben nicht hinsieht, und die gemessene `dauerMs` enthielte die
+Pausenzeit — eine Pause würde ihn doppelt bestrafen.
+
+Bildschirmhelligkeit kann eine Web-App **nicht** steuern; „Bildschirm dunkler" legt einen Schleier
+über den Inhalt. Der Schalter verspricht deshalb nichts, was er nicht kann.
 
 ### Abbruch
 
@@ -162,6 +214,15 @@ Rückgabe = **fester Kern + freies Extra**:
 - Kern: Dauer, Vollständigkeit (0–1), Genauigkeit (0–1), Druck-Mittel/-Streuung,
   Eingabegerät, Schwierigkeitsstufe, abgebrochen ja/nein
 - Extra: spielspezifisches JSON
+
+**Zwei Felder füllt der `SpielScreen`, nicht das Spiel:** die `id` (client-vergeben, macht einen
+wiederholten Upload zum Upsert) und die **Rohdaten**. Die Aufzeichnung sitzt im `SpielScreen`, weil
+die Zeigerereignisse aus dem Canvas dorthin aufsteigen — **jedes Minispiel zeichnet damit auf, ohne
+eine Zeile dafür zu enthalten.** Wer ein neues Spiel baut, muss an B4 nicht denken. Auch die
+`spielId` überschreibt der `SpielScreen` mit der aus dem Tagesplan: maßgeblich ist, welche Übung
+vorgesehen war, nicht was ein Spiel über sich selbst sagt.
+
+Ein Spiel muss dagegen **selbst** auf `angehalten` reagieren und seine Bildschleife anhalten.
 
 Nur der Kern geht in den Verlaufsgraphen — sonst sind Spiele nicht vergleichbar.
 Zusätzlich **Kategorie-Tags** je Spiel (gerade Striche, Wellen, Schreibübungen, Druckdosierung),
@@ -183,28 +244,50 @@ Absetzhäufigkeit, Geschwindigkeitsprofil, Druckstabilität) sind heute noch nic
 lassen sich später auf alten Sessions nachrechnen. Auf ~60 Hz ausdünnen, als **Float32-Blob**
 speichern, nicht als JSON-Objekte (ein 4-Minuten-Spiel sind sonst ~20.000 Objekte).
 
-Sync-fähig von Anfang an, auch wenn Phase 1 ohne Server läuft:
-**client-generierte UUIDs, append-only Session-Events, Outbox-Tabelle.** Das ist der Teil, der
-später Sync ermöglicht — nicht der Server.
+**Die Anwendung ist online.** Offline wurde gestrichen — damit entfallen Outbox, Sync-Cursor und
+Konfliktbehandlung ersatzlos. Geblieben sind die **client-generierten UUIDs** und das
+**append-only Ereignisprotokoll**: sie haben mit Offline nichts zu tun, sondern machen einen
+wiederholten Upload nach einem Verbindungsabbruch idempotent.
 
-Datenmodell **mehrbenutzerfähig** (alles hängt an einer `client_id`), UI aber nur ein aktives
-Profil, umschaltbar nur im Therapeutenmodus.
+Die Einheit geht am Ende als **ein** `PUT /api/sessions/{id}` raus. Bricht die Verbindung mitten
+im Training ab, wird zu Ende gespielt und beim nächsten Start nachgesendet — Ben sieht davon
+nichts. Beim Start ist eine Verbindung nötig: ohne Service Worker lädt die App vom Server.
+
+Der laufende Zustand liegt als Schnappschuss in `localStorage` unter `tk.lauf`. **Bewusst lokal
+und nicht auf dem Server:** er enthält die Segmentliste, und würde man ihn aus Content und
+Einstellungen neu bauen, käme nach einer Änderung des Therapeuten eine *andere* Liste heraus — der
+Index zeigte woanders hin und Ben überspränge oder wiederholte ein Spiel, ohne dass es jemand
+merkt.
+
+Datenmodell **mehrbenutzerfähig**: alles hängt an einer `KlientId`, der Zugriff steht in der
+Tabelle `Betreuung`. Ein Gerät ist immer genau einem Kind zugeordnet; die Zuordnung kommt aus dem
+**Gerätetoken**, nie aus dem Request.
 
 ### Speicher-Fallstricke (verifiziert)
 
-- Safari löscht Website-Daten nach ~7 Tagen Nichtnutzung — **außer die PWA ist auf dem Homescreen
-  installiert**. Ohne Installation sind die Therapiedaten irgendwann weg.
+- Safari löscht Website-Daten nach ~7 Tagen Nichtnutzung — **außer die App ist auf dem Homescreen
+  installiert**. Betroffen sind jetzt nicht mehr die Therapiedaten (die liegen auf dem Server),
+  sondern das **Gerätetoken**: fliegt es raus, ist die Kopplung weg und der nächste Termin fällt
+  aus. Die Erstkopplung passiert in der Praxis.
 - Beim Start `navigator.storage.persist()` anfordern.
-- Im Therapeutenmodus **Warnung anzeigen**, solange die App nicht als Homescreen-App installiert ist.
+- **Vollbild auf dem iPad kommt nicht aus dem Manifest** — iPadOS beachtet weder
+  `display: fullscreen` noch einen Orientierungs-Lock. Es kommt aus
+  `<meta name="apple-mobile-web-app-capable">`. Das Manifest liefert Symbol und Name.
+- `crypto.randomUUID()` ist auf einer unsicheren Origin `undefined`: über `http://` auf eine
+  LAN-IP **stürzt die App beim Sessionstart ab**, sie installiert sich nicht bloß nicht.
 
-## Therapeutenmodus
+## Therapeuten-App
 
-PIN, lokal gehasht, beim ersten Start gesetzt. Öffnet erst nach **2 s Langdruck**, damit Ben nicht
-hineinstolpert. Im Code offen als „Kindersicherung, keine Sicherheit" benennen — ohne Server gibt
-es kein echtes Auth, und dahinter darf später nichts Vertrauliches landen.
+Eigene Anwendung unter `/therapeut/`, eigene Anmeldung mit Cookie — **kein PIN-Bereich mehr in der
+Kind-App**. Auf Bens Tablet liegt dadurch nie eine Klientenliste.
 
-Einstellbar: Schwierigkeit/Toleranz je Übungstyp, Spiele weglassen, Reihenfolge ändern,
-Übungen verlängern/verkürzen, Pausendauer und -inhalt, Profil löschen.
+Einstellbar: Schwierigkeit/Toleranz/Zielgeschwindigkeit/Mindesttrefferquote je Übungstyp, Spiele
+weglassen, Reihenfolge, Übungen verlängern/verkürzen, Pausendauer und -inhalt. Dazu Verlauf,
+Wochenbericht, Gerätekopplung samt Sperre und **Profil löschen (Art. 17)**.
+
+Gelöscht wird hier und nicht auf dem Tablet: dort läge die Funktion hinter einer Kindersicherung,
+und die Daten liegen ohnehin auf dem Server. Ein verlorenes Tablet wird durch **Sperren des
+Gerätetokens** unschädlich gemacht — ein Knopf auf dem Gerät täte das nicht.
 
 ## Content
 
@@ -227,41 +310,46 @@ vereinsspezifischen Aufgabeninhalte** (Kaderliste, Fakten, Sprüche) — siehe L
 
 ## Phase 1 — Umfang
 
-1. PWA-Gerüst, Startbildschirm: pulsierender weißer „Drücke zum Start", Menü oben rechts
-   (Langdruck → PIN), Vereinslogo als Pin auf der Karte
-2. Erstlauf: Profi begrüßt, Namenseingabe **per Stift gezeichnet**. Der Name wird gespeichert,
-   damit Begrüßungen und Lob später persönlich adressiert werden können (C5)
-3. Ansage: Dauer der Einheit, Anzahl Übungen und Pausen (grober Plan, keine Spieldetails)
-4. Segment-Engine für den Tagesablauf
-5. **Ein Minispiel: Linie malen** — als Referenz für Tracking, Spielende, Metriken
-6. Onboarding beim ersten Spiel (Pfeile + Erklärung des Profis)
-7. Lob → Selbsteinschätzung → Pause mit Timer
-8. Abschluss-Fragebogen
-9. Therapeutenmodus: Einstellungen + Verlauf
+Erledigt: Gerüst und Startbildschirm · Erstlauf mit Spielnamen per Stift · Ansage · Segment-Engine ·
+Lob → Selbsteinschätzung → Pause mit Timer · Abschluss-Fragebogen · Therapeuten-App mit
+Einstellungen und Verlauf · Gerätekopplung, Datenannahme, Auswertung in C#, Wochenbericht ·
+Pausenmenü. Zwei Minispiele statt einem: **Ball hochhalten** und **Platzwart**.
+
+Offen aus Phase 1: **Onboarding beim ersten Spiel** (Pfeile + Erklärung des Profis) und das
+Minispiel **Linie malen**.
 
 **Arbeitsteilung für 3 Personen:** so schneiden, dass jedes Minispiel isoliert baubar ist und
-niemand in denselben Dateien arbeitet.
+niemand in denselben Dateien arbeitet. Zwei Regeln haben sich als bindend erwiesen: **eine Person
+besitzt das Datenbankschema** (nie zwei offene EF-Migrationen), und **vor `dotnet ef migrations
+add` immer erst mergen**.
 
 ## Explizit nicht bauen
 
 Gems, Shop, Trikots, eigene Mannschaft, Streak/Serien (bewusst gestrichen — ein Streak bestraft
 Krankheit und Ferien). Elternbereich. Automatische Bildauswertung des Papierfotos.
-Sync-Server-Betrieb. Datenexport als Feature. Millimeter-genaue Kalibrierung (Toleranz bleibt
-einheitenlos).
+Datenexport als Feature. Millimeter-genaue Kalibrierung (Toleranz bleibt einheitenlos).
+Offline-Betrieb, Outbox, Sync-Protokoll. Einladungsflow für weitere Therapeuten (nur Ausblick im
+Bericht). Bild-Upload der Arbeitsproben — das Schema steht, der Endpunkt kommt später.
 
 ## Offene Punkte
 
+**Vor der Vorführung auf echten Tablets nötig:**
+
+- **HTTPS unter festem Namen** (Hosts-Eintrag + Zertifikat mit diesem Namen im SAN). Umgebungs-
+  arbeit, kein Code — aber ohne sie stürzt die App auf dem iPad beim Sessionstart ab, siehe
+  Speicher-Fallstricke.
+- **D1 im Bericht neu zuordnen** (siehe Hinweis unter der Anforderungstabelle).
+
+**Danach:**
+
 - Startbildschirm-Gestaltung und Reise-Animation im Detail
-- Die vier weiteren Minispiele. Kandidaten aus der Ideenliste, mit ihren Mechaniken:
-  - **Platzwart Rasenmähen** (Kraftdosierung): nicht zu stark, nicht zu schwach drücken, sonst
-    geht der Rasen kaputt; Sprenger als Hindernis
+- Die weiteren Minispiele. Kandidaten aus der Ideenliste, mit ihren Mechaniken:
   - **Dribbeln mit Pfiff** (Inhibition): bei Trainerpfiff Stift anhalten, aber **nicht abheben**;
     Doppelpfiff = weiter. Beim Abheben rollt der Ball weg
   - **Tour Guide / Stationentour** (Tempo + Druck): Fakten in gleichmäßigem Tempo und Druck
     nachschreiben — zu schnell oder zu langsam, und die Besucher gehen
   - **11 Meter** (Hand-Auge): Schnelligkeit und gleichmäßiger Druck; sonst hält der Torwart
-  - **Ball hochhalten** (Hand-Auge): auf den Ball tippen, Zonen geben mehr Punkte
   - **Autogrammstunde** (Grafomotorik + Pinzettengriff): Unterschriften auf Trikots
+  - **Linie malen** (gerade Striche) — steht noch aus Phase 1 aus
   - Weitere in `Übungs Ideen.md` (Security, UFO/Müll einsammeln, Startelf-Namen schreiben)
-- Wann genau der Sync-Server gebaut wird
 - Ob echte Vereinsassets durch fiktive ersetzt werden
