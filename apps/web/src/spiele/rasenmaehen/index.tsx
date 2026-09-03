@@ -10,8 +10,8 @@ import { berechneSicht, zeichne, type Sicht } from './zeichnen'
  * Diese Datei hält nur Canvas, Eingabe und Bildschleife zusammen. Bewertung steht in
  * `welt.ts`, das Bild in `zeichnen.ts`.
  *
- * Das Spiel endet auf zwei Wegen, beide regulär (C2): der Platz ist fertig gemäht, oder
- * die Uhr des SpielScreens läuft ab. Einen Verliererzustand gibt es nicht.
+ * Beendet wird ausschließlich von der Uhr des SpielScreens. Ist ein Platz geschafft,
+ * kommt der nächste — es gibt weder ein vorzeitiges Ende noch einen Verliererzustand (C2).
  */
 export function Platzwart({ stufe, verein, zeitAbgelaufen, onFertig }: SpielProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -65,7 +65,7 @@ export function Platzwart({ stufe, verein, zeitAbgelaufen, onFertig }: SpielProp
       w.maeht = true
       letzter = p
       // Auch ein Tippen ohne Bewegung mäht die Stelle unter dem Mäher.
-      if (!w.fertig) maehe(w, p.x, p.y, p.x, p.y, w.druck)
+      maehe(w, p.x, p.y, p.x, p.y, w.druck)
       cv.setPointerCapture(e.pointerId)
       e.preventDefault()
     }
@@ -73,7 +73,7 @@ export function Platzwart({ stufe, verein, zeitAbgelaufen, onFertig }: SpielProp
     const bewegen = (e: PointerEvent) => {
       const p = zuLogisch(e)
       w.maeher = { x: p.x, y: p.y, drin: true }
-      if (!w.maeht || w.fertig) {
+      if (!w.maeht) {
         w.druck = druckVon(e)
         return
       }
@@ -112,8 +112,9 @@ export function Platzwart({ stufe, verein, zeitAbgelaufen, onFertig }: SpielProp
       letzteZeit = jetzt
       aktualisiere(w, dt)
       zeichne(g, w, sicht, cv.width, cv.height)
-      // Fertig gemäht oder Zeit um — in beiden Fällen ein regulärer Abschluss.
-      if (!fertig.current && (w.fertig || zeitAus.current)) {
+      // Nur die Uhr beendet das Spiel: ein geschaffter Platz wird gefeiert, dann kommt
+      // der nächste. Kein Verliererzustand und kein vorzeitiges Ende (C2).
+      if (!fertig.current && zeitAus.current) {
         fertig.current = true
         beiFertig.current(ergebnis(w, Math.round(w.zeitGesamt * 1000), false))
       }
