@@ -270,14 +270,64 @@ herunterrechnen, und **beide werden bei Art. 17 mitgelöscht**.
 
 ## 9. Offen
 
-- Aufteilung der Arbeitspakete auf drei Personen.
-- Neuzuordnung von **D1** im Bericht: „Therapeutenbereich per PIN" beschreibt nach der Auslagerung
-  nicht mehr die Kind-App, sondern die eigene Therapeuten-App. Ohne diesen Satz liest sich die
-  verschwundene PIN wie eine nicht erfüllte Anforderung.
-- `CLAUDE.md` nennt den Wochenbericht noch als „Razor-View + CSS `@media print`" und Dexie/Offline
-  als Techstack — beides ist überholt und muss angepasst werden.
+- **D4: Nachname statt Jahrgang?** Gewünscht ist, den Klienten mit **Vor- und Nachname** anzulegen
+  und den **Jahrgang wegzulassen**. D4 erlaubt ausdrücklich „Vorname + Jahrgang". Das tauscht das
+  harmlosere Datum gegen das identifizierendere — und Jahrgang ist das einzige der beiden mit
+  fachlichem Zweck, weil feinmotorische Entwicklung altersabhängig bewertet wird. Ungelöst.
+- **Gibt es Hintergrundmusik?** Ein Menüpunkt „Musik" setzt sie voraus. A4 verbietet einen
+  „Dauerton", und `klang.ts:2` hält als Entwurfsentscheidung fest: „nur funktional, **keine
+  Hintergrundmusik**". Ungelöst.
+- Aufteilung der Arbeitspakete: regelt die Gruppe selbst. **Eine Regel bleibt technisch bindend:**
+  eine Person besitzt das Datenbankschema, nie zwei offene Migrationen gleichzeitig.
+- `CLAUDE.md` ist an mehreren Stellen überholt und muss angepasst werden: Wochenbericht als
+  „Razor-View + CSS `@media print`", Dexie als lokaler Puffer, „Sync-fähig von Anfang an" mit
+  Outbox, der Abschnitt „Speicher-Fallstricke", die Erwähnungen von Offline, `.NET 8`-Begründung,
+  Namensabfrage im Erstlauf, PIN und Therapeutenmodus.
 
-## 10. Verworfen — und warum
+## 10. Kindmodus: Namen, Menü, Ton, Pause
+
+**Zwei Namen pro Kind.** Der Therapeut legt den Klienten mit **Vor- und Nachname** an — das ist der
+Name in seiner Liste. Im Spiel fragt der Erstlauf zusätzlich einen **selbstgewählten Spielnamen**
+per Stift ab („Benno"), und **nur dieser** wird für Begrüßung und Lob benutzt (C5). Die
+Stiftzeichnung ist damit zugleich die erste Grafomotorik-Probe.
+
+**Kein PIN, kein Therapeutenbereich, keine Löschfunktion auf dem Tablet.** Art. 17 löst der
+Therapeut in seiner App aus — dort liegen die Daten. Ein Leihtablet wird organisatorisch
+zurückgesetzt; zusätzlich **widerruft der Therapeut das Gerätetoken serverseitig**. Das ist besser
+als ein Knopf auf dem Gerät, weil es auch bei einem verlorenen Tablet wirkt.
+
+> **D1 muss im Bericht neu zugeordnet werden.** „Kindmodus Standard, Therapeutenbereich per PIN"
+> beschreibt die Kind-App jetzt nicht mehr. Die zwei Ansichten sind Kind-App und Therapeuten-App;
+> die Trennung ist stärker als vorher (eigene Anwendung, echte Anmeldung statt Kindersicherung),
+> aber ohne diesen Satz liest ein Prüfer die verschwundene PIN als nicht erfüllte Anforderung.
+
+**Statt des Langdrucks ein offenes Pausenmenü.** Erreichbar im Homescreen **und in jedem Spiel**,
+ohne Verzögerung. Beim Öffnen kommt eine deutliche Nachricht, dass das Spiel angehalten ist — Ben
+soll nicht glauben, er verliere gerade Zeit. Inhalt: Lautstärke, Ton aus, Bildschirm abdunkeln,
+Weiterspielen. Das sind vier Elemente und bleibt damit innerhalb von A2 (höchstens fünf pro
+Bildschirm).
+
+**Der Spieltimer muss dabei stehen bleiben** — und die gemessene `dauerMs` in `SpielErgebnis` darf
+die Pausenzeit **nicht** enthalten. Sonst bestraft eine Pause Ben doppelt: sie kostet ihn Spielzeit
+(A3 fordert 3–5 Minuten) und sie verfälscht Thomas' Verlaufskurve.
+Heute zählt `SpielScreen.tsx:30-33` unbedingt herunter und kennt kein Anhalten.
+
+**Ton, verifizierter Ist-Stand:** `tk.tonAus` steuert ausschließlich das Vorlesen
+(`ui/vorlesen.ts:4`). Die Spielgeräusche haben eine eigene Variable, und **`setStumm` in
+`spiele/ballhochhalten/klang.ts:9` wird nirgends aufgerufen** — die Geräusche lassen sich derzeit
+gar nicht abschalten. **A4 („Ton nur funktional und abschaltbar") ist damit heute nicht erfüllt.**
+Das Pausenmenü ist die Stelle, an der das repariert wird: ein Schalter, der beide Wege stummschaltet.
+
+**Bildschirmhelligkeit kann eine Web-App nicht steuern.** Es gibt keine Browser-Schnittstelle dafür,
+auf iPadOS erst recht nicht. Machbar ist ein **abdunkelndes Overlay** über den Inhalt — das ändert
+die Hintergrundbeleuchtung nicht, wirkt für ein Kind aber wie „dunkler". Der Schalter heißt deshalb
+„Bildschirm abdunkeln", nicht „Helligkeit".
+
+**Verbindung ist beim Start nötig, danach nicht mehr.** Ohne Service Worker gibt es keinen
+zwischengespeicherten App-Rumpf — die App lädt vom Server. Bricht die Verbindung **während** einer
+Einheit ab, wird zu Ende gespielt und der Schnappschuss später nachgesendet (Abschnitt 6).
+
+## 11. Verworfen — und warum
 
 | Verworfen | Grund |
 |---|---|
