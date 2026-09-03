@@ -10,14 +10,20 @@ Probetraining. **Keine Diagnose, kein Therapieersatz.**
 Dies ist eine **bewertete Schul-Projektarbeit**, LF10a, **Gruppe 16, 3 Personen**.
 LN1 (Planungsteil) wurde am 29.08.2026 abgegeben.
 
-**Maßgebliches Dokument:** `/home/lee/Documents/LF10a_Gruppe_16_LN1_Kurzfassung_v2.md`
-(PDF daneben). Es enthält die Anforderungs-IDs **A1–A5, B1–B4, C1–C6, D1–D4**, gegen die
-gebaut und bewertet wird. Bei Architekturvorschlägen immer gegen diese IDs prüfen.
+Bewertet wird gegen die Anforderungs-IDs **A1–A5, B1–B4, C1–C6, D1–D4**. Bei
+Architekturvorschlägen immer gegen diese IDs prüfen. Die Kurzform steht unten in dieser Datei.
 
-Ideensammlung des Users (seine eigene Vorarbeit, keine KI):
-`/home/lee/B.R.I.A.N.v2/Projekte/Kicker/Übungs Ideen.md` und `Generelle Ideen.md`.
-**Vor Design- oder Spielarbeit dort reinsehen** — die Datei enthält mehr Übungsideen mit
-Mechanik-Details, als hier zusammengefasst sind.
+**Entscheidungen zu Backend, Datenbank und Therapeutenbereich:** `docs/entscheidungen.md`.
+Dort steht, was bereits entschieden ist und warum — vor einem Architekturvorschlag dort nachsehen,
+damit nicht dieselben Fragen erneut aufgemacht werden.
+
+> **Zwei Quelldokumente liegen nicht im Repo** und waren zuletzt nur auf einem anderen Rechner
+> vorhanden: die **LN1-Kurzfassung** (der volle Wortlaut von A1–D4; hier steht nur die
+> Zusammenfassung in der Tabelle unten) und die **Ideensammlung** des Users (`Übungs Ideen.md`,
+> `Generelle Ideen.md`) mit Mechanik-Details zu weiteren Minispielen. Unter „Offene Punkte" sind
+> die daraus bekannten Spiele mit ihren Mechaniken festgehalten — genannt, aber ohne Details, sind
+> außerdem *Security*, *UFO/Müll einsammeln* und *Startelf-Namen schreiben*. Wer Zugriff auf die
+> Dateien hat: nach `docs/` legen und diesen Absatz ersetzen.
 
 **Design-Referenz:** `docs/mockup-startbildschirm.png` (vom User erstellt).
 
