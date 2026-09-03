@@ -196,7 +196,14 @@ komplette Absicherung gegen einen WLAN-Aussetzer — keine Outbox, kein Cursor.
 - **Visual Studio 2022 ist auf diesem Rechner nicht installiert.**
 - Verifiziert: ein `net8.0`-Projekt **baut** mit dem .NET-10-SDK, lässt sich aber **nicht starten** —
   `You must install or update .NET to run this application. Framework: 'Microsoft.NETCore.App',
-  version '8.0.0'`. Für `net8.0` müsste die .NET-8-Runtime nachinstalliert werden.
+  version '8.0.0'`.
+- **Zwei Pakete, nicht eines.** `winget install Microsoft.DotNet.AspNetCore.8` allein reicht
+  **nicht** — es liefert nur `Microsoft.AspNetCore.App 8.0.30`. Es fehlt die Basis-Runtime
+  `Microsoft.NETCore.App 8.x`: `winget install Microsoft.DotNet.Runtime.8`. Ohne sie startet die
+  API nicht, obwohl `dotnet --list-runtimes` „ASP.NET Core 8" anzeigt. Notbehelf zum Testen:
+  Umgebungsvariable `DOTNET_ROLL_FORWARD=Major`.
+- `dotnet` liegt nicht im PATH der Git-Bash — dort `export PATH="$PATH:/c/Program Files/dotnet"`.
+- `dotnet-ef` 8.0.30 ist global installiert (`~/.dotnet/tools`).
 - Node 24.16.0, npm 11.13.0.
 - **Pfadlängen-Falle:** lange Windows-Pfade brechen sowohl `git clone` (`fatal: '$GIT_DIR' too big`)
   als auch `dotnet build` (260-Zeichen-Grenze). Das Repo liegt deshalb unter
@@ -270,13 +277,6 @@ herunterrechnen, und **beide werden bei Art. 17 mitgelöscht**.
 
 ## 9. Offen
 
-- **D4: Nachname statt Jahrgang?** Gewünscht ist, den Klienten mit **Vor- und Nachname** anzulegen
-  und den **Jahrgang wegzulassen**. D4 erlaubt ausdrücklich „Vorname + Jahrgang". Das tauscht das
-  harmlosere Datum gegen das identifizierendere — und Jahrgang ist das einzige der beiden mit
-  fachlichem Zweck, weil feinmotorische Entwicklung altersabhängig bewertet wird. Ungelöst.
-- **Gibt es Hintergrundmusik?** Ein Menüpunkt „Musik" setzt sie voraus. A4 verbietet einen
-  „Dauerton", und `klang.ts:2` hält als Entwurfsentscheidung fest: „nur funktional, **keine
-  Hintergrundmusik**". Ungelöst.
 - Aufteilung der Arbeitspakete: regelt die Gruppe selbst. **Eine Regel bleibt technisch bindend:**
   eine Person besitzt das Datenbankschema, nie zwei offene Migrationen gleichzeitig.
 - `CLAUDE.md` ist an mehreren Stellen überholt und muss angepasst werden: Wochenbericht als
@@ -290,6 +290,22 @@ herunterrechnen, und **beide werden bei Art. 17 mitgelöscht**.
 Name in seiner Liste. Im Spiel fragt der Erstlauf zusätzlich einen **selbstgewählten Spielnamen**
 per Stift ab („Benno"), und **nur dieser** wird für Begrüßung und Lob benutzt (C5). Die
 Stiftzeichnung ist damit zugleich die erste Grafomotorik-Probe.
+
+**Kein Jahrgang.** D4 würde ihn erlauben, aber die Software rechnet nichts Altersabhängiges: die
+Toleranz bleibt laut CLAUDE.md einheitenlos, es gibt keine altersnormierten Vergleichswerte, und
+Thomas kennt Bens Alter aus seiner eigenen Akte. Ein gespeicherter Jahrgang wäre damit dasselbe
+wie das heutige `nameBild` — Daten ohne Leser. Zur Unterscheidung gleichnamiger Kinder dient der
+Nachname. Sollten später altersabhängige Spielempfehlungen dazukommen, ist eine nullbare Spalte
+eine rein additive Migration.
+
+> **Die dokumentierte D4-Abweichung ist also der Nachname, nicht der fehlende Jahrgang.**
+> Weniger zu speichern braucht keine Rechtfertigung; mehr zu speichern schon. Begründung für den
+> Bericht: gleichnamige Kinder müssen in der Klientenliste unterscheidbar bleiben.
+
+**Keine Hintergrundmusik.** Bleibt wie in `klang.ts:2` festgehalten: Ton nur funktional (A4). Falls
+später doch Musik kommt, dann **nur im Startbildschirm und in der Lobby, nie während eines Spiels**
+— Dauerbeschallung während einer Konzentrationsaufgabe ist genau das, was A4 verhindern soll. Das
+Pausenmenü bekommt deshalb vorerst nur einen Ton-Schalter, keinen getrennten Musik-Schalter.
 
 **Kein PIN, kein Therapeutenbereich, keine Löschfunktion auf dem Tablet.** Art. 17 löst der
 Therapeut in seiner App aus — dort liegen die Daten. Ein Leihtablet wird organisatorisch
