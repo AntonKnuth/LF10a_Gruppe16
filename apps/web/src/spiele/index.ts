@@ -2,6 +2,7 @@ import type { ComponentType } from 'react'
 import type { SpielErgebnis } from '../engine/segmente'
 import type { Verein } from '../content/typen'
 import { BallHochhalten } from './ballhochhalten'
+import { Platzwart } from './rasenmaehen'
 import { Platzhalter } from './Platzhalter'
 
 /**
@@ -68,7 +69,7 @@ export const SPIELE: Record<string, Minispiel> = {
     titel: 'Platzwart',
     anweisung: 'Mähe den Rasen — nicht zu fest und nicht zu leicht drücken.',
     tags: ['druckdosierung'],
-    Komponente: Platzhalter,
+    Komponente: Platzwart,
   },
   stationentour: {
     titel: 'Stadionführung',
