@@ -16,7 +16,7 @@ import { PauseScreen } from './screens/PauseScreen'
 import { SmileyFrage } from './screens/SmileyFrage'
 import { SpielScreen } from './screens/SpielScreen'
 import { StartScreen } from './screens/StartScreen'
-import { TherapeutScreen } from './screens/TherapeutScreen'
+import { Abdunklung, AnhalteKnopf, PausenMenue } from './ui/PausenMenue'
 
 type Stand = 'laedt' | 'ungekoppelt' | 'bereit'
 
@@ -26,7 +26,7 @@ export default function App() {
   const [fortschritt, setFortschritt] = useState(ladeFortschritt)
   const [lauf, setLauf] = useState<SessionState | null>(null)
   const [wiederaufnahme, setWiederaufnahme] = useState<SessionState | null>(null)
-  const [therapeut, setTherapeut] = useState(false)
+  const [menueOffen, setMenueOffen] = useState(false)
 
   const verein = vereine[fortschritt.vereinIndex]
   const name = kind?.spielname ?? 'Kicker'
@@ -92,176 +92,191 @@ export default function App() {
       // Bleibt liegen und geht beim nächsten Start raus.
     }
 
-    const naechste =
-      fertigeEinheit.status === 'fertig' ? naechsteEinheit(fortschritt) : fortschritt
+    const naechste = fertigeEinheit.status === 'fertig' ? naechsteEinheit(fortschritt) : fortschritt
     speichereFortschritt(naechste)
     setFortschritt(naechste)
     setLauf(null)
   }
 
-  if (stand === 'ungekoppelt') {
-    return <KopplungScreen onGekoppelt={() => setStand('laedt')} />
-  }
+  /** Der jeweilige Bildschirm des Ablaufs — ohne alles, was über ihm liegt. */
+  function bildschirm() {
+    if (stand === 'ungekoppelt') {
+      return <KopplungScreen onGekoppelt={() => setStand('laedt')} />
+    }
 
-  if (stand === 'laedt') {
-    return (
-      <div className="flex h-full items-center justify-center bg-himmel-hell">
-        <p className="text-3xl font-bold text-slate-600">Einen Moment…</p>
-      </div>
-    )
-  }
+    if (stand === 'laedt') {
+      return (
+        <div className="flex h-full items-center justify-center bg-himmel-hell">
+          <p className="text-3xl font-bold text-slate-600">Einen Moment…</p>
+        </div>
+      )
+    }
 
-  if (therapeut) return <TherapeutScreen onZurueck={() => setTherapeut(false)} />
-
-  if (wiederaufnahme) {
-    return (
-      <DialogScreen
-        verein={verein}
-        text={mitName('Da war noch ein Training offen, {name}. Weitermachen?')}
-        knopf="Weitermachen"
-        onWeiter={() => {
-          setLauf(wiederaufnahme)
-          setWiederaufnahme(null)
-        }}
-      >
-        <button
-          onClick={() => {
-            void beendeEinheit(session(wiederaufnahme, { art: 'abbrechen' }))
+    if (wiederaufnahme) {
+      return (
+        <DialogScreen
+          verein={verein}
+          text={mitName('Da war noch ein Training offen, {name}. Weitermachen?')}
+          knopf="Weitermachen"
+          onWeiter={() => {
+            setLauf(wiederaufnahme)
             setWiederaufnahme(null)
           }}
-          className="taste bg-white text-slate-600 shadow active:scale-95"
         >
-          Neu anfangen
-        </button>
-      </DialogScreen>
-    )
-  }
-
-  if (!lauf) {
-    return (
-      <StartScreen
-        aktiverVereinIndex={fortschritt.vereinIndex}
-        onTherapeut={() => setTherapeut(true)}
-        onStart={() =>
-          setLauf(
-            starteSession(
-              verein.id,
-              fortschritt.tag,
-              // Namensfrage nur, solange das Kind noch keinen Spielnamen gewählt hat.
-              tagesplan(verein, fortschritt.tag, einstellungen, kind?.spielname == null),
-            ),
-          )
-        }
-      />
-    )
-  }
-
-  const segment = aktuellesSegment(lauf)
-
-  if (!segment) {
-    // Einheit vorbei. C2: kein Verliererzustand, es geht immer weiter.
-    return (
-      <DialogScreen
-        verein={verein}
-        text={mitName(`Das war's für heute, {name}. Bis zum nächsten Mal!`)}
-        knopf="Fertig"
-        onWeiter={() => void beendeEinheit(lauf)}
-      />
-    )
-  }
-
-  switch (segment.art) {
-    case 'namenseingabe':
-      return (
-        <NameScreen
-          verein={verein}
-          onFertig={(spielname) => {
-            setKind((k) => (k ? { ...k, spielname } : k))
-            // Fehlschlag ist verkraftbar: der Name steht im Zustand, der Server bekommt ihn
-            // spätestens mit der nächsten Einheit. Ben soll hier nicht warten (A1).
-            void spielnameSetzen(spielname).catch(() => {})
-            dispatch({ art: 'weiter' })
-          }}
-        />
-      )
-
-    case 'ankommen':
-      return (
-        <DialogScreen
-          verein={verein}
-          text={mitName(verein.profi.begruessung.text)}
-          onWeiter={() => dispatch({ art: 'weiter' })}
-        />
-      )
-
-    case 'ansage':
-      return (
-        <DialogScreen
-          verein={verein}
-          text={ansageText(lauf.segmente)}
-          knopf="Los geht's"
-          onWeiter={() => dispatch({ art: 'weiter' })}
-        />
-      )
-
-    case 'spiel':
-      return (
-        <SpielScreen
-          key={lauf.index}
-          spielId={segment.spielId}
-          dauerSek={segment.dauerSek}
-          stufe={segment.stufe}
-          verein={verein}
-          name={name}
-          onFertig={(ergebnis) => dispatch({ art: 'spiel_fertig', ergebnis })}
-        />
-      )
-
-    case 'selbsteinschaetzung':
-      // C3: kommt vor Lob und Ergebnis. Die Antwort wird nie kommentiert.
-      return (
-        <SmileyFrage
-          frage="Wie ist dir die Übung gelungen?"
-          onAntwort={(wert) => dispatch({ art: 'selbsteinschaetzung', wert })}
-        />
-      )
-
-    case 'lob': {
-      const lob = verein.profi.lob[(lauf.ergebnisse.length - 1) % verein.profi.lob.length]
-      const sterne = Math.max(1, Math.round((lauf.ergebnisse.at(-1)?.genauigkeit ?? 0) * 3))
-      return (
-        <DialogScreen
-          verein={verein}
-          text={mitName(lob.text)}
-          onWeiter={() => dispatch({ art: 'weiter' })}
-        >
-          <div className="flex gap-3" aria-label={`${sterne} von 3 Sternen`}>
-            {[1, 2, 3].map((i) => (
-              <Stern key={i} an={i <= sterne} />
-            ))}
-          </div>
+          <button
+            onClick={() => {
+              void beendeEinheit(session(wiederaufnahme, { art: 'abbrechen' }))
+              setWiederaufnahme(null)
+            }}
+            className="taste bg-white text-slate-600 shadow active:scale-95"
+          >
+            Neu anfangen
+          </button>
         </DialogScreen>
       )
     }
 
-    case 'pause':
+    if (!lauf) {
       return (
-        <PauseScreen
-          key={lauf.index}
-          dauerSek={segment.dauerSek}
-          inhalt={segment.inhalt}
-          onWeiter={() => dispatch({ art: 'weiter' })}
+        <StartScreen
+          aktiverVereinIndex={fortschritt.vereinIndex}
+          onStart={() =>
+            setLauf(
+              starteSession(
+                verein.id,
+                fortschritt.tag,
+                // Namensfrage nur, solange das Kind noch keinen Spielnamen gewählt hat.
+                tagesplan(verein, fortschritt.tag, einstellungen, kind?.spielname == null),
+              ),
+            )
+          }
         />
       )
+    }
 
-    case 'fragebogen':
+    const segment = aktuellesSegment(lauf)
+
+    if (!segment) {
+      // Einheit vorbei. C2: kein Verliererzustand, es geht immer weiter.
       return (
-        <SmileyFrage
-          frage="Wie war das Training heute?"
-          onAntwort={(wert) => dispatch({ art: 'selbsteinschaetzung', wert })}
+        <DialogScreen
+          verein={verein}
+          text={mitName(`Das war's für heute, {name}. Bis zum nächsten Mal!`)}
+          knopf="Fertig"
+          onWeiter={() => void beendeEinheit(lauf)}
         />
       )
+    }
+
+    switch (segment.art) {
+      case 'namenseingabe':
+        return (
+          <NameScreen
+            verein={verein}
+            onFertig={(spielname) => {
+              setKind((k) => (k ? { ...k, spielname } : k))
+              // Fehlschlag ist verkraftbar: der Name steht im Zustand, der Server bekommt ihn
+              // spätestens mit der nächsten Einheit. Ben soll hier nicht warten (A1).
+              void spielnameSetzen(spielname).catch(() => {})
+              dispatch({ art: 'weiter' })
+            }}
+          />
+        )
+
+      case 'ankommen':
+        return (
+          <DialogScreen
+            verein={verein}
+            text={mitName(verein.profi.begruessung.text)}
+            onWeiter={() => dispatch({ art: 'weiter' })}
+          />
+        )
+
+      case 'ansage':
+        return (
+          <DialogScreen
+            verein={verein}
+            text={ansageText(lauf.segmente)}
+            knopf="Los geht's"
+            onWeiter={() => dispatch({ art: 'weiter' })}
+          />
+        )
+
+      case 'spiel':
+        return (
+          <SpielScreen
+            key={lauf.index}
+            spielId={segment.spielId}
+            dauerSek={segment.dauerSek}
+            stufe={segment.stufe}
+            verein={verein}
+            name={name}
+            angehalten={menueOffen}
+            onFertig={(ergebnis) => dispatch({ art: 'spiel_fertig', ergebnis })}
+          />
+        )
+
+      case 'selbsteinschaetzung':
+        // C3: kommt vor Lob und Ergebnis. Die Antwort wird nie kommentiert.
+        return (
+          <SmileyFrage
+            frage="Wie ist dir die Übung gelungen?"
+            onAntwort={(wert) => dispatch({ art: 'selbsteinschaetzung', wert })}
+          />
+        )
+
+      case 'lob': {
+        const lob = verein.profi.lob[(lauf.ergebnisse.length - 1) % verein.profi.lob.length]
+        const sterne = Math.max(1, Math.round((lauf.ergebnisse.at(-1)?.genauigkeit ?? 0) * 3))
+        return (
+          <DialogScreen
+            verein={verein}
+            text={mitName(lob.text)}
+            onWeiter={() => dispatch({ art: 'weiter' })}
+          >
+            <div className="flex gap-3" aria-label={`${sterne} von 3 Sternen`}>
+              {[1, 2, 3].map((i) => (
+                <Stern key={i} an={i <= sterne} />
+              ))}
+            </div>
+          </DialogScreen>
+        )
+      }
+
+      case 'pause':
+        return (
+          <PauseScreen
+            key={lauf.index}
+            dauerSek={segment.dauerSek}
+            inhalt={segment.inhalt}
+            angehalten={menueOffen}
+            onWeiter={() => dispatch({ art: 'weiter' })}
+          />
+        )
+
+      case 'fragebogen':
+        return (
+          <SmileyFrage
+            frage="Wie war das Training heute?"
+            onAntwort={(wert) => dispatch({ art: 'selbsteinschaetzung', wert })}
+          />
+        )
+    }
   }
+
+  return (
+    // `relative`, damit Anhalte-Knopf, Menü und Schleier über dem jeweiligen Bildschirm liegen.
+    <div className="relative h-full">
+      {bildschirm()}
+
+      {/* Der Anhalte-Knopf gehört zu keinem Segment, sondern zum Gerät: derselbe Knopf an
+          derselben Stelle im Startbildschirm, im Spiel und in der Zwangspause. Deshalb liegt
+          er hier und nicht in den einzelnen Bildschirmen. */}
+      {stand === 'bereit' && !menueOffen && <AnhalteKnopf onOeffnen={() => setMenueOffen(true)} />}
+      {menueOffen && <PausenMenue onWeiterspielen={() => setMenueOffen(false)} />}
+      <Abdunklung />
+    </div>
+  )
 }
 
 function Stern({ an }: { an: boolean }) {

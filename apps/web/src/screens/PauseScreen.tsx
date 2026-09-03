@@ -9,21 +9,23 @@ import { useVorlesen } from '../ui/vorlesen'
 export function PauseScreen({
   dauerSek,
   inhalt,
+  angehalten,
   onWeiter,
 }: {
   dauerSek: number
   inhalt: string
+  /** Das Pausenmenü ist offen — dann steht auch der Countdown. */
+  angehalten: boolean
   onWeiter: () => void
 }) {
   const [rest, setRest] = useState(dauerSek)
-  const [laeuft, setLaeuft] = useState(true)
   useVorlesen(`Kurze Pause. ${inhalt}.`)
 
   useEffect(() => {
-    if (!laeuft) return
+    if (angehalten) return
     const id = setInterval(() => setRest((r) => Math.max(0, r - 1)), 1000)
     return () => clearInterval(id)
-  }, [laeuft])
+  }, [angehalten])
 
   const fertig = rest === 0
   const anteil = dauerSek > 0 ? rest / dauerSek : 0
@@ -51,30 +53,14 @@ export function PauseScreen({
         </span>
       </div>
 
-      <div className="flex gap-4">
-        {fertig ? (
-          <button onClick={onWeiter} className="taste bg-rasen text-white shadow-lg active:scale-95">
-            Weiter
-          </button>
-        ) : (
-          <button
-            onClick={() => setLaeuft((l) => !l)}
-            className="taste bg-white text-slate-600 shadow active:scale-95"
-          >
-            {laeuft ? 'Anhalten' : 'Weiterlaufen'}
-          </button>
-        )}
-        {/* Neu starten verlängert die Pause, kürzt sie aber nie ab — B3 bleibt gewahrt. */}
-        <button
-          onClick={() => {
-            setRest(dauerSek)
-            setLaeuft(true)
-          }}
-          className="taste bg-white text-slate-600 shadow active:scale-95"
-        >
-          Neu starten
+      {/* Nur ein Knopf, und erst bei 0. Anhalten geht über den Anhalte-Knopf oben rechts,
+          der auf jedem Bildschirm derselbe ist — zwei Wege für dasselbe wären eine
+          Bedienung zu viel (A2). Überspringen gibt es weiterhin nicht (A3). */}
+      {fertig && (
+        <button onClick={onWeiter} className="taste bg-rasen text-white shadow-lg active:scale-95">
+          Weiter
         </button>
-      </div>
+      )}
     </div>
   )
 }

@@ -1,14 +1,15 @@
 /**
  * Klang des Minispiels. A4: nur funktional, keine Hintergrundmusik, abschaltbar.
- * Alles synthetisch über WebAudio — keine Audiodateien im Offline-Cache.
+ * Alles synthetisch über WebAudio — keine Audiodateien nötig.
+ *
+ * Lautstärke und Stummschaltung kommen aus `bedienung.ts` und werden bei **jedem** Ton neu
+ * gelesen: die Bildschleife läuft außerhalb von React, eine zwischengespeicherte Kopie wäre
+ * nach einer Änderung im Pausenmenü sofort veraltet.
  */
 
-let actx: AudioContext | null = null
-let stumm = false
+import { tonLautstaerke } from '../../bedienung'
 
-export const setStumm = (an: boolean) => {
-  stumm = an
-}
+let actx: AudioContext | null = null
 
 /** Muss aus einer Nutzergeste heraus laufen, sonst bleibt der Kontext angehalten. */
 export function weckeKlang() {
@@ -24,7 +25,8 @@ export function schliesseKlang() {
 }
 
 function ton(freq: number, dauer: number, art: OscillatorType = 'sine', laut = 0.16, spaeter = 0, nach = 0) {
-  if (stumm) return
+  const pegel = laut * tonLautstaerke()
+  if (pegel <= 0) return
   const a = weckeKlang()
   if (!a) return
   const t0 = a.currentTime + spaeter
@@ -34,7 +36,7 @@ function ton(freq: number, dauer: number, art: OscillatorType = 'sine', laut = 0
   o.frequency.setValueAtTime(freq, t0)
   if (nach) o.frequency.exponentialRampToValueAtTime(Math.max(50, nach), t0 + dauer)
   g.gain.setValueAtTime(0.0001, t0)
-  g.gain.exponentialRampToValueAtTime(laut, t0 + 0.015)
+  g.gain.exponentialRampToValueAtTime(pegel, t0 + 0.015)
   g.gain.exponentialRampToValueAtTime(0.0001, t0 + dauer)
   o.connect(g)
   g.connect(a.destination)
@@ -44,7 +46,8 @@ function ton(freq: number, dauer: number, art: OscillatorType = 'sine', laut = 0
 
 /** `anstieg` blendet das Rauschen ein, statt es losbrechen zu lassen. */
 function rauschen(dauer: number, laut = 0.18, hp = 800, anstieg = 0, spaeter = 0) {
-  if (stumm) return
+  const pegel = laut * tonLautstaerke()
+  if (pegel <= 0) return
   const a = weckeKlang()
   if (!a) return
   const n = Math.floor(a.sampleRate * dauer)
@@ -61,7 +64,7 @@ function rauschen(dauer: number, laut = 0.18, hp = 800, anstieg = 0, spaeter = 0
   f.type = 'highpass'
   f.frequency.value = hp
   const g = a.createGain()
-  g.gain.value = laut
+  g.gain.value = pegel
   src.connect(f)
   f.connect(g)
   g.connect(a.destination)

@@ -30,6 +30,12 @@ export type SpielProps = {
   /** Die geplante Spieldauer ist abgelaufen. Zeitbasierte Spiele beenden sich daraufhin;
    *  Spiele mit anderer Endbedingung (Wiederholungen, erschöpfter Inhalt) ignorieren es. */
   zeitAbgelaufen: boolean
+  /**
+   * Das Pausenmenü ist offen. Die Bildschleife muss dann **stehen bleiben**: sonst fällt der
+   * Ball weiter, während Ben nicht hinsieht, und die gemessene Dauer enthält die Pausenzeit.
+   * Weiterzeichnen ist richtig — nur `aktualisiere` darf nicht laufen.
+   */
+  angehalten: boolean
   /** Das Spiel meldet selbst „fertig". */
   onFertig: (ergebnis: SpielErgebnis) => void
 }

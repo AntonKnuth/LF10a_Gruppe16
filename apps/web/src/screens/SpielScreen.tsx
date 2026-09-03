@@ -24,6 +24,7 @@ export function SpielScreen({
   stufe,
   verein,
   name,
+  angehalten,
   onFertig,
 }: {
   spielId: string
@@ -31,6 +32,8 @@ export function SpielScreen({
   stufe: number
   verein: Verein
   name: string
+  /** Das Pausenmenü ist offen. */
+  angehalten: boolean
   onFertig: (ergebnis: SpielErgebnis) => void
 }) {
   const spiel = SPIELE[spielId]
@@ -42,10 +45,13 @@ export function SpielScreen({
   const beginn = useRef(performance.now())
   const unten = useRef(false)
 
+  // Angehalten steht auch die Uhr. Sonst kostet eine Pause Ben Spielzeit — A3 verlangt
+  // 3 bis 5 Minuten Übung, nicht 3 bis 5 Minuten Bildschirm.
   useEffect(() => {
+    if (angehalten) return
     const id = setInterval(() => setRest((r) => Math.max(0, r - 1)), 1000)
     return () => clearInterval(id)
-  }, [])
+  }, [angehalten])
 
   const nimmAuf = useCallback((e: React.PointerEvent, druckWert?: number) => {
     const r = flaeche.current?.getBoundingClientRect()
@@ -79,7 +85,9 @@ export function SpielScreen({
 
   if (!spiel) return <p className="p-8 text-2xl">Unbekanntes Spiel: {spielId}</p>
 
-  const props: SpielProps = { stufe, verein, name, zeitAbgelaufen: rest === 0, onFertig: fertig }
+  const props: SpielProps = {
+    stufe, verein, name, angehalten, zeitAbgelaufen: rest === 0, onFertig: fertig,
+  }
   const min = Math.floor(rest / 60)
   const sek = String(rest % 60).padStart(2, '0')
 
@@ -106,10 +114,11 @@ export function SpielScreen({
         ref={flaeche}
         className="min-h-0 flex-1"
         onPointerDownCapture={(e) => {
+          if (angehalten) return
           unten.current = true
           nimmAuf(e)
         }}
-        onPointerMoveCapture={(e) => unten.current && nimmAuf(e)}
+        onPointerMoveCapture={(e) => !angehalten && unten.current && nimmAuf(e)}
         onPointerUpCapture={(e) => {
           // Druck 0 markiert das Absetzen. Ohne diesen Punkt ließe sich die
           // Absetzhäufigkeit nicht aus der Punktfolge ablesen.

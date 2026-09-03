@@ -17,10 +17,12 @@ import { berechneSicht, zeichne, type Sicht } from './zeichnen'
  * Der sichtbare Timer aus A3 gehört dem SpielScreen — das Spiel selbst endet nicht von
  * allein, es läuft, bis `zeitAbgelaufen` gesetzt wird. Kein Verliererzustand (C2).
  */
-export function BallHochhalten({ stufe, verein, zeitAbgelaufen, onFertig }: SpielProps) {
+export function BallHochhalten({ stufe, verein, zeitAbgelaufen, angehalten, onFertig }: SpielProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const weltRef = useRef<Welt | null>(null)
   const fertig = useRef(false)
+  // Die Bildschleife liegt außerhalb von React und liest den Wert über diese Referenz.
+  const pause = useRef(angehalten)
   // Die Bildschleife läuft in einem Effekt ohne Abhängigkeiten und sieht `onFertig`
   // deshalb nur über diese Referenz.
   const beiFertig = useRef(onFertig)
@@ -94,7 +96,9 @@ export function BallHochhalten({ stufe, verein, zeitAbgelaufen, onFertig }: Spie
     let raf = requestAnimationFrame(function bild(jetzt: number) {
       const dt = Math.min(0.05, (jetzt - letzte) / 1000)
       letzte = jetzt
-      aktualisiere(w, dt)
+      // Angehalten wird nur gerechnet, nicht gezeichnet: das Bild bleibt stehen, die Uhr des
+      // Spiels läuft nicht weiter.
+      if (!pause.current) aktualisiere(w, dt)
       zeichne(g, w, sicht, cv.width, cv.height)
       // Erst wenn der Schlussjubel durch ist, geht das Ergebnis weiter.
       if (w.abpfiff && w.abpfiffUhr <= 0 && !fertig.current) {
@@ -121,6 +125,10 @@ export function BallHochhalten({ stufe, verein, zeitAbgelaufen, onFertig }: Spie
   useEffect(() => {
     beiFertig.current = onFertig
   }, [onFertig])
+
+  useEffect(() => {
+    pause.current = angehalten
+  }, [angehalten])
 
   /* Zeit um: erst pfeift der Schiedsrichter ab und das Stadion jubelt, dann meldet
      die Bildschleife das Ergebnis. */

@@ -33,6 +33,7 @@ export function Probe() {
   // Zählt bei jedem Neustart hoch und erzwingt als `key` eine frische Spielwelt.
   const [lauf, setLauf] = useState(0)
   const [ergebnis, setErgebnis] = useState<SpielErgebnis | null>(null)
+  const [angehalten, setAngehalten] = useState(false)
 
   const verein = vereine.find((v) => v.id === vereinId) ?? vereine[0]
 
@@ -112,6 +113,15 @@ export function Probe() {
           Neu starten
         </button>
 
+        {/* Zum Prüfen, ob ein Spiel das Anhalten wirklich beachtet: Bild und Uhr müssen
+            stehen bleiben, und die gemessene Dauer darf die Pausenzeit nicht enthalten. */}
+        <button
+          onClick={() => setAngehalten((a) => !a)}
+          className="rounded bg-slate-600 px-4 py-1 font-bold text-white"
+        >
+          {angehalten ? 'Weiterlaufen' : 'Anhalten'}
+        </button>
+
         <span className="text-slate-500">
           Stift oder Maustaste zum Zeichnen · Ziffern 1–9 und 0 stellen den Ersatzdruck
         </span>
@@ -128,6 +138,7 @@ export function Probe() {
             stufe={stufe}
             verein={verein}
             name="Ben"
+            angehalten={angehalten}
             onFertig={setErgebnis}
           />
         )}

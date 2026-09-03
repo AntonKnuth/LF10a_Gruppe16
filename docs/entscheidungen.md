@@ -307,7 +307,8 @@ später doch Musik kommt, dann **nur im Startbildschirm und in der Lobby, nie w�
 — Dauerbeschallung während einer Konzentrationsaufgabe ist genau das, was A4 verhindern soll. Das
 Pausenmenü bekommt deshalb vorerst nur einen Ton-Schalter, keinen getrennten Musik-Schalter.
 
-**Kein PIN, kein Therapeutenbereich, keine Löschfunktion auf dem Tablet.** Art. 17 löst der
+**Kein PIN, kein Therapeutenbereich, keine Löschfunktion auf dem Tablet.** `TherapeutScreen.tsx`
+ist gelöscht, der Langdruck aus dem Startbildschirm entfernt. Art. 17 löst der
 Therapeut in seiner App aus — dort liegen die Daten. Ein Leihtablet wird organisatorisch
 zurückgesetzt; zusätzlich **widerruft der Therapeut das Gerätetoken serverseitig**. Das ist besser
 als ein Knopf auf dem Gerät, weil es auch bei einem verlorenen Tablet wirkt.
@@ -317,27 +318,36 @@ als ein Knopf auf dem Gerät, weil es auch bei einem verlorenen Tablet wirkt.
 > die Trennung ist stärker als vorher (eigene Anwendung, echte Anmeldung statt Kindersicherung),
 > aber ohne diesen Satz liest ein Prüfer die verschwundene PIN als nicht erfüllte Anforderung.
 
-**Statt des Langdrucks ein offenes Pausenmenü.** Erreichbar im Homescreen **und in jedem Spiel**,
-ohne Verzögerung. Beim Öffnen kommt eine deutliche Nachricht, dass das Spiel angehalten ist — Ben
-soll nicht glauben, er verliere gerade Zeit. Inhalt: Lautstärke, Ton aus, Bildschirm abdunkeln,
-Weiterspielen. Das sind vier Elemente und bleibt damit innerhalb von A2 (höchstens fünf pro
-Bildschirm).
+**Statt des Langdrucks ein offenes Pausenmenü** (`ui/PausenMenue.tsx`, gebaut). Erreichbar im
+Startbildschirm, in jedem Spiel **und in der Zwangspause**, ohne Verzögerung und ohne PIN. Beim
+Öffnen steht „Das Spiel wartet auf dich." — Ben soll nicht glauben, ihm laufe gerade die Zeit
+davon. Vier Elemente: Ton, Lautstärke, Bildschirm dunkler, Weiterspielen. Damit bleibt A2 gewahrt.
 
-**Der Spieltimer muss dabei stehen bleiben** — und die gemessene `dauerMs` in `SpielErgebnis` darf
-die Pausenzeit **nicht** enthalten. Sonst bestraft eine Pause Ben doppelt: sie kostet ihn Spielzeit
-(A3 fordert 3–5 Minuten) und sie verfälscht Thomas' Verlaufskurve.
-Heute zählt `SpielScreen.tsx:30-33` unbedingt herunter und kennt kein Anhalten.
+Der Knopf liegt in `App.tsx` über allen Bildschirmen, nicht in den einzelnen: er gehört zum Gerät
+und zu keinem Segment, und derselbe Knopf an derselben Stelle ist für ein Kind eine Bedienung
+statt drei.
 
-**Ton, verifizierter Ist-Stand:** `tk.tonAus` steuert ausschließlich das Vorlesen
-(`ui/vorlesen.ts:4`). Die Spielgeräusche haben eine eigene Variable, und **`setStumm` in
-`spiele/ballhochhalten/klang.ts:9` wird nirgends aufgerufen** — die Geräusche lassen sich derzeit
-gar nicht abschalten. **A4 („Ton nur funktional und abschaltbar") ist damit heute nicht erfüllt.**
-Das Pausenmenü ist die Stelle, an der das repariert wird: ein Schalter, der beide Wege stummschaltet.
+**Beide Uhren bleiben dabei stehen** — die Spieluhr in `SpielScreen` und der Countdown der
+Zwangspause. Auch die Bildschleifen der Spiele rechnen nicht weiter (`angehalten` in `SpielProps`),
+sonst fiele der Ball, während Ben nicht hinsieht. Damit enthält die gemessene `dauerMs` keine
+Pausenzeit: sie kommt aus `w.zeitGesamt`, und das wächst nur in `aktualisiere`.
+*Nachgemessen: Spieluhr 0:46 beim Öffnen, 0:46 nach fünf Sekunden Menü. Zwangspause 27 beim
+Öffnen, 27 nach sechs Sekunden.*
+
+**Die zwei Knöpfe in der Zwangspause sind entfallen.** „Anhalten/Weiterlaufen" und „Neu starten"
+macht jetzt der zentrale Knopf; übrig bleibt „Weiter", und der erscheint weiterhin erst bei 0.
+Überspringen gibt es nach wie vor nicht (A3).
+
+**A4 ist damit erst jetzt erfüllt.** Vorher steuerte `tk.tonAus` nur das Vorlesen, die
+Spielgeräusche hatten eine eigene Variable, und `setStumm` wurde **nirgends aufgerufen** — die
+Geräusche ließen sich gar nicht abschalten. Beides liegt jetzt in `bedienung.ts`; `klang.ts` liest
+Lautstärke und Stummschaltung bei **jedem** Ton neu, weil die Bildschleife außerhalb von React
+läuft und eine zwischengespeicherte Kopie sofort veraltet wäre.
 
 **Bildschirmhelligkeit kann eine Web-App nicht steuern.** Es gibt keine Browser-Schnittstelle dafür,
-auf iPadOS erst recht nicht. Machbar ist ein **abdunkelndes Overlay** über den Inhalt — das ändert
-die Hintergrundbeleuchtung nicht, wirkt für ein Kind aber wie „dunkler". Der Schalter heißt deshalb
-„Bildschirm abdunkeln", nicht „Helligkeit".
+auf iPadOS erst recht nicht. Gebaut ist ein **abdunkelnder Schleier** über dem Inhalt, ohne
+Klickannahme — das ändert die Hintergrundbeleuchtung nicht, wirkt für ein Kind aber wie „dunkler".
+Der Schalter heißt deshalb „Bildschirm dunkler" und nicht „Helligkeit".
 
 **Verbindung ist beim Start nötig, danach nicht mehr.** Ohne Service Worker gibt es keinen
 zwischengespeicherten App-Rumpf — die App lädt vom Server. Bricht die Verbindung **während** einer

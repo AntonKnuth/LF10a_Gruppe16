@@ -13,10 +13,12 @@ import { berechneSicht, zeichne, type Sicht } from './zeichnen'
  * Beendet wird ausschließlich von der Uhr des SpielScreens. Ist ein Platz geschafft,
  * kommt der nächste — es gibt weder ein vorzeitiges Ende noch einen Verliererzustand (C2).
  */
-export function Platzwart({ stufe, verein, zeitAbgelaufen, onFertig }: SpielProps) {
+export function Platzwart({ stufe, verein, zeitAbgelaufen, angehalten, onFertig }: SpielProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const weltRef = useRef<Welt | null>(null)
   const fertig = useRef(false)
+  // Die Bildschleife liegt außerhalb von React und liest den Wert über diese Referenz.
+  const pause = useRef(angehalten)
   const zeitAus = useRef(false)
   // Die Bildschleife läuft in einem Effekt ohne Abhängigkeiten und sieht `onFertig`
   // deshalb nur über diese Referenz.
@@ -110,7 +112,8 @@ export function Platzwart({ stufe, verein, zeitAbgelaufen, onFertig }: SpielProp
     let raf = requestAnimationFrame(function bild(jetzt: number) {
       const dt = Math.min(0.05, (jetzt - letzteZeit) / 1000)
       letzteZeit = jetzt
-      aktualisiere(w, dt)
+      // Angehalten wird nur gerechnet, nicht gezeichnet.
+      if (!pause.current) aktualisiere(w, dt)
       zeichne(g, w, sicht, cv.width, cv.height)
       // Nur die Uhr beendet das Spiel: ein geschaffter Platz wird gefeiert, dann kommt
       // der nächste. Kein Verliererzustand und kein vorzeitiges Ende (C2).
@@ -137,6 +140,10 @@ export function Platzwart({ stufe, verein, zeitAbgelaufen, onFertig }: SpielProp
   useEffect(() => {
     beiFertig.current = onFertig
   }, [onFertig])
+
+  useEffect(() => {
+    pause.current = angehalten
+  }, [angehalten])
 
   useEffect(() => {
     if (zeitAbgelaufen) zeitAus.current = true

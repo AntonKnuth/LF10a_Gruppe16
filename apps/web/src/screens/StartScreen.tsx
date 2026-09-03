@@ -1,4 +1,3 @@
-import { useRef } from 'react'
 import { vereine } from '../content'
 import { Maskottchen, Pin, Stadion } from '../ui/Figuren'
 
@@ -9,25 +8,19 @@ const auf = (k: { x: number; y: number }) => ({
   y: KARTE.y + (k.y / 100) * KARTE.h,
 })
 
-type Props = { aktiverVereinIndex: number; onStart: () => void; onTherapeut: () => void }
+type Props = { aktiverVereinIndex: number; onStart: () => void }
 
 /**
- * A2 begrenzt den Bildschirm auf wenige Elemente: Titel, Karte, Maskottchen,
- * „Drücke zum Start" und das Menü oben rechts. Sonst nichts.
+ * A2 begrenzt den Bildschirm auf wenige Elemente: Titel, Karte, Maskottchen und
+ * „Drücke zum Start". Sonst nichts — der Anhalte-Knopf oben rechts liegt darüber und
+ * gehört nicht zu diesem Bildschirm.
  *
  * Die Karte ist zugleich die Fortschrittsanzeige aus C4 — besuchte Vereine haben eine
  * farbige Nadel, noch nicht besuchte eine blasse leere.
  */
-export function StartScreen({ aktiverVereinIndex, onStart, onTherapeut }: Props) {
+export function StartScreen({ aktiverVereinIndex, onStart }: Props) {
   const aktiv = vereine[aktiverVereinIndex]
   const aktivPos = auf(aktiv.karte)
-
-  // 2 s Langdruck, damit Ben nicht versehentlich in den Therapeutenbereich stolpert.
-  const langdruck = useRef<number>(0)
-  const halten = () => {
-    langdruck.current = window.setTimeout(onTherapeut, 2000)
-  }
-  const loslassen = () => clearTimeout(langdruck.current)
 
   return (
     <svg
@@ -90,27 +83,6 @@ export function StartScreen({ aktiverVereinIndex, onStart, onTherapeut }: Props)
         Drücke zum Start
       </text>
 
-      {/* Menü: eigener Klickbereich, darf den Start nicht auslösen. */}
-      <g
-        transform="translate(918 42)"
-        onPointerDown={(e) => {
-          e.stopPropagation()
-          halten()
-        }}
-        onPointerUp={loslassen}
-        onPointerLeave={loslassen}
-        onPointerCancel={loslassen}
-        style={{ cursor: 'pointer' }}
-        role="button"
-        aria-label="Menü, zwei Sekunden gedrückt halten"
-      >
-        <rect x="-26" y="-26" width="52" height="52" rx="16" fill="#fff" opacity="0.75" />
-        <g stroke="#3b7ea8" strokeWidth="5" strokeLinecap="round">
-          <line x1="-12" y1="-9" x2="12" y2="-9" />
-          <line x1="-12" y1="0" x2="12" y2="0" />
-          <line x1="-12" y1="9" x2="12" y2="9" />
-        </g>
-      </g>
     </svg>
   )
 }
