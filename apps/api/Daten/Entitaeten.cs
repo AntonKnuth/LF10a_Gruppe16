@@ -131,7 +131,11 @@ public class Session
     public Guid Id { get; set; }
     public int KlientId { get; set; }
     public Klient? Klient { get; set; }
-    public int GeraetId { get; set; }
+
+    /// <summary>Nullbar mit Absicht: die Sitzung gehört dem Kind, nicht dem Tablet. Wird ein
+    /// Gerät entfernt, verliert die Sitzung nur den Verweis darauf, nicht ihre Daten.
+    /// Ein Fremdschlüssel mit RESTRICT stünde hier der Löschung nach Art. 17 im Weg.</summary>
+    public int? GeraetId { get; set; }
     public Geraet? Geraet { get; set; }
 
     public string VereinId { get; set; } = "";

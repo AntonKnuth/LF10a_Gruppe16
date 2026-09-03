@@ -54,12 +54,17 @@ public class TkContext(DbContextOptions<TkContext> optionen) : DbContext(optione
         foreach (var fk in b.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))
             fk.DeleteBehavior = DeleteBehavior.Cascade;
 
-        // Ein Gerät zu löschen darf nicht die Sitzungen des Kindes mitnehmen — die gehören
-        // dem Kind, nicht dem Tablet. Deshalb hier ausdrücklich zurückgenommen.
+        // Ein Gerät zu löschen darf nicht die Sitzungen des Kindes mitnehmen — die gehören dem
+        // Kind, nicht dem Tablet. Deshalb SetNull statt Cascade.
+        //
+        // Und ausdrücklich NICHT Restrict: das Löschen eines Klienten kaskadiert gleichzeitig auf
+        // Geraete und auf Sessions. SQLite prüft Restrict sofort statt am Anweisungsende — wird
+        // die Gerätezeile zuerst entfernt, scheitert genau die Löschung nach Art. 17, die
+        // nachgewiesen werden muss. SetNull hat den gewünschten Effekt ohne diese Falle.
         b.Entity<Session>()
             .HasOne(s => s.Geraet)
             .WithMany()
             .HasForeignKey(s => s.GeraetId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

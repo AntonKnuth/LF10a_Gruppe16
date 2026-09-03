@@ -11,7 +11,7 @@ using TravelKickers.Api.Daten;
 namespace TravelKickers.Api.Migrations
 {
     [DbContext(typeof(TkContext))]
-    [Migration("20260903172841_Start")]
+    [Migration("20260903190442_Start")]
     partial class Start
     {
         /// <inheritdoc />
@@ -272,7 +272,7 @@ namespace TravelKickers.Api.Migrations
                     b.Property<DateTime>("EmpfangenAm")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("GeraetId")
+                    b.Property<int?>("GeraetId")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("KlientId")
@@ -501,8 +501,7 @@ namespace TravelKickers.Api.Migrations
                     b.HasOne("TravelKickers.Api.Daten.Geraet", "Geraet")
                         .WithMany()
                         .HasForeignKey("GeraetId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("TravelKickers.Api.Daten.Klient", "Klient")
                         .WithMany("Sessions")

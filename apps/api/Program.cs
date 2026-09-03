@@ -97,25 +97,30 @@ app.MapPost("/api/abmeldung", async (HttpContext http) =>
     return Results.Ok();
 });
 
-app.MapGet("/api/ich", (ClaimsPrincipal nutzer) => Results.Ok(new
-{
-    Id = TherapeutId(nutzer),
-    Name = nutzer.Identity?.Name,
-}));
+app.MapGet("/api/ich", (ClaimsPrincipal nutzer) =>
+    TherapeutId(nutzer) is not int id
+        ? Results.Unauthorized()
+        : Results.Ok(new { Id = id, Name = nutzer.Identity?.Name }));
 
 // --- Klienten --------------------------------------------------------------------------
 
 // Die TherapeutId kommt aus dem Cookie, nie aus dem Request. Erst dadurch ist der Satz
 // "Zugriff steht in der Tabelle Betreuung" überhaupt wahr.
 app.MapGet("/api/klienten", async (TkContext db, ClaimsPrincipal nutzer) =>
-    Results.Ok(await Zugriff.KlientenFuer(db, TherapeutId(nutzer))
+{
+    if (TherapeutId(nutzer) is not int therapeutId) return Results.Unauthorized();
+
+    return Results.Ok(await Zugriff.KlientenFuer(db, therapeutId)
         .OrderBy(k => k.Nachname).ThenBy(k => k.Vorname)
         .Select(k => new { k.Id, k.Vorname, k.Nachname, k.Spielname })
-        .ToListAsync()));
+        .ToListAsync());
+});
 
 app.MapGet("/api/klienten/{id:int}", async (int id, TkContext db, ClaimsPrincipal nutzer) =>
 {
-    var klient = await Zugriff.KlientenFuer(db, TherapeutId(nutzer))
+    if (TherapeutId(nutzer) is not int therapeutId) return Results.Unauthorized();
+
+    var klient = await Zugriff.KlientenFuer(db, therapeutId)
         .Where(k => k.Id == id)
         .Select(k => new { k.Id, k.Vorname, k.Nachname, k.Spielname, k.PausenDauerSek, k.PausenInhalt })
         .SingleOrDefaultAsync();
@@ -127,7 +132,9 @@ app.MapGet("/api/klienten/{id:int}", async (int id, TkContext db, ClaimsPrincipa
 
 app.Run();
 
-static int TherapeutId(ClaimsPrincipal nutzer) =>
-    int.Parse(nutzer.FindFirstValue(ClaimTypes.NameIdentifier)!);
+// TryParse statt Parse: ein gültiges, aber altes Cookie ohne NameIdentifier — etwa nach einer
+// Schemaänderung — gäbe sonst 500 statt 401. Ein 500 in der Vorführung sieht aus wie ein Absturz.
+static int? TherapeutId(ClaimsPrincipal nutzer) =>
+    int.TryParse(nutzer.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : null;
 
 record AnmeldeDaten(string Email, string Passwort);

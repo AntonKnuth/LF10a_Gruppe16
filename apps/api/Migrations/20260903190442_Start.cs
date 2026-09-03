@@ -197,7 +197,7 @@ namespace TravelKickers.Api.Migrations
                 {
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     KlientId = table.Column<int>(type: "INTEGER", nullable: false),
-                    GeraetId = table.Column<int>(type: "INTEGER", nullable: false),
+                    GeraetId = table.Column<int>(type: "INTEGER", nullable: true),
                     VereinId = table.Column<string>(type: "TEXT", nullable: false),
                     Tag = table.Column<int>(type: "INTEGER", nullable: false),
                     BegonnenAmMs = table.Column<long>(type: "INTEGER", nullable: false),
@@ -213,7 +213,7 @@ namespace TravelKickers.Api.Migrations
                         column: x => x.GeraetId,
                         principalTable: "Geraete",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
                         name: "FK_Sessions_Klienten_KlientId",
                         column: x => x.KlientId,
