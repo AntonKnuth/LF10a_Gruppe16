@@ -1,0 +1,18 @@
+@import 'tailwindcss';
+
+/* D3: der Wochenbericht muss auf eine Seite passen und druckbar sein.
+   Beim Drucken verschwindet alles, was nicht zum Bericht gehört. */
+@media print {
+  .kein-druck {
+    display: none !important;
+  }
+  .druckbogen {
+    box-shadow: none !important;
+    border: 0 !important;
+    padding: 0 !important;
+  }
+  @page {
+    size: A4;
+    margin: 15mm;
+  }
+}

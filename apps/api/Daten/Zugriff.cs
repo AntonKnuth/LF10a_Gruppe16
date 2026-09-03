@@ -19,9 +19,25 @@ public static class Zugriff
     public static IQueryable<Klient> KlientenFuer(TkContext db, int therapeutId) =>
         db.Klienten.Where(k => k.Betreuungen.Any(b => b.TherapeutId == therapeutId));
 
-    /// <summary>Sitzungen eines Kindes — nur, wenn der Therapeut es betreuen darf.</summary>
+    /// <summary>
+    /// Sitzungen eines Kindes — nur, wenn der Therapeut es betreuen darf.
+    ///
+    /// Bewusst flach formuliert und nicht als <c>KlientenFuer(…).SelectMany(k => k.Sessions)</c>:
+    /// zwei verschachtelte <c>SelectMany</c> übersetzt EF Core in ein SQL <c>APPLY</c>, und das
+    /// kennt SQLite nicht — die Abfrage wirft dann zur Laufzeit
+    /// „Translating this query requires the SQL APPLY operation".
+    /// </summary>
     public static IQueryable<Session> SessionsFuer(TkContext db, int therapeutId, int klientId) =>
-        KlientenFuer(db, therapeutId).Where(k => k.Id == klientId).SelectMany(k => k.Sessions);
+        db.Sessions.Where(s =>
+            s.KlientId == klientId &&
+            s.Klient!.Betreuungen.Any(b => b.TherapeutId == therapeutId));
+
+    /// <summary>Einzelne Spielergebnisse eines Kindes, für den Verlauf. Gleiche Regel, gleicher
+    /// sichtbarer Join über <see cref="Betreuung"/>.</summary>
+    public static IQueryable<Spielergebnis> ErgebnisseFuer(TkContext db, int therapeutId, int klientId) =>
+        db.Spielergebnisse.Where(e =>
+            e.Session!.KlientId == klientId &&
+            e.Session.Klient!.Betreuungen.Any(b => b.TherapeutId == therapeutId));
 
     /// <summary>Wird für 403 gebraucht. Eine leere Liste zurückzugeben wäre falsch: leer heißt
     /// in dieser App „nicht geübt", und das würde den Wochenbericht lügen lassen.</summary>

@@ -9,7 +9,14 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
+    <!-- Vollbild auf dem iPad kommt aus DIESER Zeile, nicht aus dem Manifest: iPadOS beachtet
+         weder `display: fullscreen` noch einen Orientierungs-Lock. -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <!-- Das Manifest liefert Homescreen-Symbol und Name. Installiert zu sein ist wichtig,
+         weil Safari die Website-Daten sonst nach etwa einer Woche Pause verwirft — und damit
+         die Kopplung des Tablets. -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#7ec8f0" />
     <title>TravelKickers</title>
   </head>
   <body>

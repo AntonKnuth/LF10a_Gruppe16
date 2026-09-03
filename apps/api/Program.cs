@@ -66,12 +66,38 @@ using (var start = app.Services.CreateScope())
     Seed.Anlegen(db, start.ServiceProvider.GetRequiredService<IPasswordHasher<Therapeut>>());
 }
 
+// Die gebauten Frontends liegen in wwwroot: die Kind-App unter /, die Therapeuten-App unter
+// /therapeut/. Eine Origin für alles — dadurch gibt es kein CORS zu konfigurieren, und das
+// Anmelde-Cookie wird ohne Sonderregeln mitgeschickt.
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
+// UseRouting MUSS hier ausdrücklich stehen, und zwar NACH den Dateien.
+//
+// Ohne diese Zeile fügt WebApplication das Routing automatisch ganz am Anfang der Kette ein.
+// Dann wählt der Catch-all-Fallback weiter unten bereits einen Endpunkt aus, bevor
+// UseStaticFiles überhaupt an die Reihe kommt — und die Static-Files-Middleware überspringt
+// sich selbst, sobald ein Endpunkt gewählt ist. Ergebnis: jede .js- und .css-Datei liefert
+// index.html mit Content-Type text/html, der Browser lehnt das Modul ab und die Seite bleibt
+// weiß. Der Fehler sieht aus wie ein kaputter Build und ist keiner.
+app.UseRouting();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapKonten();
 app.MapKlienten();
 app.MapTablet();
+app.MapBericht();
+
+// Beide Anwendungen holen sich ihre Zustände im Browser, nicht über Serverpfade. Alles, was
+// kein Endpunkt und keine Datei ist, bekommt deshalb die passende index.html.
+//
+// `.AllowAnonymous()` ist hier Pflicht und keine Nachlässigkeit: die FallbackPolicy verlangt
+// eine Anmeldung für jeden Endpunkt, und ein Fallback ist ein Endpunkt. Ohne diese Zeile
+// bekäme niemand die Anmeldeseite ausgeliefert — es sähe aus wie ein kaputter Build.
+app.MapFallbackToFile("/therapeut/{*pfad}", "/therapeut/index.html").AllowAnonymous();
+app.MapFallbackToFile("/{*pfad}", "/index.html").AllowAnonymous();
 
 app.Run();
 
