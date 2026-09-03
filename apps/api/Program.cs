@@ -1,9 +1,10 @@
-using System.Security.Claims;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using TravelKickers.Api.Auth;
 using TravelKickers.Api.Daten;
+using TravelKickers.Api.Endpunkte;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +15,9 @@ builder.Services.AddDbContext<TkContext>(o => o.UseSqlite($"Data Source={dbPfad}
 
 builder.Services.AddSingleton<IPasswordHasher<Therapeut>, PasswordHasher<Therapeut>>();
 
+// Zwei Anmeldeverfahren nebeneinander: Cookie für den Menschen am Laptop, Bearer-Token für das
+// Tablet. Beides über denselben Weg zu machen ginge, wäre aber schlechter — ein Cookie schickt
+// der Browser überallhin mit, ein Gerätetoken lässt sich einzeln sperren.
 builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(o =>
@@ -36,14 +40,22 @@ builder.Services
             ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
             return Task.CompletedTask;
         };
-    });
+    })
+    .AddScheme<GeraetOptionen, GeraetHandler>(GeraetHandler.Schema, _ => { });
 
-// Alles ist geschützt, außer es steht ausdrücklich AllowAnonymous dran. Andersherum vergisst
-// man irgendwann einen Endpunkt.
-builder.Services.AddAuthorizationBuilder().SetFallbackPolicy(
-    new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
-        .RequireAuthenticatedUser()
-        .Build());
+// Die Verfahren werden ausdrücklich je Richtlinie benannt. Ohne das würde ein Tablet-Token auch
+// auf Therapeuten-Endpunkten akzeptiert, sobald irgendwo beide Verfahren aktiv sind.
+var nurTherapeut = new AuthorizationPolicyBuilder(CookieAuthenticationDefaults.AuthenticationScheme)
+    .RequireAuthenticatedUser().Build();
+var nurGeraet = new AuthorizationPolicyBuilder(GeraetHandler.Schema)
+    .RequireAuthenticatedUser().Build();
+
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("Therapeut", nurTherapeut)
+    .AddPolicy("Geraet", nurGeraet)
+    // Wer eine Richtlinie zu setzen vergisst, landet beim Therapeuten-Cookie — der strengere
+    // Fall. Andersherum wäre ein vergessener Endpunkt offen.
+    .SetFallbackPolicy(nurTherapeut);
 
 var app = builder.Build();
 
@@ -57,84 +69,11 @@ using (var start = app.Services.CreateScope())
 app.UseAuthentication();
 app.UseAuthorization();
 
-// --- Anmeldung -------------------------------------------------------------------------
-
-app.MapPost("/api/anmeldung", async (
-    AnmeldeDaten eingabe,
-    TkContext db,
-    IPasswordHasher<Therapeut> hasher,
-    HttpContext http) =>
-{
-    var therapeut = await db.Therapeuten.SingleOrDefaultAsync(t => t.Email == eingabe.Email);
-
-    // Auch bei unbekannter E-Mail wird gehasht, damit die Antwortzeit nicht verrät,
-    // welche Adressen es gibt.
-    var pruefung = hasher.VerifyHashedPassword(
-        therapeut ?? new Therapeut(),
-        therapeut?.PasswortHash ?? "",
-        eingabe.Passwort);
-
-    if (therapeut is null || !therapeut.Aktiv || pruefung == PasswordVerificationResult.Failed)
-        return Results.Unauthorized();
-
-    var anspruch = new ClaimsIdentity(
-        [
-            new Claim(ClaimTypes.NameIdentifier, therapeut.Id.ToString()),
-            new Claim(ClaimTypes.Name, $"{therapeut.Vorname} {therapeut.Nachname}"),
-        ],
-        CookieAuthenticationDefaults.AuthenticationScheme);
-
-    await http.SignInAsync(
-        CookieAuthenticationDefaults.AuthenticationScheme,
-        new ClaimsPrincipal(anspruch));
-
-    return Results.Ok(new { therapeut.Id, therapeut.Vorname, therapeut.Nachname });
-}).AllowAnonymous();
-
-app.MapPost("/api/abmeldung", async (HttpContext http) =>
-{
-    await http.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-    return Results.Ok();
-});
-
-app.MapGet("/api/ich", (ClaimsPrincipal nutzer) =>
-    TherapeutId(nutzer) is not int id
-        ? Results.Unauthorized()
-        : Results.Ok(new { Id = id, Name = nutzer.Identity?.Name }));
-
-// --- Klienten --------------------------------------------------------------------------
-
-// Die TherapeutId kommt aus dem Cookie, nie aus dem Request. Erst dadurch ist der Satz
-// "Zugriff steht in der Tabelle Betreuung" überhaupt wahr.
-app.MapGet("/api/klienten", async (TkContext db, ClaimsPrincipal nutzer) =>
-{
-    if (TherapeutId(nutzer) is not int therapeutId) return Results.Unauthorized();
-
-    return Results.Ok(await Zugriff.KlientenFuer(db, therapeutId)
-        .OrderBy(k => k.Nachname).ThenBy(k => k.Vorname)
-        .Select(k => new { k.Id, k.Vorname, k.Nachname, k.Spielname })
-        .ToListAsync());
-});
-
-app.MapGet("/api/klienten/{id:int}", async (int id, TkContext db, ClaimsPrincipal nutzer) =>
-{
-    if (TherapeutId(nutzer) is not int therapeutId) return Results.Unauthorized();
-
-    var klient = await Zugriff.KlientenFuer(db, therapeutId)
-        .Where(k => k.Id == id)
-        .Select(k => new { k.Id, k.Vorname, k.Nachname, k.Spielname, k.PausenDauerSek, k.PausenInhalt })
-        .SingleOrDefaultAsync();
-
-    // 403, nicht 404 und nicht eine leere Antwort: "kein Zugriff" und "hat nicht geübt"
-    // dürfen sich nicht gleich anfühlen.
-    return klient is null ? Results.Forbid() : Results.Ok(klient);
-});
+app.MapKonten();
+app.MapKlienten();
+app.MapTablet();
 
 app.Run();
 
-// TryParse statt Parse: ein gültiges, aber altes Cookie ohne NameIdentifier — etwa nach einer
-// Schemaänderung — gäbe sonst 500 statt 401. Ein 500 in der Vorführung sieht aus wie ein Absturz.
-static int? TherapeutId(ClaimsPrincipal nutzer) =>
-    int.TryParse(nutzer.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : null;
-
-record AnmeldeDaten(string Email, string Passwort);
+/// <summary>Nur damit die Tests den Host hochfahren können.</summary>
+public partial class Program;

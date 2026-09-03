@@ -5,6 +5,8 @@ Fachlicher Hintergrund und Anforderungs-IDs: siehe `CLAUDE.md`.
 
 ## Starten
 
+Kind-App:
+
 ```bash
 cd apps/web
 npm install
@@ -12,6 +14,29 @@ npm run dev     # http://localhost:5173
 npm test        # Auswertung der Ablauflogik
 npm run build
 ```
+
+Server:
+
+```bash
+cd apps/api
+dotnet run      # http://localhost:5099
+```
+
+```bash
+dotnet test     # Zugriffsregel, Art. 17, Idempotenz der Datenannahme
+```
+
+**Voraussetzung: .NET 8.** Auf einem Rechner mit .NET-10-SDK reicht `Microsoft.DotNet.AspNetCore.8`
+allein **nicht** — es fehlt die Basis-Runtime. Beide installieren:
+
+```bash
+winget install Microsoft.DotNet.Runtime.8
+```
+
+Ohne sie baut das Projekt, startet aber nicht. Nach `dotnet ef migrations add …` immer neu bauen,
+sonst findet `Migrate()` die Migration nicht und legt eine leere Datenbank an.
+
+Demo-Konto aus dem Seed: `thomas@praxis.test` / `travelkickers`.
 
 ## Aufbau
 

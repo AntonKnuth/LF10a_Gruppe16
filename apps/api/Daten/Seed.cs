@@ -47,6 +47,25 @@ public static class Seed
             KlientId = ben.Id,
             Von = DateTime.UtcNow,
         });
+
+        // Ohne diese Zeilen liefert GET /api/kind eine leere Liste und in der Vorführung
+        // startet kein einziges Spiel. Die Spiel-IDs sind dieselben wie in
+        // apps/web/src/spiele/index.ts — sie kommen aus dem Content, nicht aus der Datenbank.
+        string[] spiele =
+        [
+            "aufwaermen", "linie", "autogramme", "rasenmaehen", "stationentour",
+            "startelf", "elfmeter", "dribbeln", "ballhochhalten", "abschiedsgeschenk",
+        ];
+
+        db.Einstellungen.AddRange(spiele.Select((spielId, i) => new Einstellung
+        {
+            KlientId = ben.Id,
+            SpielId = spielId,
+            Stufe = 3,
+            DauerSek = 210, // A3 verlangt 3–5 Minuten je Spiel
+            Reihenfolge = i,
+        }));
+
         db.SaveChanges();
     }
 }
