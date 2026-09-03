@@ -1,23 +1,49 @@
 import type { Verein } from '../content/typen'
 import type { Segment } from './segmente'
 
-/** Einstellungen des Therapeuten, die den Ablauf verändern (B1, A3). */
+/**
+ * Einstellungen des Therapeuten, die den Ablauf verändern (B1, A3, B3).
+ *
+ * Je Übungstyp, nicht global: B1 verlangt Toleranz, Zielgeschwindigkeit und Mindesttrefferquote
+ * ausdrücklich „je Übungstyp". Die Werte kommen vom Server (`GET /api/kind`); die Vorgaben
+ * unten gelten nur, solange das Gerät noch keine Antwort hat.
+ */
+export type SpielEinstellung = {
+  stufe: number
+  dauerSek: number
+  toleranz: number
+  zielgeschwindigkeit: number
+  mindesttrefferquote: number
+  /** Der Therapeut kann ein Spiel aus dem Tagesplan nehmen. */
+  aktiv: boolean
+  reihenfolge: number
+}
+
 export type Einstellungen = {
-  spielDauerSek: number
   pauseDauerSek: number
   pauseInhalt: string
-  stufe: number
-  /** Spiele, die Thomas für Ben weggelassen hat. */
-  ausgelassen: string[]
+  spiele: Record<string, SpielEinstellung>
+}
+
+const VORGABE: SpielEinstellung = {
+  stufe: 3,
+  dauerSek: 210, // 3,5 Min — A3 verlangt 3–5 Min je Spiel
+  toleranz: 1,
+  zielgeschwindigkeit: 1,
+  mindesttrefferquote: 0.5,
+  aktiv: true,
+  reihenfolge: 0,
 }
 
 export const standardEinstellungen: Einstellungen = {
-  spielDauerSek: 210, // 3,5 Min — A3 verlangt 3–5 Min je Spiel
   pauseDauerSek: 10,
   pauseInhalt: '10 Hampelmänner',
-  stufe: 3,
-  ausgelassen: [],
+  spiele: {},
 }
+
+/** Vorgabe für ein Spiel, über das der Server nichts gesagt hat. */
+export const fuerSpiel = (e: Einstellungen, spielId: string): SpielEinstellung =>
+  e.spiele[spielId] ?? VORGABE
 
 /**
  * Baut die Segmentliste für einen Trainingstag.
@@ -43,10 +69,11 @@ export function tagesplan(
   if (tag === 1) segmente.push({ art: 'ankommen' })
   segmente.push({ art: 'ansage' })
 
-  const spiele = verein.tage[tag - 1].spiele.filter((id) => !e.ausgelassen.includes(id))
+  const spiele = verein.tage[tag - 1].spiele.filter((id) => fuerSpiel(e, id).aktiv)
 
   spiele.forEach((spielId, i) => {
-    segmente.push({ art: 'spiel', spielId, dauerSek: e.spielDauerSek, stufe: e.stufe })
+    const s = fuerSpiel(e, spielId)
+    segmente.push({ art: 'spiel', spielId, dauerSek: s.dauerSek, stufe: s.stufe })
     segmente.push({ art: 'selbsteinschaetzung' })
     segmente.push({ art: 'lob' })
     // Keine Pause nach dem letzten Spiel — die Einheit soll im Erfolg enden,

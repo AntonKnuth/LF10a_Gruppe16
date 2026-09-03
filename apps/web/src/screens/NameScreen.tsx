@@ -7,9 +7,15 @@ const BREITE = 1200
 const HOEHE = 340
 
 /**
- * Erstlauf: Ben schreibt seinen Namen mit dem Stift (Phase 1, Punkt 2).
- * Das Bild wird gespeichert, der getippte Vorname daneben dient dazu, Begrüßung und
- * Lob später persönlich zu adressieren (C5). D4: nur der Vorname, sonst nichts.
+ * Erstlauf: Ben wählt seinen Spielnamen und schreibt ihn mit dem Stift.
+ *
+ * Der bürgerliche Name kommt vom Therapeuten und taucht im Kindmodus nie auf; angesprochen
+ * wird ausschließlich dieser selbstgewählte Name (C5). Das Getippte ist nötig, weil sich die
+ * Handschrift eines Siebenjährigen nicht auslesen lässt — das Schreiben ist die Übung.
+ *
+ * Die Zeichnung wird bewusst **nicht** gespeichert: es gäbe niemanden, der sie liest, und ein
+ * abgelegtes Handschriftbild eines Kindes ohne Zweck verstößt gegen D4. Sobald der Upload der
+ * Arbeitsproben gebaut ist, bekommt sie einen Empfänger und kann mitgehen.
  *
  * Zugleich die Referenz für Pointer-Events: `getCoalescedEvents()` liefert alle
  * Zwischenpunkte, die der Browser seit dem letzten Frame gesammelt hat — beim Apple
@@ -20,15 +26,15 @@ export function NameScreen({
   onFertig,
 }: {
   verein: Verein
-  onFertig: (vorname: string, bild: string) => void
+  onFertig: (spielname: string) => void
 }) {
-  const frage = 'Schreib deinen Namen mit dem Stift.'
+  const frage = 'Wie sollen wir dich nennen? Schreib es mit dem Stift.'
   useVorlesen(frage)
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const zeichnet = useRef(false)
   const [leer, setLeer] = useState(true)
-  const [vorname, setVorname] = useState('')
+  const [spielname, setSpielname] = useState('')
 
   const ctx = () => canvasRef.current?.getContext('2d') ?? null
 
@@ -100,10 +106,10 @@ export function NameScreen({
       />
 
       <input
-        value={vorname}
-        onChange={(e) => setVorname(e.target.value)}
-        placeholder="Vorname tippen"
-        aria-label="Vorname"
+        value={spielname}
+        onChange={(e) => setSpielname(e.target.value)}
+        placeholder="Namen tippen"
+        aria-label="Spielname"
         className="taste w-80 border-2 border-slate-300 bg-white text-center text-slate-800"
       />
 
@@ -112,10 +118,8 @@ export function NameScreen({
           Nochmal
         </button>
         <button
-          disabled={leer || vorname.trim() === ''}
-          onClick={() =>
-            onFertig(vorname.trim(), canvasRef.current?.toDataURL('image/png') ?? '')
-          }
+          disabled={leer || spielname.trim() === ''}
+          onClick={() => onFertig(spielname.trim())}
           className="taste bg-rasen text-white shadow-lg active:scale-95 disabled:opacity-40"
         >
           Fertig

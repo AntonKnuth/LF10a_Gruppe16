@@ -1,3 +1,5 @@
+import type { Aufzeichnung } from '../rohdaten'
+
 /**
  * Ein Trainingstag ist eine lineare Liste von Segmenten — kein Zustandsautomat
  * und kein Router. Die Reihenfolge in der Liste *ist* die Ablaufregel.
@@ -35,6 +37,12 @@ export type Smiley = 1 | 2 | 3
  * Bericht landen. Die maßgeblichen Kennzahlen rechnet C# aus der Rohdaten-Punktfolge.
  */
 export type SpielErgebnis = {
+  /**
+   * Vom Gerät vergeben, erst beim Abschluss durch den `SpielScreen`. Dadurch ist ein
+   * wiederholter Upload nach einem Verbindungsabbruch ein Upsert statt eines Duplikats.
+   * Die Minispiele setzen das Feld nicht selbst.
+   */
+  id?: string
   spielId: string
   dauerMs: number
   /** 0–1, wie viel der Aufgabe bearbeitet wurde. */
@@ -55,4 +63,10 @@ export type SpielErgebnis = {
   abgebrochen: boolean
   /** Spielspezifisch, geht nicht in den Verlaufsgraphen. */
   extra: Record<string, unknown>
+  /**
+   * B4: die aufgezeichnete Punktfolge. Wird vom `SpielScreen` angehängt, nicht vom Spiel —
+   * dadurch zeichnet jedes Minispiel auf, ohne eine Zeile dafür zu enthalten.
+   * Aus diesen Werten rechnet C# die maßgeblichen Kennzahlen.
+   */
+  rohdaten?: Aufzeichnung
 }

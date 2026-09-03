@@ -99,7 +99,10 @@ async function hole<T>(pfad: string, optionen: RequestInit = {}): Promise<T> {
   if (antwort.status === 401) throw new NichtAngemeldet()
   if (!antwort.ok) throw new Error(`${antwort.status} ${antwort.statusText}`)
 
-  return antwort.status === 204 ? (undefined as T) : ((await antwort.json()) as T)
+  // Erst lesen, dann entscheiden — nicht am Statuscode festmachen. Ein 201 ohne Rumpf oder ein
+  // 200 mit leerer Antwort ließe `antwort.json()` werfen, obwohl der Aufruf erfolgreich war.
+  const rumpf = await antwort.text()
+  return (rumpf ? JSON.parse(rumpf) : undefined) as T
 }
 
 export const api = {

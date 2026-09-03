@@ -45,7 +45,15 @@ describe('tagesplan', () => {
   })
 
   it('lässt vom Therapeuten abgewählte Spiele weg (B1)', () => {
-    const e = { ...standardEinstellungen, ausgelassen: ['linie'] }
+    const e = {
+      ...standardEinstellungen,
+      spiele: {
+        linie: {
+          stufe: 3, dauerSek: 210, toleranz: 1, zielgeschwindigkeit: 1,
+          mindesttrefferquote: 0.5, aktiv: false, reihenfolge: 0,
+        },
+      },
+    }
     const ids = tagesplan(hsv, 1, e, false).flatMap((s) => (s.art === 'spiel' ? [s.spielId] : []))
     expect(ids).not.toContain('linie')
     expect(ids.length).toBe(hsv.tage[0].spiele.length - 1)

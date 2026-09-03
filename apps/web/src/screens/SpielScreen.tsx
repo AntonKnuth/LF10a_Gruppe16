@@ -1,12 +1,22 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { SPIELE, type SpielProps } from '../spiele'
 import type { SpielErgebnis } from '../engine/segmente'
 import type { Verein } from '../content/typen'
+import { druckVon, feinEreignisse } from '../eingabe'
+import { neueAufzeichnung } from '../rohdaten'
 import { useVorlesen } from '../ui/vorlesen'
 
 /**
- * Rahmen um jedes Minispiel: Anweisung (A5) und sichtbarer Timer (A3).
- * Das Spiel selbst bekommt die volle Fläche darunter und meldet, wann es fertig ist.
+ * Rahmen um jedes Minispiel: Anweisung (A5), sichtbarer Timer (A3) — und die
+ * Rohdatenaufzeichnung (B4).
+ *
+ * Die Aufzeichnung sitzt bewusst **hier** und nicht in den Spielen: die Zeigerereignisse steigen
+ * aus dem Canvas hierher auf, also zeichnet jedes Minispiel auf, ohne eine Zeile dafür zu
+ * enthalten. Wer ein neues Spiel baut, muss an B4 nicht denken.
+ *
+ * Aufgezeichnet wird in den Bildschirmkoordinaten dieses Bereichs, nicht in den logischen
+ * Koordinaten des jeweiligen Spiels — die maßgeblichen Kennzahlen (Zittern, Tempo,
+ * Druckstabilität) beschreiben die Handbewegung, nicht die Spielmechanik.
  */
 export function SpielScreen({
   spielId,
@@ -27,14 +37,49 @@ export function SpielScreen({
   const [rest, setRest] = useState(dauerSek)
   useVorlesen(spiel?.anweisung ?? '')
 
+  const flaeche = useRef<HTMLElement>(null)
+  const aufzeichnung = useRef(neueAufzeichnung())
+  const beginn = useRef(performance.now())
+  const unten = useRef(false)
+
   useEffect(() => {
     const id = setInterval(() => setRest((r) => Math.max(0, r - 1)), 1000)
     return () => clearInterval(id)
   }, [])
 
+  const nimmAuf = useCallback((e: React.PointerEvent, druckWert?: number) => {
+    const r = flaeche.current?.getBoundingClientRect()
+    if (!r) return
+    // Volle Abtastrate des Pencils; `rohdaten.ts` dünnt danach auf ~60 Hz aus.
+    for (const fein of feinEreignisse(e.nativeEvent)) {
+      aufzeichnung.current.punkt(
+        fein.timeStamp - beginn.current,
+        fein.clientX - r.left,
+        fein.clientY - r.top,
+        druckWert ?? druckVon(fein).wert,
+      )
+    }
+  }, [])
+
+  const fertig = useCallback(
+    (ergebnis: SpielErgebnis) => {
+      onFertig({
+        ...ergebnis,
+        // Vom Gerät vergeben: dadurch ist ein wiederholter Upload ein Upsert.
+        id: ergebnis.id ?? crypto.randomUUID(),
+        // Maßgeblich ist der Tagesplan, nicht was das Spiel über sich selbst sagt. Der
+        // Platzhalter meldet sonst für jede Übung „platzhalter", und im Bericht des
+        // Therapeuten steht dann nicht mehr, welche Übung Ben gemacht hat.
+        spielId,
+        rohdaten: aufzeichnung.current.fertig(),
+      })
+    },
+    [onFertig, spielId],
+  )
+
   if (!spiel) return <p className="p-8 text-2xl">Unbekanntes Spiel: {spielId}</p>
 
-  const props: SpielProps = { stufe, verein, name, zeitAbgelaufen: rest === 0, onFertig }
+  const props: SpielProps = { stufe, verein, name, zeitAbgelaufen: rest === 0, onFertig: fertig }
   const min = Math.floor(rest / 60)
   const sek = String(rest % 60).padStart(2, '0')
 
@@ -54,7 +99,27 @@ export function SpielScreen({
           </span>
         </div>
       </header>
-      <main className="min-h-0 flex-1">
+
+      {/* `…Capture`, damit die Aufzeichnung auch dann läuft, wenn das Spiel das Ereignis
+          selbst abfängt. Sie verändert nichts und hält nichts auf. */}
+      <main
+        ref={flaeche}
+        className="min-h-0 flex-1"
+        onPointerDownCapture={(e) => {
+          unten.current = true
+          nimmAuf(e)
+        }}
+        onPointerMoveCapture={(e) => unten.current && nimmAuf(e)}
+        onPointerUpCapture={(e) => {
+          // Druck 0 markiert das Absetzen. Ohne diesen Punkt ließe sich die
+          // Absetzhäufigkeit nicht aus der Punktfolge ablesen.
+          nimmAuf(e, 0)
+          unten.current = false
+        }}
+        onPointerCancelCapture={() => {
+          unten.current = false
+        }}
+      >
         <spiel.Komponente {...props} />
       </main>
     </div>

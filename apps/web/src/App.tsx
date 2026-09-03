@@ -1,16 +1,16 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { kindLaden, NichtGekoppelt, sessionHochladen, spielnameSetzen } from './api'
+import type { KindVomServer } from './api'
 import { vereine } from './content'
+import { ladeToken } from './geraet'
 import { aktuellesSegment, session, starteSession } from './engine/session'
 import type { SessionAction, SessionState } from './engine/session'
+import type { Einstellungen } from './engine/tagesplan'
 import { ansageText, standardEinstellungen, tagesplan } from './engine/tagesplan'
-import {
-  ladeFortschritt,
-  ladeProfil,
-  naechsteEinheit,
-  speichereFortschritt,
-  speichereProfil,
-} from './profil'
+import { gleicherTag, hole, merke, vergiss } from './persistenz'
+import { ladeFortschritt, naechsteEinheit, speichereFortschritt } from './profil'
 import { DialogScreen } from './screens/DialogScreen'
+import { KopplungScreen } from './screens/KopplungScreen'
 import { NameScreen } from './screens/NameScreen'
 import { PauseScreen } from './screens/PauseScreen'
 import { SmileyFrage } from './screens/SmileyFrage'
@@ -18,18 +18,124 @@ import { SpielScreen } from './screens/SpielScreen'
 import { StartScreen } from './screens/StartScreen'
 import { TherapeutScreen } from './screens/TherapeutScreen'
 
+type Stand = 'laedt' | 'ungekoppelt' | 'bereit'
+
 export default function App() {
-  const [profil, setProfil] = useState(ladeProfil)
+  const [stand, setStand] = useState<Stand>(ladeToken() ? 'laedt' : 'ungekoppelt')
+  const [kind, setKind] = useState<KindVomServer | null>(null)
   const [fortschritt, setFortschritt] = useState(ladeFortschritt)
   const [lauf, setLauf] = useState<SessionState | null>(null)
+  const [wiederaufnahme, setWiederaufnahme] = useState<SessionState | null>(null)
   const [therapeut, setTherapeut] = useState(false)
 
   const verein = vereine[fortschritt.vereinIndex]
-  const name = profil?.vorname ?? 'Kicker'
+  const name = kind?.spielname ?? 'Kicker'
   const mitName = (t: string) => t.replaceAll('{name}', name)
   const dispatch = (a: SessionAction) => setLauf((s) => (s ? session(s, a) : s))
 
+  const einstellungen: Einstellungen = kind
+    ? {
+        pauseDauerSek: kind.pausenDauerSek,
+        pauseInhalt: kind.pausenInhalt,
+        spiele: Object.fromEntries(kind.einstellungen.map((e) => [e.spielId, e])),
+      }
+    : standardEinstellungen
+
+  /**
+   * Beim Start: Einstellungen holen und einen liegengebliebenen Schnappschuss abarbeiten.
+   *
+   * Reihenfolge ist wichtig — erst senden, dann vergessen. Schlägt der Upload fehl, bleibt der
+   * Schnappschuss liegen und der nächste Start versucht es erneut. Ben sieht davon nichts:
+   * ein Verbindungsfehler ist kein Grund, ein Kind mitten im Training zu stoppen.
+   */
+  const starten = useCallback(async () => {
+    try {
+      const geladen = await kindLaden()
+      setKind(geladen)
+
+      const alt = hole()
+      if (alt && !alt.gesendet) {
+        if (alt.lauf.status === 'laeuft' && gleicherTag(alt.gespeichertAm)) {
+          // Am selben Tag darf Ben weitermachen, wo er aufgehört hat.
+          setWiederaufnahme(alt.lauf)
+        } else {
+          // An einem anderen Tag beginnt der Tag neu — der angefangene wird als abgebrochen
+          // protokolliert. Ein Abbruch nach 90 Sekunden ist für Thomas ein Befund, kein Müll.
+          const zuSenden =
+            alt.lauf.status === 'laeuft' ? session(alt.lauf, { art: 'abbrechen' }) : alt.lauf
+          await sessionHochladen(zuSenden)
+          vergiss()
+        }
+      }
+
+      setStand('bereit')
+    } catch (fehler) {
+      if (fehler instanceof NichtGekoppelt) setStand('ungekoppelt')
+      else setStand('bereit') // Server nicht erreichbar: mit Vorgaben spielen dürfen.
+    }
+  }, [])
+
+  useEffect(() => {
+    if (stand === 'laedt') void starten()
+  }, [stand, starten])
+
+  /** Nach jeder Zustandsänderung sichern. Gelöscht wird nur nach bestätigtem Upload. */
+  useEffect(() => {
+    if (lauf) merke(lauf)
+  }, [lauf])
+
+  async function beendeEinheit(fertigeEinheit: SessionState) {
+    try {
+      await sessionHochladen(fertigeEinheit)
+      vergiss()
+    } catch {
+      // Bleibt liegen und geht beim nächsten Start raus.
+    }
+
+    const naechste =
+      fertigeEinheit.status === 'fertig' ? naechsteEinheit(fortschritt) : fortschritt
+    speichereFortschritt(naechste)
+    setFortschritt(naechste)
+    setLauf(null)
+  }
+
+  if (stand === 'ungekoppelt') {
+    return <KopplungScreen onGekoppelt={() => setStand('laedt')} />
+  }
+
+  if (stand === 'laedt') {
+    return (
+      <div className="flex h-full items-center justify-center bg-himmel-hell">
+        <p className="text-3xl font-bold text-slate-600">Einen Moment…</p>
+      </div>
+    )
+  }
+
   if (therapeut) return <TherapeutScreen onZurueck={() => setTherapeut(false)} />
+
+  if (wiederaufnahme) {
+    return (
+      <DialogScreen
+        verein={verein}
+        text={mitName('Da war noch ein Training offen, {name}. Weitermachen?')}
+        knopf="Weitermachen"
+        onWeiter={() => {
+          setLauf(wiederaufnahme)
+          setWiederaufnahme(null)
+        }}
+      >
+        <button
+          onClick={() => {
+            void beendeEinheit(session(wiederaufnahme, { art: 'abbrechen' }))
+            setWiederaufnahme(null)
+          }}
+          className="taste bg-white text-slate-600 shadow active:scale-95"
+        >
+          Neu anfangen
+        </button>
+      </DialogScreen>
+    )
+  }
 
   if (!lauf) {
     return (
@@ -41,8 +147,8 @@ export default function App() {
             starteSession(
               verein.id,
               fortschritt.tag,
-              // Namensabfrage nur beim allerersten Start überhaupt, nicht bei jedem Verein.
-              tagesplan(verein, fortschritt.tag, standardEinstellungen, profil === null),
+              // Namensfrage nur, solange das Kind noch keinen Spielnamen gewählt hat.
+              tagesplan(verein, fortschritt.tag, einstellungen, kind?.spielname == null),
             ),
           )
         }
@@ -59,13 +165,7 @@ export default function App() {
         verein={verein}
         text={mitName(`Das war's für heute, {name}. Bis zum nächsten Mal!`)}
         knopf="Fertig"
-        onWeiter={() => {
-          const naechste =
-            lauf.status === 'fertig' ? naechsteEinheit(fortschritt) : fortschritt
-          speichereFortschritt(naechste)
-          setFortschritt(naechste)
-          setLauf(null)
-        }}
+        onWeiter={() => void beendeEinheit(lauf)}
       />
     )
   }
@@ -75,10 +175,11 @@ export default function App() {
       return (
         <NameScreen
           verein={verein}
-          onFertig={(vorname, bild) => {
-            const p = { vorname, nameBild: bild }
-            speichereProfil(p)
-            setProfil(p)
+          onFertig={(spielname) => {
+            setKind((k) => (k ? { ...k, spielname } : k))
+            // Fehlschlag ist verkraftbar: der Name steht im Zustand, der Server bekommt ihn
+            // spätestens mit der nächsten Einheit. Ben soll hier nicht warten (A1).
+            void spielnameSetzen(spielname).catch(() => {})
             dispatch({ art: 'weiter' })
           }}
         />
