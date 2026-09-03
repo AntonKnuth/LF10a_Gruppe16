@@ -69,13 +69,23 @@ Folgen:
 - Outbox, Sync-Cursor, Konfliktbehandlung und das ganze Sync-Protokoll **entfallen**.
 - Ein WLAN-Aussetzer ist trotzdem kein Sonderfall, sondern Normalbetrieb. Die minimale Absicherung
   (Wiederholung eines fehlgeschlagenen Uploads) bleibt nötig — sie ist kein Offline-Betrieb.
-- **Manifest bleibt, Service Worker fliegt raus.** Die Eigenschaft, die gebraucht wird — App-Symbol
-  auf dem Homescreen, Vollbild, Landscape, kein sichtbarer Browser — hängt am **Manifest**. Der
-  Service Worker war ausschließlich für Offline da und bringt jetzt nur noch Cache-Probleme beim
-  Vorführen („warum sehe ich die alte Version?"). `vite-plugin-pwa` bleibt für das Manifest,
-  `injectRegister: null` / kein `registerSW`.
-- Damit wird auch die Safari-7-Tage-Warnung in `TherapeutScreen.tsx` gegenstandslos — sie
-  verschwindet mit dem Bildschirm.
+- **Manifest bleibt, Service Worker fliegt raus.** Der Service Worker war ausschließlich für Offline
+  da und ist jetzt nur noch eine Fehlerquelle (veraltete `index.html` aus dem Cache nach einem
+  Deploy — „warum sehe ich die alte Version?").
+- **Beim Entfernen einmalig `unregister()` aufrufen.** Der bisherige `registerType: 'autoUpdate'`
+  hat sich auf jedem Gerät eingetragen, das je einen Build gesehen hat. Ohne expliziten
+  `navigator.serviceWorker.getRegistrations()` → `unregister()` in `main.tsx` liefert dieser
+  Service Worker dort **dauerhaft die alte App aus**, egal was auf dem Server steht.
+- **Vollbild auf dem iPad kommt NICHT aus dem Manifest** — iPadOS beachtet weder
+  `display: fullscreen` noch einen Orientierungs-Lock. Es kommt aus
+  `<meta name="apple-mobile-web-app-capable" content="yes">`, verifiziert in
+  `apps/web/index.html:12`. Das Manifest liefert Homescreen-Symbol und Name. **Wichtig für die
+  mündliche Prüfung** — die naheliegende Antwort „das macht das Manifest" ist falsch.
+- **`navigator.storage.persist()` (`main.tsx:9`) und die Installationswarnung bleiben, werden aber
+  umgeschrieben.** Sie schützen nicht mehr die Therapiedaten (die liegen auf dem Server), sondern
+  das **Gerätetoken**. Wirft Safari die Website-Daten nach ~7 Tagen Pause weg, verliert das Tablet
+  seine Kopplung — nach Ferien oder Krankheit ist das ein ausgefallener Praxistermin, und die
+  Erstkopplung passiert laut Abschnitt 5 in der Praxis.
 
 ## 4. Konten und Zugriff
 
@@ -142,7 +152,43 @@ Beides ist geprüft, nicht vermutet, und beides muss repariert werden:
 - **`apps/web/src/profil.ts:47`** — `loescheProfil()` entfernt `tk.profil` und `tk.fortschritt`.
   `tk.pinHash` und `tk.tonAus` bleiben liegen. **Die Geräteseite von Art. 17 fällt heute durch.**
 
+- **`nameBild` ist write-only.** Geschrieben in `App.tsx:79`, deklariert in `profil.ts:14`,
+  **nirgends gelesen**. Ein gespeichertes Bild der Handschrift eines Kindes ohne jeden Verwendungs-
+  zweck ist heute die einzige echte D4-Verletzung im Projekt. Mit der Entscheidung aus Abschnitt 8
+  (Arbeitsprobe für Thomas) bekommt es einen Zweck — bis der Upload gebaut ist, bleibt es zwecklos
+  gespeichert.
+
 Außerdem: `dexie` ist als Dependency installiert und **nirgends im Code benutzt**.
+
+### Reload-Bug: Lösung auf dem Tablet, nicht im Backend
+
+**Korrigiert.** Die naheliegende Online-Lösung („nach jedem Segment an den Server, beim Neustart von
+dort wiederherstellen") ist die **schlechtere**. Zwei Gründe:
+
+1. Der `SessionState` enthält `segmente`, `index`, `ergebnisse`, `einschaetzungen`, `events`
+   (`engine/session.ts:17-29`). Zum Wiederherstellen müsste entweder der Server den kompletten
+   Tagesplan samt Content und Einstellungen kennen, oder der Client baut ihn neu — und baut ihn nach
+   einer Einstellungsänderung **anders**, womit `index` in eine andere Liste zeigt und Ben ein Spiel
+   überspringt oder wiederholt, ohne dass es jemand merkt.
+2. Der Fall, gegen den man sich absichert, ist genau der Fall, in dem das Netz weg ist. Eine
+   Wiederherstellung, die den Server braucht, hilft ausgerechnet dann nicht.
+
+Stattdessen: ein Schnappschuss des `SessionState` in `localStorage` unter `tk.lauf`, ~20 Zeilen.
+Er speichert die Segmentliste mit und ist dadurch immun gegen Einstellungsänderungen mitten in der
+Einheit. Vier Details, ohne die er kaputtgeht:
+
+- Zusatzfelder `gespeichertAm` und `gesendet`.
+- Reihenfolge: erst `PUT`, erst bei bestätigter Antwort `gesendet = true`, **erst dann löschen**.
+  Der `useEffect` darf `tk.lauf` nie löschen, nur weil `lauf` auf `null` gesetzt wurde.
+- Der Retry beim Start nimmt **jeden** ungesendeten Schnappschuss. Ist er von einem früheren Tag,
+  wird er vor dem Senden auf `abgebrochen` gesetzt und bekommt ein `abbruch`-Ereignis — das ist die
+  Abbruchregel aus CLAUDE.md und D2.
+- Ein eigenes Flag für den „Weitermachen?"-Bildschirm, sonst fällt die App direkt ins laufende Spiel
+  zurück, statt zu fragen.
+
+Die Einheit geht am Ende als **ein** `PUT /api/sessions/{sessionId}` raus. Weil die `sessionId`
+client-seitig erzeugt wird, ist ein Wiederholversuch ein Upsert statt eines Duplikats. Das ist die
+komplette Absicherung gegen einen WLAN-Aussetzer — keine Outbox, kein Cursor.
 
 ## 7. Umgebung (Stand 03.09.2026)
 
@@ -189,6 +235,38 @@ dokumentierte D4-Abweichung** wie das Backend selbst, nicht als eigene Ausnahme.
 Konsequenzen für den Code: eigener Endpunkt und eigene Tabelle (nicht Base64 in
 `SpielErgebnis.extra`), Größen- und Content-Type-Grenze, Foto vor dem Hochladen auf ~1600 px
 herunterrechnen, und **beide werden bei Art. 17 mitgelöscht**.
+
+### Details, die vor der ersten Migration feststehen müssen
+
+- **Entitäten:** Therapeut, Klient, Betreuung, Gerät, Kopplungscode, **Einstellungen** (B1),
+  Session, **SessionEvent** (D2 + Abbruch als Befund), Spielergebnis **mit Selbsteinschätzung**
+  (C3), Rohdaten, Anhang. Ohne Einstellungen, SessionEvent und Selbsteinschätzung sind **B1, D2 und
+  C3 nicht erfüllbar** — und die drei werden benotet.
+- **GUID nur für client-erzeugte Entitäten** (Session, SessionEvent, Spielergebnis, Rohdaten), mit
+  `UNIQUE` auf der `sessionId`; Begründung ist Idempotenz eines wiederholten POST. Für Therapeut,
+  Klient, Betreuung, Einstellungen `int`-Autoincrement — liest sich im bewerteten ERD besser.
+- **Rohdaten in eigener Tabelle** (1:1 zur Session). Begründung ist EF Core, nicht SQLite: EF
+  materialisiert das `byte[]` bei jeder Abfrage der Entität mit.
+- **Verbindungszeichenfolge über einen absoluten Pfad** aus `AppContext.BaseDirectory` (oder
+  `-WorkingDirectory` im Startskript). Sonst legt `Migrate()` am Vorführtag still eine leere
+  Datenbank an und das Login gibt 401 — ohne sichtbaren Grund.
+- **Art. 17:** Cascade-Delete + xUnit-Test auf null Zeilen in jeder Tabelle als Nachweis, dazu
+  `VACUUM` — sonst stehen die Bytes noch in Freelist und WAL.
+- **Sicherung:** `VACUUM INTO` auf einen zweiten Datenträger nach jeder Übungseinheit. Das ist die
+  wahrscheinlichste Datenverlustquelle im ganzen Projekt.
+- **Eine Person besitzt das Schema.** Nie zwei offene Migrationen gleichzeitig — damit entfällt die
+  Snapshot-Konfliktbehandlung ganz, statt sie zu erklären.
+- **Endpunkte ohne `{klientId}` im Pfad.** Der Server liest die Klient-Zuordnung aus dem
+  Gerätetoken (Abschnitt 5): `PUT /api/sessions/{sessionId}`, `GET /api/kind`, `POST
+  /api/kind/bilder`. **Kein `DELETE` aus der Kind-App** — die Löschung nach Art. 17 löst die
+  Therapeuten-App aus. Auf dem Tablet heißt der Knopf „Lokale Daten dieses Geräts löschen"
+  (entfernt `tk.profil`, `tk.fortschritt`, `tk.pinHash`, `tk.tonAus`, `tk.lauf` und das
+  Gerätetoken — zugleich der Rücksetzvorgang fürs Leihtablet) und verspricht nicht „Art. 17".
+- **Bilder erst später bauen**, das Schema aber jetzt vorbereiten: eine Anhang-Tabelle
+  hinzuzufügen ist eine rein additive Migration. Wenn gebaut: nur das **Kamerafoto** client-seitig
+  über Canvas auf ~1600 px JPEG umkodieren — nicht nur wegen der Größe, sondern weil dabei **EXIF
+  mit GPS-Standort verschwindet**. Die Handschriftprobe bleibt unverändertes PNG; JPEG würde die
+  Strichkanten zerstören, und EXIF hat sie ohnehin keins.
 
 ## 9. Offen
 
