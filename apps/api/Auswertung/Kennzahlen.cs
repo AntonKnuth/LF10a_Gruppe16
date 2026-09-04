@@ -75,6 +75,7 @@ public static class Kennzahlen
             // Strichen ist keine Schreibbewegung und würde Tempo und Weglänge verfälschen.
             if (p[i - 1].Druck <= 0 || p[i].Druck <= 0) continue;
 
+            // Für Mathematiker: Satz des Pythagoras, um die Hypothenuse zu berechnen
             var dx = p[i].X - p[i - 1].X;
             var dy = p[i].Y - p[i - 1].Y;
             var strecke = Math.Sqrt(dx * dx + dy * dy);
@@ -93,6 +94,7 @@ public static class Kennzahlen
                 {
                     var a = Math.Atan2(dy, dx) - Math.Atan2(vy, vx);
                     // Auf -180°..180° normieren, sonst zählt jede Richtungsumkehr doppelt.
+                    // Hier wird Bogenmaß in Grad umgerechnet 
                     while (a > Math.PI) a -= 2 * Math.PI;
                     while (a < -Math.PI) a += 2 * Math.PI;
                     winkel.Add(Math.Abs(a) * 180 / Math.PI);
@@ -115,12 +117,12 @@ public static class Kennzahlen
     }
 
     private static double Mittel(IReadOnlyCollection<double> werte) =>
-        werte.Count == 0 ? 0 : werte.Sum() / werte.Count;
+        werte.Count == 0 ? 0 : werte.Sum() / werte.Count; //TODO: linq.Average() macht die Berechnung leichter
 
     private static double Streuung(IReadOnlyCollection<double> werte)
     {
         if (werte.Count < 2) return 0;
         var m = Mittel(werte);
-        return Math.Sqrt(werte.Sum(w => (w - m) * (w - m)) / werte.Count);
+        return Math.Sqrt(werte.Sum(w => (w - m) * (w - m)) / werte.Count); //Ich gucke nach einer Funktion, die die Berechnung für uns leichter macht
     }
 }
