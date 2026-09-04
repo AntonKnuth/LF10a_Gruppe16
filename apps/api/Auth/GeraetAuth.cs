@@ -65,6 +65,7 @@ public class GeraetHandler(
 /// </summary>
 public static class Ansprueche
 {
+    // Hier könnten wir ein bisschen DRYen
     public static int? TherapeutId(this ClaimsPrincipal nutzer) =>
         int.TryParse(nutzer.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : null;
 
