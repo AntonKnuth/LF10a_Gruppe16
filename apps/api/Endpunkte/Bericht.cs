@@ -25,6 +25,18 @@ public record SpielZeile(
     Kennzahl? Mittelwerte,
     int OhneRohdaten);
 
+/// <summary>
+/// Zusammenfassung nach Fähigkeitsbereich. <b>Ein Spiel kann mehrere Bereiche tragen</b> — die
+/// Summe der Anzahlen ist deshalb größer als die Zahl der Übungen. Der Bericht sagt das dazu,
+/// sonst wirkt er falsch addiert.
+/// </summary>
+public record KategorieZeile(
+    string Kategorie,
+    int Anzahl,
+    double UebungszeitMinuten,
+    Kennzahl? Mittelwerte,
+    int OhneRohdaten);
+
 public record Wochenbericht(
     DateTime Von,
     DateTime Bis,
@@ -33,6 +45,7 @@ public record Wochenbericht(
     int Einheiten,
     int Abgebrochen,
     double UebungszeitMinuten,
+    IReadOnlyList<KategorieZeile> ProKategorie,
     IReadOnlyList<SpielZeile> ProSpiel,
     double? SelbsteinschaetzungMittel,
     IReadOnlyList<string> Hinweise);
@@ -102,18 +115,24 @@ public static class Bericht
                 })
                 .ToListAsync();
 
-            var alleErgebnisse = sessions.SelectMany(s => s.Ergebnisse).ToList();
+            // Jede Punktfolge wird genau einmal ausgewertet und dann zweimal gruppiert —
+            // nach Übung und nach Fähigkeitsbereich. Sonst rechnet man dieselben Blobs doppelt.
+            var alleErgebnisse = sessions
+                .SelectMany(s => s.Ergebnisse)
+                .Select(e => new
+                {
+                    e.SpielId, e.Stufe, e.DauerMs, e.Selbsteinschaetzung,
+                    Kennzahl = e.Roh is null ? null : Kennzahlen.Berechne(e.Roh),
+                })
+                .ToList();
 
             var proSpiel = alleErgebnisse
                 .GroupBy(e => e.SpielId)
                 .OrderBy(g => g.Key)
                 .Select(g =>
                 {
-                    var kennzahlen = g
-                        .Select(e => e.Roh is null ? null : Kennzahlen.Berechne(e.Roh))
-                        .Where(k => k is not null)
-                        .Cast<Kennzahl>()
-                        .ToList();
+                    var kennzahlen = g.Select(e => e.Kennzahl).Where(k => k is not null)
+                        .Cast<Kennzahl>().ToList();
 
                     return new SpielZeile(
                         SpielId: g.Key,
@@ -123,9 +142,27 @@ public static class Bericht
                         Stufe: g.Last().Stufe,
                         UebungszeitMinuten: Math.Round(g.Sum(e => e.DauerMs) / 60000.0, 1),
                         Mittelwerte: kennzahlen.Count == 0 ? null : Mitteln(kennzahlen),
-                        // Nicht `Roh is null` zählen: auch eine Aufzeichnung mit zu wenigen
+                        // Nicht die fehlende Aufzeichnung zählen: auch eine mit zu wenigen
                         // Punkten liefert keine Kennzahl. Sonst fällt sie still aus dem
                         // Mittelwert und der Bericht rechnet über weniger Übungen, als er anzeigt.
+                        OhneRohdaten: g.Count() - kennzahlen.Count);
+                })
+                .ToList();
+
+            var proKategorie = alleErgebnisse
+                .SelectMany(e => Kategorien.Fuer(e.SpielId).Select(k => new { Kategorie = k, e }))
+                .GroupBy(x => x.Kategorie)
+                .OrderBy(g => g.Key)
+                .Select(g =>
+                {
+                    var kennzahlen = g.Select(x => x.e.Kennzahl).Where(k => k is not null)
+                        .Cast<Kennzahl>().ToList();
+
+                    return new KategorieZeile(
+                        Kategorie: g.Key,
+                        Anzahl: g.Count(),
+                        UebungszeitMinuten: Math.Round(g.Sum(x => x.e.DauerMs) / 60000.0, 1),
+                        Mittelwerte: kennzahlen.Count == 0 ? null : Mitteln(kennzahlen),
                         OhneRohdaten: g.Count() - kennzahlen.Count);
                 })
                 .ToList();
@@ -149,6 +186,11 @@ public static class Bericht
                     $"{ohneRoh} von {alleErgebnisse.Count} Übungen ohne verwertbare Aufzeichnung — " +
                     "sie sind in den Mittelwerten nicht enthalten.");
 
+            if (proKategorie.Any(k => k.Kategorie == Kategorien.OhneZuordnung))
+                hinweise.Add(
+                    "Für mindestens eine Übung fehlt die Zuordnung zu einem Fähigkeitsbereich — " +
+                    "sie ist in Auswertung/Kategorien.cs nicht eingetragen.");
+
             var stufenwechsel = alleErgebnisse.Select(e => e.Stufe).Distinct().Count();
             if (stufenwechsel > 1)
                 hinweise.Add("Die Schwierigkeitsstufe wurde in diesem Zeitraum geändert — Werte sind nur eingeschränkt vergleichbar.");
@@ -164,6 +206,7 @@ public static class Bericht
                 Einheiten: sessions.Count,
                 Abgebrochen: abgebrochen,
                 UebungszeitMinuten: Math.Round(alleErgebnisse.Sum(e => e.DauerMs) / 60000.0, 1),
+                ProKategorie: proKategorie,
                 ProSpiel: proSpiel,
                 SelbsteinschaetzungMittel: einschaetzungen.Count == 0
                     ? null

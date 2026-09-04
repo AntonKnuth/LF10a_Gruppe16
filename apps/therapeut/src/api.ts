@@ -64,6 +64,14 @@ export type SpielZeile = {
   ohneRohdaten: number
 }
 
+export type KategorieZeile = {
+  kategorie: string
+  anzahl: number
+  uebungszeitMinuten: number
+  mittelwerte: Kennzahl | null
+  ohneRohdaten: number
+}
+
 export type Wochenbericht = {
   von: string
   bis: string
@@ -72,6 +80,7 @@ export type Wochenbericht = {
   einheiten: number
   abgebrochen: number
   uebungszeitMinuten: number
+  proKategorie: KategorieZeile[]
   proSpiel: SpielZeile[]
   selbsteinschaetzungMittel: number | null
   hinweise: string[]
@@ -176,3 +185,20 @@ export const SPIEL_TITEL: Record<string, string> = {
 }
 
 export const titel = (spielId: string) => SPIEL_TITEL[spielId] ?? spielId
+
+/**
+ * Anzeigenamen der Fähigkeitsbereiche. Die Zuordnung Spiel → Bereich macht der Server
+ * (`Auswertung/Kategorien.cs`) — hier stehen nur die Beschriftungen.
+ */
+export const KATEGORIE_TITEL: Record<string, string> = {
+  'gerade-striche': 'Gerade Striche',
+  wellen: 'Wellen und Bögen',
+  schreiben: 'Schreibübungen',
+  druckdosierung: 'Druckdosierung',
+  'hand-auge': 'Hand-Auge-Koordination',
+  pinzettengriff: 'Pinzettengriff',
+  inhibition: 'Impulskontrolle',
+  'ohne-zuordnung': 'Ohne Zuordnung',
+}
+
+export const kategorieTitel = (id: string) => KATEGORIE_TITEL[id] ?? id

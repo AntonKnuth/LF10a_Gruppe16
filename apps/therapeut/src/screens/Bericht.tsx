@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { api, titel, type KlientDetail, type Wochenbericht } from '../api'
+import { api, kategorieTitel, titel, type Kennzahl, type KlientDetail, type Wochenbericht } from '../api'
 
 /**
  * D3: Wochenbericht auf einer Seite, druckbar.
@@ -13,6 +13,9 @@ import { api, titel, type KlientDetail, type Wochenbericht } from '../api'
  */
 export function Bericht({ klient }: { klient: KlientDetail }) {
   const [bericht, setBericht] = useState<Wochenbericht | null>(null)
+  // Der Bericht soll auf eine Seite passen (D3). Die Einzelübungen sind die Ausnahme für den
+  // Fall, dass eine Auffälligkeit im Bereich geklärt werden muss — deshalb zugeklappt.
+  const [einzeln, setEinzeln] = useState(false)
   const [von, setVon] = useState(() => {
     const d = new Date()
     d.setDate(d.getDate() - 7)
@@ -71,47 +74,48 @@ export function Bericht({ klient }: { klient: KlientDetail }) {
           />
         </div>
 
-        <table className="mb-6 w-full text-sm">
-          <thead className="border-b border-slate-300 text-left text-slate-600">
-            <tr>
-              <th className="py-2">Übung</th>
-              <th className="py-2">Anzahl</th>
-              <th className="py-2">Stufe</th>
-              <th className="py-2">Zeit</th>
-              <th className="py-2">Tempo ⌀</th>
-              <th className="py-2">Zittern</th>
-              <th className="py-2">Druck ⌀</th>
-              <th className="py-2">Druck-Streuung</th>
-              <th className="py-2">Absetzer</th>
-            </tr>
-          </thead>
-          <tbody>
-            {bericht.proSpiel.map((z) => (
-              <tr key={z.spielId} className="border-b border-slate-100">
-                <td className="py-2 font-semibold text-slate-700">{titel(z.spielId)}</td>
-                <td className="py-2">{z.anzahl}</td>
-                <td className="py-2">{z.stufe}</td>
-                <td className="py-2">{z.uebungszeitMinuten} min</td>
-                {z.mittelwerte ? (
-                  <>
-                    <td className="py-2">{z.mittelwerte.tempoMittel.toFixed(1)}</td>
-                    <td className="py-2">{z.mittelwerte.zittern.toFixed(1)}°</td>
-                    <td className="py-2">{z.mittelwerte.druckMittel.toFixed(2)}</td>
-                    <td className="py-2">{z.mittelwerte.druckStreuung.toFixed(2)}</td>
-                    <td className="py-2">{z.mittelwerte.absetzer}</td>
-                  </>
-                ) : (
-                  <td colSpan={5} className="py-2 text-slate-400">keine Rohdaten</td>
-                )}
-              </tr>
-            ))}
-            {bericht.proSpiel.length === 0 && (
-              <tr>
-                <td colSpan={9} className="py-4 text-slate-400">Keine Übungen in diesem Zeitraum.</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+        <h3 className="mb-2 font-bold text-slate-800">Nach Fähigkeitsbereich</h3>
+        <Messtabelle
+          erste="Bereich"
+          zeilen={bericht.proKategorie.map((z) => ({
+            schluessel: z.kategorie,
+            name: kategorieTitel(z.kategorie),
+            anzahl: z.anzahl,
+            zeit: z.uebungszeitMinuten,
+            mittelwerte: z.mittelwerte,
+          }))}
+        />
+        <p className="mt-1 mb-6 text-xs text-slate-500">
+          Eine Übung kann zu mehreren Bereichen zählen — die Anzahlen summieren sich deshalb auf
+          mehr als {bericht.proSpiel.reduce((n, z) => n + z.anzahl, 0)} Übungen.
+        </p>
+
+        {/* Absichtlich unauffällig und zugeklappt: der Bericht soll auf eine Seite passen (D3),
+            und die Bereiche sind die Aussage. Die einzelnen Übungen sind der Blick dahinter. */}
+        <button
+          onClick={() => setEinzeln((e) => !e)}
+          className="kein-druck mb-4 text-sm text-slate-500 underline"
+        >
+          {einzeln ? 'Einzelne Übungen ausblenden' : 'Einzelne Übungen anzeigen'}
+        </button>
+
+        {einzeln && (
+          <div className="mb-6">
+            <h3 className="mb-2 font-bold text-slate-800">Einzelne Übungen</h3>
+            <Messtabelle
+              erste="Übung"
+              stufeZeigen
+              zeilen={bericht.proSpiel.map((z) => ({
+                schluessel: z.spielId,
+                name: titel(z.spielId),
+                anzahl: z.anzahl,
+                stufe: z.stufe,
+                zeit: z.uebungszeitMinuten,
+                mittelwerte: z.mittelwerte,
+              }))}
+            />
+          </div>
+        )}
 
         {bericht.hinweise.length > 0 && (
           <section>
@@ -130,6 +134,74 @@ export function Bericht({ klient }: { klient: KlientDetail }) {
         </footer>
       </div>
     </div>
+  )
+}
+
+type Messzeile = {
+  schluessel: string
+  name: string
+  anzahl: number
+  stufe?: number
+  zeit: number
+  mittelwerte: Kennzahl | null
+}
+
+/** Dieselbe Tabelle für Bereiche und für Einzelübungen — nur die erste Spalte unterscheidet sie. */
+function Messtabelle({
+  erste,
+  zeilen,
+  stufeZeigen = false,
+}: {
+  erste: string
+  zeilen: Messzeile[]
+  stufeZeigen?: boolean
+}) {
+  const spalten = stufeZeigen ? 9 : 8
+
+  return (
+    <table className="w-full text-sm">
+      <thead className="border-b border-slate-300 text-left text-slate-600">
+        <tr>
+          <th className="py-2">{erste}</th>
+          <th className="py-2">Anzahl</th>
+          {stufeZeigen && <th className="py-2">Stufe</th>}
+          <th className="py-2">Zeit</th>
+          <th className="py-2">Tempo ⌀</th>
+          <th className="py-2">Zittern</th>
+          <th className="py-2">Druck ⌀</th>
+          <th className="py-2">Druck-Streuung</th>
+          <th className="py-2">Absetzer</th>
+        </tr>
+      </thead>
+      <tbody>
+        {zeilen.map((z) => (
+          <tr key={z.schluessel} className="border-b border-slate-100">
+            <td className="py-2 font-semibold text-slate-700">{z.name}</td>
+            <td className="py-2">{z.anzahl}</td>
+            {stufeZeigen && <td className="py-2">{z.stufe}</td>}
+            <td className="py-2">{z.zeit} min</td>
+            {z.mittelwerte ? (
+              <>
+                <td className="py-2">{z.mittelwerte.tempoMittel.toFixed(1)}</td>
+                <td className="py-2">{z.mittelwerte.zittern.toFixed(1)}°</td>
+                <td className="py-2">{z.mittelwerte.druckMittel.toFixed(2)}</td>
+                <td className="py-2">{z.mittelwerte.druckStreuung.toFixed(2)}</td>
+                <td className="py-2">{z.mittelwerte.absetzer}</td>
+              </>
+            ) : (
+              <td colSpan={5} className="py-2 text-slate-400">keine Rohdaten</td>
+            )}
+          </tr>
+        ))}
+        {zeilen.length === 0 && (
+          <tr>
+            <td colSpan={spalten} className="py-4 text-slate-400">
+              Keine Übungen in diesem Zeitraum.
+            </td>
+          </tr>
+        )}
+      </tbody>
+    </table>
   )
 }
 

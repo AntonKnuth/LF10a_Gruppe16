@@ -275,6 +275,22 @@ herunterrechnen, und **beide werden bei Art. 17 mitgelöscht**.
   mit GPS-Standort verschwindet**. Die Handschriftprobe bleibt unverändertes PNG; JPEG würde die
   Strichkanten zerstören, und EXIF hat sie ohnehin keins.
 
+### Wochenbericht: Fähigkeitsbereich vor Einzelübung
+
+Die Haupttabelle des Wochenberichts fasst **nach Fähigkeitsbereich** zusammen (CLAUDE.md:
+„Kategorie-Tags … für die Auswertung nach Fähigkeitsbereich"). Die Einzelübungen liegen hinter
+einem bewusst unauffälligen Knopf und sind zugeklappt — D3 verlangt eine Seite, und die Aussage
+ist der Bereich, nicht die einzelne Übung.
+
+**Ein Spiel kann mehrere Bereiche tragen**, die Anzahlen summieren sich deshalb auf mehr als die
+Zahl der Übungen. Der Bericht schreibt das dazu, sonst wirkt er falsch addiert.
+
+Die Zuordnung Spiel → Bereich liegt in **`apps/api/Auswertung/Kategorien.cs`**, nicht im Frontend:
+die Zusammenfassung ist Auswertung, und die gehört laut Techstack nach C#. Die Therapeuten-App
+kennt nur die Beschriftungen. **Ein neues Minispiel muss dort eingetragen werden** — vergisst man
+es, verschwindet es nicht still, sondern landet unter „Ohne Zuordnung" und der Bericht schreibt
+einen Hinweis. Genau das ist im Test `KategorienTests` festgehalten.
+
 ## 9. Offen
 
 - Aufteilung der Arbeitspakete: regelt die Gruppe selbst. **Eine Regel bleibt technisch bindend:**
