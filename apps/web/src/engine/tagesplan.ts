@@ -87,6 +87,16 @@ export function tagesplan(
   return segmente
 }
 
+/**
+ * Enthält der Plan überhaupt eine Übung?
+ *
+ * Kann `false` werden, weil `tagesplan` die feste Spieleliste des Vereinstages gegen die
+ * Einstellungen filtert: hat der Therapeut die Spiele dieses Tages alle abgewählt, bleibt nichts
+ * übrig. Eine Einheit ohne Übung darf dann **nicht** starten — sonst liefe sie durch, meldete
+ * „fertig" und schöbe den Fortschritt weiter, ohne dass Ben etwas getan hat.
+ */
+export const hatUebung = (segmente: Segment[]) => segmente.some((s) => s.art === 'spiel')
+
 /** Für die Ansage (A5: ein Satz, keine Spieldetails). */
 export function ansageText(segmente: Segment[]): string {
   const spiele = segmente.filter((s) => s.art === 'spiel').length

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { aktuellesSegment, session, starteSession } from './session'
-import { standardEinstellungen, tagesplan } from './tagesplan'
+import { hatUebung, standardEinstellungen, tagesplan } from './tagesplan'
 import type { SpielErgebnis } from './segmente'
 import { hsv } from '../content/vereine/hsv'
 
@@ -109,5 +109,32 @@ describe('session', () => {
     expect(vorher[0].art).toBe('session_start')
     expect(nachher.slice(0, vorher.length)).toEqual(vorher)
     expect(nachher.length).toBeGreaterThan(vorher.length)
+  })
+})
+
+describe('leerer Tagesplan', () => {
+  /** Der gemeldete Fehler: sind alle Spiele des Tages abgewählt, bleibt nichts übrig. */
+  const alleAus = (ids: string[]) => ({
+    ...standardEinstellungen,
+    spiele: Object.fromEntries(
+      ids.map((id) => [
+        id,
+        {
+          stufe: 3, dauerSek: 210, toleranz: 1, zielgeschwindigkeit: 1,
+          mindesttrefferquote: 0.5, aktiv: false, reihenfolge: 0,
+        },
+      ]),
+    ),
+  })
+
+  it('erkennt einen Tag ohne Übung', () => {
+    const e = alleAus(hsv.tage[0].spiele)
+    expect(hatUebung(tagesplan(hsv, 1, e, false))).toBe(false)
+  })
+
+  it('erkennt einen Tag mit mindestens einer Übung', () => {
+    // Nur zwei der drei Übungen abgewählt — der Tag bleibt gültig.
+    const e = alleAus(hsv.tage[0].spiele.slice(0, 2))
+    expect(hatUebung(tagesplan(hsv, 1, e, false))).toBe(true)
   })
 })

@@ -6,7 +6,7 @@ import { ladeToken } from './geraet'
 import { aktuellesSegment, session, starteSession } from './engine/session'
 import type { SessionAction, SessionState } from './engine/session'
 import type { Einstellungen } from './engine/tagesplan'
-import { ansageText, standardEinstellungen, tagesplan } from './engine/tagesplan'
+import { ansageText, hatUebung, standardEinstellungen, tagesplan } from './engine/tagesplan'
 import { gleicherTag, hole, merke, vergiss } from './persistenz'
 import { ladeFortschritt, naechsteEinheit, speichereFortschritt } from './profil'
 import { DialogScreen } from './screens/DialogScreen'
@@ -27,6 +27,7 @@ export default function App() {
   const [lauf, setLauf] = useState<SessionState | null>(null)
   const [wiederaufnahme, setWiederaufnahme] = useState<SessionState | null>(null)
   const [menueOffen, setMenueOffen] = useState(false)
+  const [keinTraining, setKeinTraining] = useState(false)
 
   const verein = vereine[fortschritt.vereinIndex]
   const name = kind?.spielname ?? 'Kicker'
@@ -136,20 +137,30 @@ export default function App() {
       )
     }
 
+    if (keinTraining) {
+      // Kein Verliererzustand und kein Fehlerbildschirm (C2): Ben hat nichts falsch gemacht,
+      // es ist nichts eingerichtet. Der Fortschritt bleibt stehen, damit der Tag nicht
+      // stillschweigend als erledigt gilt.
+      return (
+        <DialogScreen
+          verein={verein}
+          text={mitName('Heute ist noch kein Training eingerichtet, {name}. Wir sagen Bescheid!')}
+          knopf="Zurück"
+          onWeiter={() => setKeinTraining(false)}
+        />
+      )
+    }
+
     if (!lauf) {
       return (
         <StartScreen
           aktiverVereinIndex={fortschritt.vereinIndex}
-          onStart={() =>
-            setLauf(
-              starteSession(
-                verein.id,
-                fortschritt.tag,
-                // Namensfrage nur, solange das Kind noch keinen Spielnamen gewählt hat.
-                tagesplan(verein, fortschritt.tag, einstellungen, kind?.spielname == null),
-              ),
-            )
-          }
+          onStart={() => {
+            // Namensfrage nur, solange das Kind noch keinen Spielnamen gewählt hat.
+            const plan = tagesplan(verein, fortschritt.tag, einstellungen, kind?.spielname == null)
+            if (!hatUebung(plan)) return setKeinTraining(true)
+            setLauf(starteSession(verein.id, fortschritt.tag, plan))
+          }}
         />
       )
     }
