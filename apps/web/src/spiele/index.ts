@@ -1,7 +1,9 @@
 import type { ComponentType } from 'react'
 import type { SpielErgebnis } from '../engine/segmente'
 import type { Verein } from '../content/typen'
+import { Autogrammstunde } from './autogramme'
 import { BallHochhalten } from './ballhochhalten'
+import { LinieMalen } from './linie'
 import { Platzwart } from './rasenmaehen'
 import { Platzhalter } from './Platzhalter'
 
@@ -63,13 +65,13 @@ export const SPIELE: Record<string, Minispiel> = {
     titel: 'Linie malen',
     anweisung: 'Ziehe den Ball auf der Linie zum Tor.',
     tags: ['gerade-striche'],
-    Komponente: Platzhalter,
+    Komponente: LinieMalen,
   },
   autogramme: {
     titel: 'Autogrammstunde',
     anweisung: 'Schreibe dein Autogramm auf jedes Trikot.',
     tags: ['schreiben', 'pinzettengriff'],
-    Komponente: Platzhalter,
+    Komponente: Autogrammstunde,
   },
   rasenmaehen: {
     titel: 'Platzwart',
