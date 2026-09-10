@@ -9,7 +9,7 @@ export const hsv = {
   id: 'hsv',
   name: 'Hamburger SV',
   stadt: 'Hamburg',
-  karte: { x: 53, y: 24 },
+  karte: { x: 49.0, y: 25.1 },
   farben: { primaer: '#0a3a82', sekundaer: '#ffffff' },
 
   profi: {
