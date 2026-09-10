@@ -371,13 +371,22 @@ Der folgende Absatz gehört in das Kapitel zur Anforderungserfüllung, direkt zu
 und nicht im Berichtsdokument, weil das Dokument nicht im Repository liegt — beim Einfügen bitte
 gegen die dortige Nummerierung und Zitierweise prüfen.
 
-> **D1 — Zwei Ansichten (abweichend umgesetzt, Anforderung erfüllt)**
+> **D1 — Zwei Ansichten (während der Implementierung geändert, Anforderung erfüllt)**
 >
 > LN1 sah als zweite Ansicht einen Therapeutenbereich vor, der innerhalb der Kind-Anwendung
 > über eine PIN erreichbar ist. Umgesetzt wurden stattdessen **zwei getrennte Anwendungen**: die
 > Kind-Anwendung unter `/` und die Therapeuten-Anwendung unter `/therapeut/`, letztere mit
 > eigener Anmeldung über E-Mail und Passwort. In der Kind-Anwendung gibt es keine PIN-Abfrage
 > und keinen verborgenen Bereich mehr.
+>
+> **Diese Änderung ist nicht Teil der Planung, sondern während der Implementierung entstanden.**
+> Der Planungsteil wurde am 29.08.2026 abgegeben und beschrieb den PIN-Bereich noch so. Am
+> 03.09.2026 entstand die Therapeuten-Anwendung als eigene Anwendung — eine Folge der
+> Entscheidung für ein Backend (siehe Abweichung zu D4). Damit wäre ein PIN-Bereich in der
+> Kind-Anwendung eine zweite Oberfläche für dieselben Funktionen gewesen, die zusätzlich
+> schlechter geschützt ist. Der PIN-Bereich wurde deshalb am selben Tag entfernt und durch das
+> Pausenmenü ersetzt, das nur noch Ton, Lautstärke und Abdunkeln enthält. Der Verlauf ist in der
+> Versionsgeschichte des Projekts nachvollziehbar.
 >
 > Die Anforderung „zwei Ansichten, Kindmodus als Standard, therapeutische Funktionen geschützt"
 > ist damit erfüllt, und zwar strenger als ursprünglich geplant. Eine PIN ist eine
@@ -398,10 +407,13 @@ gegen die dortige Nummerierung und Zitierweise prüfen.
 > Unverändert bleibt, dass es **keinen Elternbereich** gibt (D1) und der Wochenbericht
 > Gesprächsgrundlage für den Therapeuten ist, nicht für die Eltern (D3).
 
-Der Vollständigkeit halber: Die zweite bewusste Abweichung von LN1 betrifft **D4** (Backend statt
-rein lokaler Speicherung, Vor- **und** Nachname statt Vorname und Jahrgang). Sie ist in Abschnitt 1
-und Abschnitt 8 dieses Dokuments begründet und gehört im Bericht an dieselbe Stelle wie dieser
-Absatz — beide Abweichungen zusammen, nicht verstreut.
+Der Vollständigkeit halber: Die zweite Abweichung von LN1 betrifft **D4** (Backend statt rein
+lokaler Speicherung, Vor- **und** Nachname statt Vorname und Jahrgang). Auch sie entstand
+**während der Implementierung** und nicht in der Planung — sie geht auf die Vorgabe der Lehrkraft
+zurück, ein Backend zu bauen. Begründet ist sie in Abschnitt 1 und Abschnitt 8 dieses Dokuments;
+im Bericht gehört sie an dieselbe Stelle wie dieser Absatz — beide Abweichungen zusammen und
+beide als das gekennzeichnet, was sie sind: nachträgliche Änderungen an einer abgegebenen Planung,
+nicht übersehene Anforderungen.
 
 **Statt des Langdrucks ein offenes Pausenmenü** (`ui/PausenMenue.tsx`, gebaut). Erreichbar im
 Startbildschirm, in jedem Spiel **und in der Zwangspause**, ohne Verzögerung und ohne PIN. Beim
