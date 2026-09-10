@@ -2,7 +2,9 @@ import type { ComponentType } from 'react'
 import type { SpielErgebnis } from '../engine/segmente'
 import type { Verein } from '../content/typen'
 import { KATALOG, type Spieldaten } from './katalog'
+import { Autogrammstunde } from './autogramme'
 import { BallHochhalten } from './ballhochhalten'
+import { LinieMalen } from './linie'
 import { Platzwart } from './rasenmaehen'
 import { Platzhalter } from './Platzhalter'
 
@@ -39,10 +41,12 @@ export type Minispiel = Spieldaten & {
  * Komponente ein Spiel zeichnet. Noch nicht gebaute Spiele zeigen den `Platzhalter` —
  * ihre Daten sind trotzdem schon echt, sie gehören zum Tagesplan und nicht zur Umsetzung.
  *
- * Ein Spiel fertigstellen heißt: Datei danebenlegen und hier den Eintrag tauschen.
+ * Ein Spiel fertigstellen heißt: Datei danebenlegen und hier den Eintrag ergänzen.
  */
 const KOMPONENTEN: Record<string, ComponentType<SpielProps>> = {
+  autogramme: Autogrammstunde,
   ballhochhalten: BallHochhalten,
+  linie: LinieMalen,
   rasenmaehen: Platzwart,
 }
 
