@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { PAUSEN_UEBUNGEN, uebungZu } from './PausenFigur'
+import { PAUSEN_UEBUNGEN, uebungZu } from './pausenUebungen'
 
 /**
  * Die Übung wird aus dem freien Text des Therapeuten erkannt — genau deshalb braucht es

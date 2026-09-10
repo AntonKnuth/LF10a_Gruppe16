@@ -8,7 +8,7 @@ import { PauseScreen } from './screens/PauseScreen'
 import { StartScreen } from './screens/StartScreen'
 import { SpielScreen } from './screens/SpielScreen'
 import { SPIELE } from './spiele'
-import { PAUSEN_UEBUNGEN } from './ui/PausenFigur'
+import { PAUSEN_UEBUNGEN } from './ui/pausenUebungen'
 
 /**
  * Probebühne für einzelne Minispiele — **Entwicklerwerkzeug, nicht Teil des Kindmodus.**

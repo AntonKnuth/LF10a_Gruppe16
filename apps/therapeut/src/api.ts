@@ -226,7 +226,7 @@ export const titel = (spielId: string) => SPIEL_TITEL[spielId] ?? spielId
  *
  * Die Kind-App erkennt diese Übungen am gespeicherten Text und zeigt dann eine Figur, die sie
  * vormacht — für ein Kind, das noch unsicher liest, ist die Bewegung die eigentliche Anweisung.
- * **Die Schreibweise muss deshalb zu den Stichwörtern in `apps/web/src/ui/PausenFigur.tsx`
+ * **Die Schreibweise muss deshalb zu den Stichwörtern in `apps/web/src/ui/pausenUebungen.ts`
  * passen.** Gespeichert wird weiterhin nur ein freier Text; wer etwas Eigenes einträgt, bekommt
  * genau seinen Satz, dann eben ohne Figur.
  */

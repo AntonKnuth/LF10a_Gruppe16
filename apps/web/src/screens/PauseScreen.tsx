@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
-import { PausenFigur, uebungZu } from "../ui/PausenFigur";
-import { useVorlesen } from "../ui/vorlesen";
+import { useEffect, useState } from 'react'
+import { PausenFigur } from '../ui/PausenFigur'
+import { uebungZu } from '../ui/pausenUebungen'
+import { useVorlesen } from '../ui/vorlesen'
 
 /**
  * A3 / B3: Die Pause ist verpflichtend. Sie lässt sich **anhalten**, falls zu Hause etwas
@@ -13,33 +14,31 @@ export function PauseScreen({
   angehalten,
   onWeiter,
 }: {
-  dauerSek: number;
-  inhalt: string;
+  dauerSek: number
+  inhalt: string
   /** Das Pausenmenü ist offen — dann steht auch der Countdown. */
-  angehalten: boolean;
-  onWeiter: () => void;
+  angehalten: boolean
+  onWeiter: () => void
 }) {
-  const [rest, setRest] = useState(dauerSek);
-  useVorlesen(`Kurze Pause. ${inhalt}.`);
-  // Erkannt am Text des Therapeuten — siehe `ui/PausenFigur.tsx`. Passt nichts, bleibt es
+  const [rest, setRest] = useState(dauerSek)
+  useVorlesen(`Kurze Pause. ${inhalt}.`)
+  // Erkannt am Text des Therapeuten — siehe `ui/pausenUebungen.ts`. Passt nichts, bleibt es
   // beim Satz allein, genau wie vorher.
-  const uebung = uebungZu(inhalt);
+  const uebung = uebungZu(inhalt)
 
   useEffect(() => {
-    if (angehalten) return;
-    const id = setInterval(() => setRest((r) => Math.max(0, r - 1)), 1000);
-    return () => clearInterval(id);
-  }, [angehalten]);
+    if (angehalten) return
+    const id = setInterval(() => setRest((r) => Math.max(0, r - 1)), 1000)
+    return () => clearInterval(id)
+  }, [angehalten])
 
-  const fertig = rest === 0;
-  const anteil = dauerSek > 0 ? rest / dauerSek : 0;
+  const fertig = rest === 0
+  const anteil = dauerSek > 0 ? rest / dauerSek : 0
 
   return (
     <div className="flex h-full flex-col items-center justify-center gap-8 bg-himmel-hell p-8">
       <p className="text-4xl font-bold text-slate-700">Kurze Pause</p>
-      <p className="text-center text-5xl font-extrabold text-rasen-dunkel">
-        {inhalt}
-      </p>
+      <p className="text-center text-5xl font-extrabold text-rasen-dunkel">{inhalt}</p>
 
       <div className="flex items-center gap-10">
         {/* Die Figur macht vor, was der Satz sagt: ein Siebenjähriger, der noch unsicher
@@ -73,13 +72,10 @@ export function PauseScreen({
           der auf jedem Bildschirm derselbe ist — zwei Wege für dasselbe wären eine
           Bedienung zu viel (A2). Überspringen gibt es weiterhin nicht (A3). */}
       {fertig && (
-        <button
-          onClick={onWeiter}
-          className="taste bg-rasen text-white shadow-lg active:scale-95"
-        >
+        <button onClick={onWeiter} className="taste bg-rasen text-white shadow-lg active:scale-95">
           Weiter
         </button>
       )}
     </div>
-  );
+  )
 }
