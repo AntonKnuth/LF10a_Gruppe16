@@ -5,6 +5,7 @@ import { vereine } from './content'
 import type { SpielErgebnis } from './engine/segmente'
 import { LobScreen } from './screens/LobScreen'
 import { PauseScreen } from './screens/PauseScreen'
+import { StartScreen } from './screens/StartScreen'
 import { SpielScreen } from './screens/SpielScreen'
 import { SPIELE } from './spiele'
 import { PAUSEN_UEBUNGEN } from './ui/PausenFigur'
@@ -19,6 +20,7 @@ import { PAUSEN_UEBUNGEN } from './ui/PausenFigur'
  *
  *   http://localhost:5173/probe.html
  *   http://localhost:5173/probe.html?spiel=rasenmaehen&stufe=3&dauer=45
+ *   http://localhost:5173/probe.html?start=1 — nur der Startbildschirm
  *   http://localhost:5173/probe.html?lob=1   — nur der Lob-Bildschirm (C5)
  *   http://localhost:5173/probe.html?pause=Hampelmänner%20machen   — nur die Zwangspause (A3)
  *
@@ -45,6 +47,9 @@ export function Probe() {
   // Dasselbe für die Pause: sie liegt im Tagesplan hinter einem ganzen Spiel, und ihre
   // Figur will man beim Bauen alle zehn Sekunden sehen, nicht alle vier Minuten.
   const [pause, setPause] = useState(p.get('pause'))
+  // Und der Startbildschirm: der ist ohne gekoppeltes Gerät gar nicht erreichbar, wird aber
+  // gerade gestaltet — Wolken, Maskottchen, Leuchten am Verein.
+  const [startOffen, setStartOffen] = useState(p.get('start') === '1')
 
   const verein = vereine.find((v) => v.id === vereinId) ?? vereine[0]
 
@@ -127,6 +132,13 @@ export function Probe() {
         {/* Zum Prüfen, ob ein Spiel das Anhalten wirklich beachtet: Bild und Uhr müssen
             stehen bleiben, und die gemessene Dauer darf die Pausenzeit nicht enthalten. */}
         <button
+          onClick={() => setStartOffen(true)}
+          className="rounded bg-slate-600 px-4 py-1 font-bold text-white"
+        >
+          Start
+        </button>
+
+        <button
           onClick={() => setLobOffen(true)}
           className="rounded bg-slate-600 px-4 py-1 font-bold text-white"
         >
@@ -163,7 +175,12 @@ export function Probe() {
       </div>
 
       <div className="min-h-0 flex-1">
-        {pause ? (
+        {startOffen ? (
+          <StartScreen
+            aktiverVereinIndex={Math.max(0, vereine.indexOf(verein))}
+            onStart={() => setStartOffen(false)}
+          />
+        ) : pause ? (
           <PauseScreen
             key={pause}
             dauerSek={dauer}

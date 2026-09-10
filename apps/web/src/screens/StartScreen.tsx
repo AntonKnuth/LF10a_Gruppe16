@@ -42,11 +42,21 @@ export function StartScreen({ aktiverVereinIndex, onStart }: Props) {
 
       <rect width="1000" height="750" fill="url(#himmel)" />
 
+      {/* Jede Wolke in einer eigenen Hülle mit eigenem Tempo — sonst schwebt der ganze
+          Himmel im Gleichschritt und sieht aus wie ein Fehler. */}
       <g fill="#fff" opacity="0.92">
-        <Wolke x={120} y={150} s={1.1} />
-        <Wolke x={840} y={195} s={0.9} />
-        <Wolke x={330} y={95} s={0.7} />
-        <Wolke x={640} y={120} s={0.6} />
+        <g className="s-wolke" style={{ animationDuration: '24s' }}>
+          <Wolke x={120} y={150} s={1.1} />
+        </g>
+        <g className="s-wolke" style={{ animationDuration: '31s', animationDirection: 'reverse' }}>
+          <Wolke x={840} y={195} s={0.9} />
+        </g>
+        <g className="s-wolke" style={{ animationDuration: '38s' }}>
+          <Wolke x={330} y={95} s={0.7} />
+        </g>
+        <g className="s-wolke" style={{ animationDuration: '27s', animationDirection: 'reverse' }}>
+          <Wolke x={640} y={120} s={0.6} />
+        </g>
       </g>
 
       {/* Globus-Andeutung: sehr großer Kreis, von dem nur die obere Wölbung sichtbar ist. */}
@@ -60,12 +70,21 @@ export function StartScreen({ aktiverVereinIndex, onStart }: Props) {
         return <Pin key={v.id} x={p.x} y={p.y} />
       })}
 
-      <circle cx={aktivPos.x} cy={aktivPos.y + 44} r="70" fill="url(#leuchten)" />
+      <circle
+        className="s-leuchten"
+        style={{ transformOrigin: `${aktivPos.x}px ${aktivPos.y + 44}px` }}
+        cx={aktivPos.x}
+        cy={aktivPos.y + 44}
+        r="70"
+        fill="url(#leuchten)"
+      />
       <Stadion x={aktivPos.x} y={aktivPos.y + 44} />
       <Pin x={aktivPos.x} y={aktivPos.y} farbe={aktiv.farben.primaer} kuerzel={aktiv.id.toUpperCase().slice(0, 3)} />
 
       <Titel />
-      <Maskottchen x={690} y={268} s={1.15} />
+      <g className="s-schwebt">
+        <Maskottchen x={690} y={268} s={1.15} />
+      </g>
 
       <text
         x="500"
@@ -118,6 +137,7 @@ function Europa() {
 function Titel() {
   return (
     <text
+      className="s-titel"
       x="500"
       y="150"
       textAnchor="middle"

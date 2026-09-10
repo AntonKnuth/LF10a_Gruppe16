@@ -39,6 +39,52 @@ body {
   touch-action: manipulation;
 }
 
+/* ── Startbildschirm ─────────────────────────────────────────────────────────
+   Ruhige Dauerbewegung: Wolken schweben, das Maskottchen wippt, der Titel atmet, und am
+   aktuellen Verein pulst das Leuchten. Klein und langsam mit Absicht — der Bildschirm soll
+   leben, aber Ben hat ADHS und soll hier zur Ruhe kommen, nicht angesprungen werden (A2).
+
+   Die Dauer steht am Element (inline), nicht hier: so hat jede Wolke ihr eigenes Tempo,
+   ohne dass es für jede eine eigene Regel braucht.
+
+   **Wichtig bei SVG:** eine CSS-`transform` überschreibt das `transform`-Attribut desselben
+   Elements. Deshalb liegt die Animation immer auf einer **Hülle** um die Figur, nie auf der
+   Figur selbst — sonst verliert sie ihre Position auf der Karte. */
+.s-wolke,
+.s-schwebt,
+.s-titel,
+.s-leuchten {
+  transform-box: view-box;
+}
+
+@keyframes tk-wolke {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(36px); }
+}
+.s-wolke { animation: tk-wolke 24s ease-in-out infinite; }
+
+@keyframes tk-schweben {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-9px); }
+}
+.s-schwebt { animation: tk-schweben 3.4s ease-in-out infinite; }
+
+@keyframes tk-titel-atmen {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.018); }
+}
+.s-titel {
+  transform-origin: 500px 130px;
+  animation: tk-titel-atmen 6s ease-in-out infinite;
+}
+
+/* Das Leuchten sitzt dort, wo Ben hintippen soll — die einzige Bewegung im Bildmittelpunkt. */
+@keyframes tk-leuchten {
+  0%, 100% { transform: scale(0.88); opacity: 0.55; }
+  50% { transform: scale(1.12); opacity: 1; }
+}
+.s-leuchten { animation: tk-leuchten 3.6s ease-in-out infinite; }
+
 /* ── Pausenübungen ───────────────────────────────────────────────────────────
    Die Figur in `ui/PausenFigur.tsx` macht die Übung vor. Bewegt wird nur hier, mit
    CSS-Keyframes: kein Bildschleifen-Code und nichts, was angehalten werden müsste.
