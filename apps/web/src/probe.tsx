@@ -4,8 +4,10 @@ import './index.css'
 import { vereine } from './content'
 import type { SpielErgebnis } from './engine/segmente'
 import { LobScreen } from './screens/LobScreen'
+import { PauseScreen } from './screens/PauseScreen'
 import { SpielScreen } from './screens/SpielScreen'
 import { SPIELE } from './spiele'
+import { PAUSEN_UEBUNGEN } from './ui/PausenFigur'
 
 /**
  * Probebühne für einzelne Minispiele — **Entwicklerwerkzeug, nicht Teil des Kindmodus.**
@@ -18,6 +20,7 @@ import { SPIELE } from './spiele'
  *   http://localhost:5173/probe.html
  *   http://localhost:5173/probe.html?spiel=rasenmaehen&stufe=3&dauer=45
  *   http://localhost:5173/probe.html?lob=1   — nur der Lob-Bildschirm (C5)
+ *   http://localhost:5173/probe.html?pause=Hampelmänner%20machen   — nur die Zwangspause (A3)
  *
  * Bindet bewusst den **echten** `SpielScreen` ein: Anweisung, Vorlesen und der sichtbare
  * Timer aus A3 verhalten sich hier genau wie im Tagesplan. Was auf der Probebühne läuft,
@@ -39,6 +42,9 @@ export function Probe() {
   // Das Lob liegt im Tagesplan hinter einem ganzen Spiel und einer Smiley-Frage. Zum
   // Gestalten ist das derselbe unbrauchbare Umweg, gegen den es diese Seite gibt.
   const [lobOffen, setLobOffen] = useState(p.get('lob') === '1')
+  // Dasselbe für die Pause: sie liegt im Tagesplan hinter einem ganzen Spiel, und ihre
+  // Figur will man beim Bauen alle zehn Sekunden sehen, nicht alle vier Minuten.
+  const [pause, setPause] = useState(p.get('pause'))
 
   const verein = vereine.find((v) => v.id === vereinId) ?? vereine[0]
 
@@ -127,6 +133,23 @@ export function Probe() {
           Lob
         </button>
 
+        <label className="flex items-center gap-2">
+          Pause
+          <select
+            className="rounded bg-slate-700 px-2 py-1"
+            value={pause ?? ''}
+            onChange={(e) => setPause(e.target.value || null)}
+          >
+            <option value="">— aus —</option>
+            {PAUSEN_UEBUNGEN.map((u) => (
+              <option key={u.id} value={u.titel}>
+                {u.titel}
+              </option>
+            ))}
+            <option value="Etwas ganz Eigenes">Eigener Text (ohne Figur)</option>
+          </select>
+        </label>
+
         <button
           onClick={() => setAngehalten((a) => !a)}
           className="rounded bg-slate-600 px-4 py-1 font-bold text-white"
@@ -140,7 +163,15 @@ export function Probe() {
       </div>
 
       <div className="min-h-0 flex-1">
-        {lobOffen ? (
+        {pause ? (
+          <PauseScreen
+            key={pause}
+            dauerSek={dauer}
+            inhalt={pause}
+            angehalten={angehalten}
+            onWeiter={() => setPause(null)}
+          />
+        ) : lobOffen ? (
           <LobScreen
             verein={verein}
             text={verein.profi.lob[0].text.replaceAll('{name}', 'Ben')}

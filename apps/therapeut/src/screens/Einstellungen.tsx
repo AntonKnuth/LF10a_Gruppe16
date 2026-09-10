@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
-import { api, rolleVon, titel, type Einstellung, type KlientDetail, type Rolle, type Tagesform } from '../api'
+import {
+  PAUSEN_VORLAGEN, api, rolleVon, titel,
+  type Einstellung, type KlientDetail, type Rolle, type Tagesform,
+} from '../api'
 
 /**
  * B1: Toleranz, Zielgeschwindigkeit und Mindesttrefferquote je Übungstyp.
@@ -200,6 +203,25 @@ export function Einstellungen({ klient }: { klient: KlientDetail }) {
               className="w-32 rounded-lg border border-slate-300 px-3 py-2"
             />
           </label>
+          <label className="text-sm">
+            <span className="mb-1 block font-semibold text-slate-600">Übung</span>
+            <select
+              value={PAUSEN_VORLAGEN.includes(pauseInhalt) ? pauseInhalt : ''}
+              onChange={(e) => {
+                if (!e.target.value) return
+                setGespeichert(false)
+                setPauseInhalt(e.target.value)
+              }}
+              className="rounded-lg border border-slate-300 px-3 py-2"
+            >
+              <option value="">Eigener Text …</option>
+              {PAUSEN_VORLAGEN.map((v) => (
+                <option key={v} value={v}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </label>
           <label className="flex-1 text-sm">
             <span className="mb-1 block font-semibold text-slate-600">Inhalt</span>
             <input
@@ -213,7 +235,9 @@ export function Einstellungen({ klient }: { klient: KlientDetail }) {
           </label>
         </div>
         <p className="mt-2 text-xs text-slate-500">
-          Die Pause kann von Ben angehalten, aber nicht übersprungen werden (A3).
+          Die Pause kann von Ben angehalten, aber nicht übersprungen werden (A3). Zu den Übungen
+          aus der Liste zeigt die Kind-App eine Figur, die die Übung vormacht — eigener Text
+          erscheint nur als Satz.
         </p>
       </section>
 

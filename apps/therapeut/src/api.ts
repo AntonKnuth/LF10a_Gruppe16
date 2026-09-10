@@ -222,6 +222,24 @@ export const SPIEL_TITEL: Record<string, string> = {
 export const titel = (spielId: string) => SPIEL_TITEL[spielId] ?? spielId
 
 /**
+ * Vorlagen für den Inhalt der Zwangspause (B3).
+ *
+ * Die Kind-App erkennt diese Übungen am gespeicherten Text und zeigt dann eine Figur, die sie
+ * vormacht — für ein Kind, das noch unsicher liest, ist die Bewegung die eigentliche Anweisung.
+ * **Die Schreibweise muss deshalb zu den Stichwörtern in `apps/web/src/ui/PausenFigur.tsx`
+ * passen.** Gespeichert wird weiterhin nur ein freier Text; wer etwas Eigenes einträgt, bekommt
+ * genau seinen Satz, dann eben ohne Figur.
+ */
+export const PAUSEN_VORLAGEN = [
+  'Hampelmänner machen',
+  'Hände ausschütteln',
+  'Faust auf, Faust zu',
+  'Schultern kreisen',
+  'Zum Himmel strecken',
+  'Tief durchatmen',
+]
+
+/**
  * Anzeigenamen der Fähigkeitsbereiche. Die Zuordnung Spiel → Bereich macht der Server
  * (`Auswertung/Kategorien.cs`) — hier stehen nur die Beschriftungen.
  */

@@ -39,6 +39,126 @@ body {
   touch-action: manipulation;
 }
 
+/* ── Pausenübungen ───────────────────────────────────────────────────────────
+   Die Figur in `ui/PausenFigur.tsx` macht die Übung vor. Bewegt wird nur hier, mit
+   CSS-Keyframes: kein Bildschleifen-Code und nichts, was angehalten werden müsste.
+
+   Drehpunkte stehen in Nutzereinheiten des SVG (`transform-box: view-box`) — eine Schulter
+   ist ein Punkt in der Zeichnung, kein Prozentwert einer Box. */
+.p-arm-l,
+.p-arm-r,
+.p-bein-l,
+.p-bein-r,
+.p-hand-l,
+.p-hand-r,
+.p-oben,
+.p-koerper,
+.p-atemring {
+  transform-box: view-box;
+}
+
+.p-arm-l { transform-origin: 80px 92px; }
+.p-arm-r { transform-origin: 120px 92px; }
+.p-bein-l { transform-origin: 92px 148px; }
+.p-bein-r { transform-origin: 108px 148px; }
+.p-hand-l { transform-origin: 80px 150px; }
+.p-hand-r { transform-origin: 120px 150px; }
+.p-oben { transform-origin: 100px 120px; }
+.p-koerper { transform-origin: 100px 240px; }
+.p-atemring { transform-origin: 100px 120px; }
+
+/* Ruhehaltung: Arme hängen leicht ab, Beine stehen fast geschlossen. Ohne sie
+   startet jede Übung aus einer anderen Lage. */
+.p-arm-l { transform: rotate(10deg); }
+.p-arm-r { transform: rotate(-10deg); }
+.p-bein-l { transform: rotate(3deg); }
+.p-bein-r { transform: rotate(-3deg); }
+
+/* Hampelmänner: hüpfen, Arme hoch, Beine auf. */
+@keyframes tk-huepf {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+@keyframes tk-arm-l-hampel {
+  0%, 100% { transform: rotate(10deg); }
+  50% { transform: rotate(150deg); }
+}
+@keyframes tk-arm-r-hampel {
+  0%, 100% { transform: rotate(-10deg); }
+  50% { transform: rotate(-150deg); }
+}
+@keyframes tk-bein-l-hampel {
+  0%, 100% { transform: rotate(3deg); }
+  50% { transform: rotate(22deg); }
+}
+@keyframes tk-bein-r-hampel {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(-22deg); }
+}
+.u-hampelmann .p-koerper { animation: tk-huepf 0.7s ease-in-out infinite; }
+.u-hampelmann .p-arm-l { animation: tk-arm-l-hampel 0.7s ease-in-out infinite; }
+.u-hampelmann .p-arm-r { animation: tk-arm-r-hampel 0.7s ease-in-out infinite; }
+.u-hampelmann .p-bein-l { animation: tk-bein-l-hampel 0.7s ease-in-out infinite; }
+.u-hampelmann .p-bein-r { animation: tk-bein-r-hampel 0.7s ease-in-out infinite; }
+
+/* Hände ausschütteln: schnell und klein, das ist der Sinn der Übung. */
+@keyframes tk-schuettel-l {
+  0%, 100% { transform: rotate(14deg); }
+  50% { transform: rotate(-2deg); }
+}
+@keyframes tk-schuettel-r {
+  0%, 100% { transform: rotate(-14deg); }
+  50% { transform: rotate(2deg); }
+}
+.u-schuetteln .p-arm-l { animation: tk-schuettel-l 0.22s ease-in-out infinite; }
+.u-schuetteln .p-arm-r { animation: tk-schuettel-r 0.22s ease-in-out infinite; }
+
+/* Faust auf, Faust zu: nur die Hände, dafür deutlich. */
+@keyframes tk-faust {
+  0%, 100% { transform: scale(0.65); }
+  50% { transform: scale(1.45); }
+}
+.u-faust .p-hand-l,
+.u-faust .p-hand-r { animation: tk-faust 1.6s ease-in-out infinite; }
+
+/* Schultern kreisen: der Oberkörper fährt eine kleine Kreisbahn, die Arme hängen mit. */
+@keyframes tk-schulter {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(5px, -6px); }
+  50% { transform: translate(10px, 0); }
+  75% { transform: translate(5px, 6px); }
+}
+.u-schultern .p-oben { animation: tk-schulter 2s linear infinite; }
+
+/* Zum Himmel strecken: langsam hoch und halten, nicht wippen. */
+@keyframes tk-streck-l {
+  0%, 100% { transform: rotate(148deg); }
+  50% { transform: rotate(170deg); }
+}
+@keyframes tk-streck-r {
+  0%, 100% { transform: rotate(-148deg); }
+  50% { transform: rotate(-170deg); }
+}
+@keyframes tk-recken {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.u-strecken .p-arm-l { animation: tk-streck-l 3s ease-in-out infinite; }
+.u-strecken .p-arm-r { animation: tk-streck-r 3s ease-in-out infinite; }
+.u-strecken .p-koerper { animation: tk-recken 3s ease-in-out infinite; }
+
+/* Tief durchatmen: bewusst die langsamste Bewegung von allen. */
+@keyframes tk-atmen {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.07); }
+}
+@keyframes tk-atemring {
+  0%, 100% { transform: scale(0.82); opacity: 0.35; }
+  50% { transform: scale(1); opacity: 0.8; }
+}
+.u-atmen .p-oben { animation: tk-atmen 5s ease-in-out infinite; }
+.u-atmen .p-atemring { animation: tk-atemring 5s ease-in-out infinite; }
+
 @keyframes auftritt {
   from {
     opacity: 0;

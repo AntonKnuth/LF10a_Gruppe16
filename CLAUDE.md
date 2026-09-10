@@ -228,7 +228,14 @@ Zweck verstößt gegen D4.
 
 - Sichtbarer Timer **im Spiel** (A3).
 - Danach **Zwangspause**. Sie lässt sich **nicht überspringen**; „Weiter" erscheint erst bei 0.
-- Inhalt und Dauer der Pause stellt Thomas ein (z. B. 10 Hampelmänner, Stifthaltung, Hand lockern).
+- Inhalt und Dauer der Pause stellt Thomas ein. Sechs Übungen stehen als Vorlage bereit
+  (Hampelmänner, Hände ausschütteln, Faust auf/zu, Schultern kreisen, Zum Himmel strecken, Tief
+  durchatmen); **zu jeder macht eine Figur die Übung vor** (`ui/PausenFigur.tsx`). Ben ist sieben
+  und liest noch unsicher — die Bewegung ist die eigentliche Anweisung, der Satz bleibt daneben
+  stehen und wird vorgelesen (A5).
+- **Keine neue Spalte dafür:** gespeichert ist weiterhin ein freier Text, die Übung wird an
+  Stichwörtern darin erkannt. Damit funktioniert auch, was schon in der Datenbank steht, und
+  eigener Text bleibt möglich — dann eben ohne Figur.
 
 **Anhalten geht überall über denselben Knopf oben rechts** (`ui/PausenMenue.tsx`) — im
 Startbildschirm, im Spiel und in der Zwangspause. Dahinter: Ton, Lautstärke, Bildschirm dunkler,
