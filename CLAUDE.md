@@ -385,7 +385,9 @@ Bericht). Bild-Upload der Arbeitsproben — das Schema steht, der Endpunkt kommt
 - **HTTPS unter festem Namen** (Hosts-Eintrag + Zertifikat mit diesem Namen im SAN). Umgebungs-
   arbeit, kein Code — aber ohne sie stürzt die App auf dem iPad beim Sessionstart ab, siehe
   Speicher-Fallstricke.
-- **D1 im Bericht neu zuordnen** (siehe Hinweis unter der Anforderungstabelle).
+- **D1-Absatz in das Berichtsdokument einfügen.** Der fertige Text steht in
+  `docs/entscheidungen.md` unter „Textbaustein D1"; das Berichtsdokument selbst liegt nicht im
+  Repo, deshalb bleibt das Einfügen Handarbeit.
 
 **Danach:**
 

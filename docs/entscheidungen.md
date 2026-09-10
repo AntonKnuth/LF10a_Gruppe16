@@ -365,6 +365,44 @@ als ein Knopf auf dem Gerät, weil es auch bei einem verlorenen Tablet wirkt.
 > die Trennung ist stärker als vorher (eigene Anwendung, echte Anmeldung statt Kindersicherung),
 > aber ohne diesen Satz liest ein Prüfer die verschwundene PIN als nicht erfüllte Anforderung.
 
+#### Textbaustein D1 — wörtlich für den Bericht
+
+Der folgende Absatz gehört in das Kapitel zur Anforderungserfüllung, direkt zu D1. Er steht hier
+und nicht im Berichtsdokument, weil das Dokument nicht im Repository liegt — beim Einfügen bitte
+gegen die dortige Nummerierung und Zitierweise prüfen.
+
+> **D1 — Zwei Ansichten (abweichend umgesetzt, Anforderung erfüllt)**
+>
+> LN1 sah als zweite Ansicht einen Therapeutenbereich vor, der innerhalb der Kind-Anwendung
+> über eine PIN erreichbar ist. Umgesetzt wurden stattdessen **zwei getrennte Anwendungen**: die
+> Kind-Anwendung unter `/` und die Therapeuten-Anwendung unter `/therapeut/`, letztere mit
+> eigener Anmeldung über E-Mail und Passwort. In der Kind-Anwendung gibt es keine PIN-Abfrage
+> und keinen verborgenen Bereich mehr.
+>
+> Die Anforderung „zwei Ansichten, Kindmodus als Standard, therapeutische Funktionen geschützt"
+> ist damit erfüllt, und zwar strenger als ursprünglich geplant. Eine PIN ist eine
+> Kindersicherung: Sie verbirgt eine Oberfläche, die auf dem Gerät weiterhin vorhanden ist,
+> und schützt die dahinterliegenden Daten nicht. Die getrennte Anwendung dagegen verlangt eine
+> echte Anmeldung, und die Daten liegen serverseitig. Auf dem Tablet des Kindes befindet sich
+> dadurch zu keinem Zeitpunkt eine Klientenliste, ein Verlauf oder ein Wochenbericht — auch
+> nicht verborgen.
+>
+> Praktisch wirkt sich das an drei Stellen aus. Erstens ist die Zuordnung Gerät zu Kind nicht
+> mehr Sache der Bedienung, sondern eines Gerätetokens, das bei der Kopplung in der Praxis
+> vergeben wird; die Kind-Anwendung sendet niemals eine Kennung des Kindes mit, sie steht im
+> Token. Zweitens wird ein verlorenes oder entwendetes Tablet dadurch unschädlich gemacht, dass
+> der Therapeut das Token serverseitig sperrt — ein Knopf auf dem Gerät selbst könnte das nicht
+> leisten. Drittens wird die Löschung eines Profils nach Art. 17 DSGVO in der Therapeuten-
+> Anwendung ausgelöst, also dort, wo die Daten tatsächlich liegen.
+>
+> Unverändert bleibt, dass es **keinen Elternbereich** gibt (D1) und der Wochenbericht
+> Gesprächsgrundlage für den Therapeuten ist, nicht für die Eltern (D3).
+
+Der Vollständigkeit halber: Die zweite bewusste Abweichung von LN1 betrifft **D4** (Backend statt
+rein lokaler Speicherung, Vor- **und** Nachname statt Vorname und Jahrgang). Sie ist in Abschnitt 1
+und Abschnitt 8 dieses Dokuments begründet und gehört im Bericht an dieselbe Stelle wie dieser
+Absatz — beide Abweichungen zusammen, nicht verstreut.
+
 **Statt des Langdrucks ein offenes Pausenmenü** (`ui/PausenMenue.tsx`, gebaut). Erreichbar im
 Startbildschirm, in jedem Spiel **und in der Zwangspause**, ohne Verzögerung und ohne PIN. Beim
 Öffnen steht „Das Spiel wartet auf dich." — Ben soll nicht glauben, ihm laufe gerade die Zeit
