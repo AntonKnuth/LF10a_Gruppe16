@@ -45,6 +45,11 @@ public static class Spielkatalog
         ["abschiedsgeschenk"] = new(Rolle.Sonder, ["schreiben"]),
     };
 
+    /// <summary>Alle bekannten Spiel-IDs in Katalogreihenfolge. Daraus legt der Seed die
+    /// Einstellungszeilen an — eine zweite Liste im Seed würde beim nächsten neuen Spiel
+    /// auseinanderlaufen.</summary>
+    public static IReadOnlyList<string> AlleIds => [.. Spiele.Keys];
+
     public static IReadOnlyList<string> KategorienFuer(string spielId) =>
         Spiele.TryGetValue(spielId, out var e) ? e.Kategorien : [OhneZuordnung];
 

@@ -71,6 +71,7 @@ public static class Tablet
                 {
                     k.Spielname, k.PausenDauerSek, k.PausenInhalt,
                     k.AnzahlAufwaermen, k.AnzahlUebungen, k.AnzahlSonder,
+                    k.LimitFreigabeAm,
                 })
                 .SingleAsync();
 
@@ -88,6 +89,9 @@ public static class Tablet
             {
                 kind.Spielname, kind.PausenDauerSek, kind.PausenInhalt,
                 kind.AnzahlAufwaermen, kind.AnzahlUebungen, kind.AnzahlSonder,
+                // B3: Der Zeitpunkt der letzten Freigabe des Tageslimits. Das Tablet vergleicht
+                // ihn mit dem zuletzt beachteten und setzt nur bei einem neueren zurück.
+                kind.LimitFreigabeAm,
                 Einstellungen = einstellungen,
             });
         }).RequireAuthorization("Geraet");

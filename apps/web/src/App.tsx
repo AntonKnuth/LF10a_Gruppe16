@@ -10,6 +10,7 @@ import { ansageText, hatUebung, standardEinstellungen, tagesplan } from './engin
 import { gleicherTag, hole, merke, vergiss } from './persistenz'
 import {
   EINHEITEN_PRO_TAG,
+  beachteFreigabe,
   einheitenHeute,
   ladeFortschritt,
   naechsteEinheit,
@@ -118,10 +119,6 @@ export default function App() {
    * ist kein Grund, ein Kind vor einem leeren Bildschirm sitzen zu lassen.
    */
   async function beginneEinheit() {
-    // B3: vor dem Netz geprüft — eine Obergrenze, die eine Verbindung braucht, greift genau
-    // dann nicht, wenn Ben allein zu Hause weiterspielen will.
-    if (einheitenHeute() >= EINHEITEN_PRO_TAG) return setTagesgrenze(true)
-
     let aktuell = kind
     try {
       aktuell = await kindLaden()
@@ -129,6 +126,13 @@ export default function App() {
     } catch {
       // Weiter mit dem, was wir haben.
     }
+
+    // B3: erst die Freigabe des Therapeuten beachten, dann die Obergrenze prüfen. Ohne
+    // Verbindung bleibt es beim lokalen Zähler — die Grenze gilt dann weiter, und das ist die
+    // sichere Richtung: lieber eine Einheit zu wenig als eine Verkrampfungsprävention, die
+    // sich mit einem gezogenen Netzstecker aushebeln lässt.
+    beachteFreigabe(aktuell?.limitFreigabeAm)
+    if (einheitenHeute() >= EINHEITEN_PRO_TAG) return setTagesgrenze(true)
 
     const plan = tagesplan(
       verein.id,

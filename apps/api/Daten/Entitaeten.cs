@@ -53,6 +53,19 @@ public class Klient
     public int AnzahlUebungen { get; set; } = 3;
     public int AnzahlSonder { get; set; } = 1;
 
+    /// <summary>
+    /// B3: Wann der Therapeut das Tageslimit zuletzt freigegeben hat.
+    ///
+    /// Gezählt wird die eine Einheit pro Tag auf dem Tablet — der Server weiß nicht, ob eine
+    /// abgebrochene Einheit noch ankommt. Ist etwas schiefgegangen, drückt Thomas hier einen
+    /// Knopf; das Tablet holt die Einstellungen vor jedem Start neu, sieht einen **neueren**
+    /// Zeitpunkt als den zuletzt beachteten und setzt seinen Zähler zurück.
+    ///
+    /// Ein Zeitpunkt und kein Schalter: ein Schalter müsste zurückgestellt werden, und wer das
+    /// vergisst, hebt die Obergrenze dauerhaft auf. So wirkt jede Freigabe genau einmal.
+    /// </summary>
+    public DateTime? LimitFreigabeAm { get; set; }
+
     public DateTime ErstelltAm { get; set; }
 
     public List<Betreuung> Betreuungen { get; set; } = [];

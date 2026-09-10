@@ -222,6 +222,22 @@ public static class Klienten
             return Results.NoContent();
         });
 
+        // B3: Das Tageslimit von einer Einheit gilt auf dem Tablet. Ging etwas schief — Absturz,
+        // versehentlich abgebrochen, falsches Kind am Gerät — gibt Thomas hier einen weiteren
+        // Durchgang frei. Wirkt genau einmal: das Tablet merkt sich den Zeitpunkt, den es zuletzt
+        // beachtet hat, und ein zweiter Start am selben Tag findet keinen neueren mehr.
+        app.MapPost("/api/klienten/{id:int}/tageslimit", async (
+            int id, TkContext db, ClaimsPrincipal nutzer) =>
+        {
+            if (nutzer.TherapeutId() is not int therapeutId) return Results.Unauthorized();
+            if (!await Zugriff.DarfSehen(db, therapeutId, id)) return Results.Forbid();
+
+            var klient = await db.Klienten.SingleAsync(k => k.Id == id);
+            klient.LimitFreigabeAm = DateTime.UtcNow;
+            await db.SaveChangesAsync();
+            return Results.Ok(new { klient.LimitFreigabeAm });
+        });
+
         app.MapPut("/api/klienten/{id:int}/pause", async (
             int id, PauseEingang eingabe, TkContext db, ClaimsPrincipal nutzer) =>
         {

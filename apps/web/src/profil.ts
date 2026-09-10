@@ -77,16 +77,36 @@ export function merkeGesehen(spielId: string) {
  */
 export const EINHEITEN_PRO_TAG = 1
 
+type Tageszaehler = { datum: string; anzahl: number; freigabe?: string | null }
+
 /** Zählt nur, was zu Ende gespielt wurde. Ein Abbruch nach 90 Sekunden war kein Training. */
 export const einheitenHeute = (): number => {
-  const z = lies<{ datum: string; anzahl: number }>(TAG)
+  const z = lies<Tageszaehler>(TAG)
   return z?.datum === heute() ? z.anzahl : 0
 }
 
-export const zaehleEinheit = () =>
-  localStorage.setItem(TAG, JSON.stringify({ datum: heute(), anzahl: einheitenHeute() + 1 }))
+export const zaehleEinheit = () => schreibeZaehler(einheitenHeute() + 1, freigabeStand())
+
+/**
+ * B3: Der Therapeut kann für heute eine weitere Einheit freigeben, wenn etwas schiefgegangen
+ * ist — abgestürzt, versehentlich abgebrochen, falsches Kind am Gerät.
+ *
+ * Zurückgesetzt wird nur bei einem **anderen** Zeitpunkt als dem zuletzt beachteten. Ohne diesen
+ * Vergleich setzte jeder Start den Zähler zurück, sobald einmal freigegeben wurde — die
+ * Obergrenze gäbe es dann nicht mehr. Rückgabe sagt, ob tatsächlich zurückgesetzt wurde.
+ */
+export function beachteFreigabe(freigabeAm: string | null | undefined): boolean {
+  if (!freigabeAm || freigabeAm === freigabeStand()) return false
+  schreibeZaehler(0, freigabeAm)
+  return true
+}
 
 const heute = () => new Date().toDateString()
+
+const freigabeStand = () => lies<Tageszaehler>(TAG)?.freigabe ?? null
+
+const schreibeZaehler = (anzahl: number, freigabe: string | null) =>
+  localStorage.setItem(TAG, JSON.stringify({ datum: heute(), anzahl, freigabe }))
 
 /** D4 / Art. 17 DSGVO: Profil vollständig löschbar. */
 export function loescheProfil() {

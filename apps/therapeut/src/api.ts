@@ -191,6 +191,14 @@ export const api = {
       method: 'POST',
     }),
 
+  /**
+   * B3: Gibt für heute eine weitere Einheit frei. Der Zähler steht auf dem Tablet, deshalb
+   * wirkt der Knopf erst beim nächsten Start dort — die Kind-App holt die Einstellungen vor
+   * jeder Einheit neu.
+   */
+  tageslimitFreigeben: (klientId: number) =>
+    hole<{ limitFreigabeAm: string }>(`/api/klienten/${klientId}/tageslimit`, { method: 'POST' }),
+
   geraetSperren: (geraetId: number) =>
     hole<void>(`/api/geraete/${geraetId}/sperren`, { method: 'POST' }),
 }

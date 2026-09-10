@@ -39,7 +39,8 @@ die Rolle `aufwaermen` unbesetzt, jede Einheit begann mit dem `Platzhalter`.
 Ebenfalls fertig: **C5** (der Profi lobt eine persönliche Bestleistung namentlich — verglichen
 wird je Spiel gegen den bisher besten Wert, `pruefeBestwert` in `profil.ts`), **B3-Tagesobergrenze**
 (**eine Einheit pro Tag**, fest im Client; wie lang eine Einheit ist, stellt Thomas ohnehin über
-Anzahl und Dauer der Übungen ein) und das **Onboarding** (beim allerersten Mal erklärt der Profi
+Anzahl und Dauer der Übungen ein — und im Therapeutenbereich gibt ein Knopf für einen Tag
+**eine** weitere Einheit frei, falls etwas schiefgegangen ist) und das **Onboarding** (beim allerersten Mal erklärt der Profi
 das Spiel, danach nie wieder; Uhr und Spiel stehen solange).
 
 Starten: `powershell -File start.ps1` → Kindmodus `http://localhost:5099/`,
@@ -323,6 +324,13 @@ Einstellbar: Schwierigkeit/Toleranz/Zielgeschwindigkeit/Mindesttrefferquote je �
 weglassen, Reihenfolge, Übungen verlängern/verkürzen, Pausendauer und -inhalt. Dazu Verlauf,
 Wochenbericht, Gerätekopplung samt Sperre und **Profil löschen (Art. 17)**.
 
+**Tageslimit freigeben (B3).** Gezählt wird die eine Einheit pro Tag auf dem Tablet — nur dort ist
+bekannt, ob eine abgebrochene Einheit überhaupt noch ankommt. Der Knopf setzt deshalb keinen
+Zähler zurück, sondern einen **Zeitpunkt** (`Klient.LimitFreigabeAm`); das Tablet holt die
+Einstellungen vor jedem Start neu, sieht einen neueren Zeitpunkt als den zuletzt beachteten und
+setzt daraufhin seinen Zähler zurück. Ein Schalter statt eines Zeitpunkts müsste zurückgestellt
+werden, und wer das vergisst, hebt die Obergrenze dauerhaft auf.
+
 Gelöscht wird hier und nicht auf dem Tablet: dort läge die Funktion hinter einer Kindersicherung,
 und die Daten liegen ohnehin auf dem Server. Ein verlorenes Tablet wird durch **Sperren des
 Gerätetokens** unschädlich gemacht — ein Knopf auf dem Gerät täte das nicht.
@@ -359,15 +367,20 @@ Phase 1 ist damit abgearbeitet. Das Onboarding erklärt der Profi in einer Sprec
 auf einzelne Spielelemente gibt es nicht** — die bräuchten pro Spiel Wissen über dessen Canvas.
 Nachrüsten, falls sich beim Ausprobieren mit Ben zeigt, dass der Satz allein nicht trägt.
 
-**Wenn ein neues Minispiel dazukommt**, muss es an vier Stellen eingetragen werden — die
+**Wenn ein neues Minispiel dazukommt**, muss es an drei Stellen eingetragen werden — die
 Komponente selbst (`apps/web/src/spiele/index.ts`) nicht mitgezählt:
 
 | Datei | Was fehlt sonst |
 |---|---|
 | `apps/web/src/spiele/katalog.ts` | Titel, Anweisung, Rolle, Bereiche — ohne den Eintrag kommt das Spiel im Tagesplan gar nicht vor |
 | `apps/api/Auswertung/Spielkatalog.cs` | Rolle und Bereiche auf dem Server. Fehlt es, gilt es als normale Übung ohne Bereich und taucht im Wochenbericht unter „Ohne Zuordnung" mit einem Hinweis auf |
-| `apps/api/Daten/Seed.cs` | die Einstellungszeile des Demo-Kindes. Ohne sie kann Thomas Stufe und Dauer für dieses Spiel nicht einstellen |
 | `apps/therapeut/src/api.ts` (`SPIEL_TITEL`) | der Klartextname. Ohne ihn steht in der Therapeuten-App die rohe Spiel-ID |
+
+Die **Einstellungszeilen legt der Seed bei jedem Start nach** (`ErgaenzeEinstellungen`, IDs aus
+`Spielkatalog.cs`). Das war einmal ein vierter Eintrag von Hand, und genau der wurde vergessen:
+die Datenbank existierte schon, also fehlte dem bestehenden Kind die Zeile für das neue Spiel.
+Gespielt wurde es trotzdem — die Kind-App nimmt für Unbekanntes ihre Vorgabe — aber im
+Therapeutenbereich war es unsichtbar und ließ sich weder einstellen noch abwählen.
 
 **Arbeitsteilung für 3 Personen:** so schneiden, dass jedes Minispiel isoliert baubar ist und
 niemand in denselben Dateien arbeitet. Zwei Regeln haben sich als bindend erwiesen: **eine Person

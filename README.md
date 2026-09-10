@@ -96,7 +96,7 @@ Test abgesichert — sie umzudrehen macht die Messung wertlos.
 
 Neuer Ordner in `src/spiele/`, dessen `index.tsx` `SpielProps` entgegennimmt und
 `onFertig(ergebnis)` aufruft. Danach in `src/spiele/index.ts` unter `KOMPONENTEN` eintragen.
-Steht das Spiel noch nicht im Katalog, kommen **drei** Einträge dazu — siehe „Ein Spiel
+Steht das Spiel noch nicht im Katalog, kommen zwei weitere Einträge dazu — siehe „Ein Spiel
 registrieren" unten. Sonst nichts; zwei Personen arbeiten dadurch nie in derselben Datei.
 
 Eine Pflicht gibt es: **auf `angehalten` reagieren** und die Bildschleife anhalten. Sonst läuft
@@ -126,15 +126,17 @@ die Lage des Stifts zur Ballmitte die Richtung. Ohne Stift greift der Ersatz aus
 
 ### Ein Spiel registrieren
 
-Ein **neues** Spiel — eines, das noch in keinem Katalog steht — braucht vier Einträge. Die
-Komponente in `src/spiele/index.ts` ist der fünfte und der einzige, den man nicht vergessen kann:
+Ein **neues** Spiel — eines, das noch in keinem Katalog steht — braucht drei Einträge. Die
+Komponente in `src/spiele/index.ts` ist der vierte und der einzige, den man nicht vergessen kann:
 
 | Datei | Was fehlt sonst |
 |---|---|
 | `apps/web/src/spiele/katalog.ts` | Titel, Anweisung, Rolle, Bereiche — ohne den Eintrag kommt das Spiel im Tagesplan gar nicht vor |
 | `apps/api/Auswertung/Spielkatalog.cs` | Rolle und Bereiche auf dem Server; sonst landet es im Wochenbericht unter „Ohne Zuordnung" |
-| `apps/api/Daten/Seed.cs` | die Einstellungszeile des Demo-Kindes; sonst kann Thomas Stufe und Dauer nicht einstellen |
 | `apps/therapeut/src/api.ts` | der Klartextname; sonst steht in der Therapeuten-App die rohe Spiel-ID |
+
+Die Einstellungszeilen je Kind legt der Seed beim Serverstart nach — auch in einer Datenbank, die
+schon existiert. Sonst wäre ein neues Spiel im Therapeutenbereich unsichtbar.
 
 ## Noch offen
 

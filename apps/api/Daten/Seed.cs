@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using TravelKickers.Api.Auswertung;
 
 namespace TravelKickers.Api.Daten;
 
@@ -19,8 +20,17 @@ public static class Seed
 
     public static void Anlegen(TkContext db, IPasswordHasher<Therapeut> hasher)
     {
-        if (db.Therapeuten.Any()) return;
+        if (!db.Therapeuten.Any()) DemoAnlegen(db, hasher);
 
+        // Läuft bei **jedem** Start, nicht nur beim ersten: sonst fehlt jedem bereits
+        // angelegten Kind die Einstellungszeile für ein neu dazugekommenes Minispiel. Das Spiel
+        // liefe dann zwar (die Kind-App nimmt für Unbekanntes ihre Vorgabe), aber der Therapeut
+        // könnte es weder einstellen noch abwählen — und würde es in seiner Liste nicht sehen.
+        ErgaenzeEinstellungen(db);
+    }
+
+    private static void DemoAnlegen(TkContext db, IPasswordHasher<Therapeut> hasher)
+    {
         var thomas = new Therapeut
         {
             Vorname = "Thomas",
@@ -48,24 +58,43 @@ public static class Seed
             Von = DateTime.UtcNow,
         });
 
-        // Ohne diese Zeilen liefert GET /api/kind eine leere Liste und in der Vorführung
-        // startet kein einziges Spiel. Die Spiel-IDs sind dieselben wie in
-        // apps/web/src/spiele/index.ts — sie kommen aus dem Content, nicht aus der Datenbank.
-        string[] spiele =
-        [
-            "aufwaermen", "linie", "autogramme", "rasenmaehen", "stationentour",
-            "startelf", "elfmeter", "dribbeln", "ballhochhalten", "brezelverkauf",
-            "abschiedsgeschenk",
-        ];
+        db.SaveChanges();
+    }
 
-        db.Einstellungen.AddRange(spiele.Select((spielId, i) => new Einstellung
+    /// <summary>
+    /// Legt für jedes Kind die fehlenden Einstellungszeilen an — eine je Spiel aus
+    /// <see cref="Spielkatalog"/>.
+    ///
+    /// Ohne diese Zeilen liefert <c>GET /api/kind</c> eine leere Liste und in der Vorführung
+    /// startet kein einziges Spiel. Vorhandene Zeilen bleiben unangetastet: was der Therapeut
+    /// eingestellt hat, darf ein Neustart nicht zurücksetzen.
+    /// </summary>
+    private static void ErgaenzeEinstellungen(TkContext db)
+    {
+        var vorhanden = db.Einstellungen
+            .Select(e => new { e.KlientId, e.SpielId })
+            .ToLookup(e => e.KlientId, e => e.SpielId);
+
+        foreach (var klientId in db.Klienten.Select(k => k.Id).ToList())
         {
-            KlientId = ben.Id,
-            SpielId = spielId,
-            Stufe = 3,
-            DauerSek = 210, // A3 verlangt 3–5 Minuten je Spiel
-            Reihenfolge = i,
-        }));
+            var schon = vorhanden[klientId].ToHashSet();
+            var fehlt = Spielkatalog.AlleIds.Where(id => !schon.Contains(id)).ToList();
+            if (fehlt.Count == 0) continue;
+
+            // Neue Spiele hinten anhängen, statt die bestehende Reihenfolge zu verschieben.
+            var naechste = schon.Count == 0
+                ? 0
+                : db.Einstellungen.Where(e => e.KlientId == klientId).Max(e => e.Reihenfolge) + 1;
+
+            db.Einstellungen.AddRange(fehlt.Select((spielId, i) => new Einstellung
+            {
+                KlientId = klientId,
+                SpielId = spielId,
+                Stufe = 3,
+                DauerSek = 210, // A3 verlangt 3–5 Minuten je Spiel
+                Reihenfolge = naechste + i,
+            }));
+        }
 
         db.SaveChanges();
     }

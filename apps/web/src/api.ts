@@ -58,6 +58,8 @@ export type KindVomServer = {
   anzahlAufwaermen: number
   anzahlUebungen: number
   anzahlSonder: number
+  /** B3: Wann der Therapeut zuletzt eine weitere Einheit für den Tag freigegeben hat. */
+  limitFreigabeAm: string | null
   einstellungen: SpielEinstellungVomServer[]
 }
 

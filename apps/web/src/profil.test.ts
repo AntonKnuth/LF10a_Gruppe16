@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
-  EINHEITEN_PRO_TAG, einheitenHeute, loescheProfil, merkeGesehen, pruefeBestwert, schonGesehen,
-  speichereFortschritt, zaehleEinheit,
+  EINHEITEN_PRO_TAG, beachteFreigabe, einheitenHeute, loescheProfil, merkeGesehen, pruefeBestwert,
+  schonGesehen, speichereFortschritt, zaehleEinheit,
 } from './profil'
 
 /**
@@ -61,6 +61,35 @@ describe('Tagesobergrenze (B3)', () => {
   it('fängt an einem anderen Tag wieder bei null an', () => {
     localStorage.setItem('tk.heute', JSON.stringify({ datum: 'Mon Jan 01 2024', anzahl: 3 }))
     expect(einheitenHeute()).toBe(0)
+  })
+
+  it('setzt den Zähler zurück, wenn der Therapeut freigibt', () => {
+    zaehleEinheit()
+    expect(einheitenHeute()).toBe(1)
+
+    expect(beachteFreigabe('2026-09-10T12:00:00Z')).toBe(true)
+    expect(einheitenHeute()).toBe(0)
+  })
+
+  it('beachtet dieselbe Freigabe nur ein einziges Mal', () => {
+    const freigabe = '2026-09-10T12:00:00Z'
+    beachteFreigabe(freigabe)
+    zaehleEinheit()
+
+    // Ohne diesen Vergleich setzte jeder Start den Zähler zurück und die Obergrenze wäre weg.
+    expect(beachteFreigabe(freigabe)).toBe(false)
+    expect(einheitenHeute()).toBe(1)
+
+    // Eine zweite Freigabe wirkt wieder.
+    expect(beachteFreigabe('2026-09-10T15:30:00Z')).toBe(true)
+    expect(einheitenHeute()).toBe(0)
+  })
+
+  it('tut ohne Freigabe nichts — auch nicht bei fehlender Verbindung', () => {
+    zaehleEinheit()
+    expect(beachteFreigabe(null)).toBe(false)
+    expect(beachteFreigabe(undefined)).toBe(false)
+    expect(einheitenHeute()).toBe(1)
   })
 })
 
