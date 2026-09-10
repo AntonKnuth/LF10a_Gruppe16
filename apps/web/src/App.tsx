@@ -34,14 +34,6 @@ export default function App() {
   const mitName = (t: string) => t.replaceAll('{name}', name)
   const dispatch = (a: SessionAction) => setLauf((s) => (s ? session(s, a) : s))
 
-  const einstellungen: Einstellungen = kind
-    ? {
-        pauseDauerSek: kind.pausenDauerSek,
-        pauseInhalt: kind.pausenInhalt,
-        spiele: Object.fromEntries(kind.einstellungen.map((e) => [e.spielId, e])),
-      }
-    : standardEinstellungen
-
   /**
    * Beim Start: Einstellungen holen und einen liegengebliebenen Schnappschuss abarbeiten.
    *
@@ -97,6 +89,35 @@ export default function App() {
     speichereFortschritt(naechste)
     setFortschritt(naechste)
     setLauf(null)
+  }
+
+  /**
+   * Vor jeder Einheit die Einstellungen frisch holen.
+   *
+   * Ein iPad wird nicht geschlossen — ohne diesen Aufruf bekäme Ben eine Änderung des
+   * Therapeuten erst nach einem Neuladen der Seite. Der Moment ist unkritisch: Ben hat gerade
+   * auf „Drücke zum Start" getippt und wartet ohnehin einen Wimpernschlag.
+   *
+   * Schlägt der Aufruf fehl, wird mit dem zuletzt bekannten Stand gespielt. Ein Netzproblem
+   * ist kein Grund, ein Kind vor einem leeren Bildschirm sitzen zu lassen.
+   */
+  async function beginneEinheit() {
+    let aktuell = kind
+    try {
+      aktuell = await kindLaden()
+      setKind(aktuell)
+    } catch {
+      // Weiter mit dem, was wir haben.
+    }
+
+    const plan = tagesplan(
+      verein.id,
+      fortschritt.tag,
+      zuEinstellungen(aktuell),
+      aktuell?.spielname == null,
+    )
+    if (!hatUebung(plan)) return setKeinTraining(true)
+    setLauf(starteSession(verein.id, fortschritt.tag, plan))
   }
 
   /** Der jeweilige Bildschirm des Ablaufs — ohne alles, was über ihm liegt. */
@@ -155,12 +176,7 @@ export default function App() {
       return (
         <StartScreen
           aktiverVereinIndex={fortschritt.vereinIndex}
-          onStart={() => {
-            // Namensfrage nur, solange das Kind noch keinen Spielnamen gewählt hat.
-            const plan = tagesplan(verein, fortschritt.tag, einstellungen, kind?.spielname == null)
-            if (!hatUebung(plan)) return setKeinTraining(true)
-            setLauf(starteSession(verein.id, fortschritt.tag, plan))
-          }}
+          onStart={() => void beginneEinheit()}
         />
       )
     }
@@ -288,6 +304,19 @@ export default function App() {
       <Abdunklung />
     </div>
   )
+}
+
+/** Was der Server über das Kind sagt, in die Form, die die Segment-Engine erwartet. */
+function zuEinstellungen(kind: KindVomServer | null): Einstellungen {
+  if (!kind) return standardEinstellungen
+  return {
+    pauseDauerSek: kind.pausenDauerSek,
+    pauseInhalt: kind.pausenInhalt,
+    anzahlAufwaermen: kind.anzahlAufwaermen,
+    anzahlUebungen: kind.anzahlUebungen,
+    anzahlSonder: kind.anzahlSonder,
+    spiele: Object.fromEntries(kind.einstellungen.map((e) => [e.spielId, e])),
+  }
 }
 
 function Stern({ an }: { an: boolean }) {

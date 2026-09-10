@@ -21,13 +21,6 @@ export const ajax = {
     bestleistung: { text: 'Bestleistung, {name}! Besser als jedes Mal davor.' },
   },
 
-  tage: [
-    { spiele: ['aufwaermen', 'linie', 'stationentour'] },
-    { spiele: ['aufwaermen', 'dribbeln', 'linie'] },
-    { spiele: ['aufwaermen', 'linie', 'ballhochhalten'] },
-    { spiele: ['aufwaermen', 'startelf', 'linie'] },
-    { spiele: ['aufwaermen', 'linie', 'abschiedsgeschenk'] },
-  ],
 
   kader: [
     { nummer: 1, name: 'Remko Pasveer' },

@@ -43,6 +43,16 @@ public class Klient
     public int PausenDauerSek { get; set; } = 60;
     public string PausenInhalt { get; set; } = "Hand locker ausschütteln";
 
+    // Wie viele Übungen welcher Rolle eine Einheit hat. Vorgabe: ein Aufwärmspiel, drei
+    // Übungen, und am letzten Tag eines Vereins das Abschiedsgeschenk.
+    //
+    // Der Tagesplan wird daraus gewürfelt; es gibt keine feste Liste mehr, welche Übung an
+    // welchem Tag drankommt. Die Prüfung beim Speichern sorgt dafür, dass für jede Rolle
+    // mindestens so viele Spiele aktiv sind, wie hier Plätze stehen.
+    public int AnzahlAufwaermen { get; set; } = 1;
+    public int AnzahlUebungen { get; set; } = 3;
+    public int AnzahlSonder { get; set; } = 1;
+
     public DateTime ErstelltAm { get; set; }
 
     public List<Betreuung> Betreuungen { get; set; } = [];

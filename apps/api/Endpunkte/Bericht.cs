@@ -150,7 +150,7 @@ public static class Bericht
                 .ToList();
 
             var proKategorie = alleErgebnisse
-                .SelectMany(e => Kategorien.Fuer(e.SpielId).Select(k => new { Kategorie = k, e }))
+                .SelectMany(e => Spielkatalog.KategorienFuer(e.SpielId).Select(k => new { Kategorie = k, e }))
                 .GroupBy(x => x.Kategorie)
                 .OrderBy(g => g.Key)
                 .Select(g =>
@@ -186,10 +186,10 @@ public static class Bericht
                     $"{ohneRoh} von {alleErgebnisse.Count} Übungen ohne verwertbare Aufzeichnung — " +
                     "sie sind in den Mittelwerten nicht enthalten.");
 
-            if (proKategorie.Any(k => k.Kategorie == Kategorien.OhneZuordnung))
+            if (proKategorie.Any(k => k.Kategorie == Spielkatalog.OhneZuordnung))
                 hinweise.Add(
                     "Für mindestens eine Übung fehlt die Zuordnung zu einem Fähigkeitsbereich — " +
-                    "sie ist in Auswertung/Kategorien.cs nicht eingetragen.");
+                    "sie ist in Auswertung/Spielkatalog.cs nicht eingetragen.");
 
             var stufenwechsel = alleErgebnisse.Select(e => e.Stufe).Distinct().Count();
             if (stufenwechsel > 1)

@@ -25,17 +25,6 @@ export const hsv = {
     bestleistung: { text: '{name}, das war deine beste Runde bisher!' },
   },
 
-  // Tag 1 beginnt mit Ankommen, Tag 5 endet mit dem Abschiedsgeschenk.
-  tage: [
-    // TESTSTAND Phase 1: „ballhochhalten" steht vorn, weil es das einzige gebaute
-    // Minispiel ist — sonst kommt man nur über zwei Platzhalter und zwei Pausen hin.
-    // Zurücksetzen auf ['aufwaermen', 'linie', 'autogramme'], sobald mehr fertig ist.
-    { spiele: ['ballhochhalten', 'linie', 'autogramme'] },
-    { spiele: ['aufwaermen', 'linie', 'rasenmaehen'] },
-    { spiele: ['aufwaermen', 'stationentour', 'linie'] },
-    { spiele: ['aufwaermen', 'startelf', 'elfmeter'] },
-    { spiele: ['aufwaermen', 'linie', 'abschiedsgeschenk'] },
-  ],
 
   kader: [
     { nummer: 1, name: 'Daniel Heuer Fernandes' },

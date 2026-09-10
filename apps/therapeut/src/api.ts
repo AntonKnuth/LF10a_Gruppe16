@@ -20,6 +20,27 @@ export type KlientDetail = Klient & {
   pausenInhalt: string
 }
 
+export type Rolle = 'aufwaermen' | 'normal' | 'sonder'
+
+/**
+ * Rolle je Spiel. Vergibt der Content, nicht der Therapeut — er sieht sie nur als Abschnitt.
+ * Muss zu `apps/api/Auswertung/Spielkatalog.cs` passen; ein fehlender Eintrag gilt dort wie
+ * hier als normale Übung.
+ */
+export const SPIEL_ROLLE: Record<string, Rolle> = {
+  aufwaermen: 'aufwaermen',
+  abschiedsgeschenk: 'sonder',
+}
+
+export const rolleVon = (spielId: string): Rolle => SPIEL_ROLLE[spielId] ?? 'normal'
+
+export type Tagesform = {
+  anzahlAufwaermen: number
+  anzahlUebungen: number
+  anzahlSonder: number
+  spiele: Einstellung[]
+}
+
 export type Einstellung = {
   spielId: string
   stufe: number
@@ -106,6 +127,11 @@ async function hole<T>(pfad: string, optionen: RequestInit = {}): Promise<T> {
   // 401 ist kein Fehler im üblichen Sinn, sondern der Normalfall beim ersten Aufruf.
   // Die Oberfläche zeigt daraufhin die Anmeldung, statt eine Fehlermeldung.
   if (antwort.status === 401) throw new NichtAngemeldet()
+
+  // Der Server lehnt eine ungültige Tagesform mit einer erklärenden Meldung ab. Die soll
+  // Thomas lesen können — „400 Bad Request" hilft ihm nicht weiter.
+  if (antwort.status === 400) throw new Error((await antwort.text()) || 'Ungültige Eingabe.')
+
   if (!antwort.ok) throw new Error(`${antwort.status} ${antwort.statusText}`)
 
   // Erst lesen, dann entscheiden — nicht am Statuscode festmachen. Ein 201 ohne Rumpf oder ein
@@ -137,12 +163,12 @@ export const api = {
 
   klientLoeschen: (id: number) => hole<void>(`/api/klienten/${id}`, { method: 'DELETE' }),
 
-  einstellungen: (id: number) => hole<Einstellung[]>(`/api/klienten/${id}/einstellungen`),
+  einstellungen: (id: number) => hole<Tagesform>(`/api/klienten/${id}/einstellungen`),
 
-  einstellungenSpeichern: (id: number, werte: Einstellung[]) =>
+  einstellungenSpeichern: (id: number, form: Tagesform) =>
     hole<void>(`/api/klienten/${id}/einstellungen`, {
       method: 'PUT',
-      body: JSON.stringify(werte),
+      body: JSON.stringify(form),
     }),
 
   pauseSpeichern: (id: number, pausenDauerSek: number, pausenInhalt: string) =>

@@ -38,8 +38,6 @@ export type Verein = {
   karte: { x: number; y: number }
   farben: { primaer: string; sekundaer: string }
   profi: Profi
-  /** Die 5 Trainingstage bei diesem Verein, je eine Liste von Spiel-IDs. */
-  tage: { spiele: string[] }[]
   // --- Vereinsspezifische Aufgabeninhalte ---
   // Der Kern des Konzepts: Ben soll den Eindruck haben, wirklich mit den Leuten
   // dort zu trainieren — nicht dieselbe Übung mit ausgetauschtem Wappen.

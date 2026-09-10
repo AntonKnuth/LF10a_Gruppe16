@@ -54,6 +54,10 @@ export type KindVomServer = {
   spielname: string | null
   pausenDauerSek: number
   pausenInhalt: string
+  /** Wie viele Übungen welcher Rolle eine Einheit hat. */
+  anzahlAufwaermen: number
+  anzahlUebungen: number
+  anzahlSonder: number
   einstellungen: SpielEinstellungVomServer[]
 }
 

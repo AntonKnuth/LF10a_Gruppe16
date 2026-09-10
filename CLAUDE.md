@@ -159,7 +159,8 @@ Bildschirm.
 
 ## Ablauf
 
-**Ein Verein = 5 Einheiten.** Danach Reise zum nächsten Verein: neuer Profi, andere Spielauswahl.
+**Ein Verein = 5 Einheiten.** Danach Reise zum nächsten Verein, immer in derselben Reihenfolge:
+neuer Profi, neue Aufgabeninhalte.
 
 Eine Einheit besteht aus einer Liste von **Segmenten**:
 
@@ -170,9 +171,38 @@ Eine Einheit besteht aus einer Liste von **Segmenten**:
  Abschluss-Fragebogen   jeden Tag
 ```
 
-Stationentour, Autogrammstunde und Abschiedsgeschenk sind **normale Minispiele** im Tagesplan,
-keine Sonderfälle. Tag 5 endet mit dem Abschiedsgeschenk (Foto einer auf Papier geschriebenen
-Aufgabe, per Kamera aufgenommen — **nur speichern und Thomas anzeigen, nicht auswerten**).
+### Woher die Übungen des Tages kommen
+
+**Es steht nirgends fest, welche Übung an welchem Tag drankommt.** Es gibt keine Tagesliste mehr
+im Content — der Plan wird für jeden Tag neu gewürfelt.
+
+Jedes Minispiel hat im Katalog (`apps/web/src/spiele/katalog.ts`) eine **Rolle**: `aufwaermen`,
+`normal` oder `sonder`. Die vergibt der Content, **nicht** der Therapeut — ob „Aufwärmen" ein
+Aufwärmspiel ist, ist eine Eigenschaft des Spiels. Der Therapeut stellt zweierlei ein: **wie
+viele** Übungen welcher Rolle eine Einheit hat (Vorgabe 1 + 3 + 1) und **welche Spiele** im Topf
+sind. Das Sonderspiel steht immer als **letzte** Übung an Tag 5 (Abschiedsgeschenk: Foto einer
+auf Papier geschriebenen Aufgabe — **nur speichern und Thomas anzeigen, nicht auswerten**).
+
+**Geordneter Zufall.** Der Startwert kommt aus Verein und Tag, bewusst *ohne* Kind-Kennung — die
+kennt das Tablet gar nicht, sie steckt nur im Gerätetoken. Folgen daraus: derselbe Tag ergibt
+denselben Plan (nach einem Abbruch bringt Ben das zu Ende, was er angefangen hat, und der Plan
+ist mit vitest prüfbar), verschiedene Tage ergeben verschiedene Pläne, und sobald der Therapeut
+ein Spiel aus dem Topf nimmt, wird aus einer anderen Menge gezogen.
+
+**Die Abwechslungsregel** (`spieleDesTages` in `engine/tagesplan.ts`) in vier Zeilen: die erste
+Übung wird gewürfelt · für jeden weiteren Platz gewinnt die Übung mit der geringsten
+Überschneidung der Fähigkeitsbereiche zur vorherigen · bei Gleichstand gewinnt, was heute noch
+nicht dran war · sonst der Zufall, und dasselbe Spiel nie dreimal hintereinander. Ergebnis:
+Hand-Auge, dann Striche, dann Wellen, dann Druck — ohne dass irgendwo eine Liste steht.
+
+**Speichersperre.** Sind für eine Rolle mehr Plätze eingestellt als Spiele aktiv, lehnt der
+Server das Speichern mit einer Meldung ab („Übungen: 3 pro Einheit eingestellt, aber nur 2 Spiele
+sind aktiv."). Sonst müsste sich dieselbe Übung wiederholen, und die Einstellung wäre nicht das,
+was der Therapeut meint. Die Oberfläche warnt vorher, der Server ist die Regel.
+
+**Änderungen gelten ab dem nächsten Training:** die Kind-App holt die Einstellungen vor **jedem**
+Start einer Einheit neu. Ein iPad wird nicht geschlossen — beim App-Start allein käme eine
+Änderung erst nach einem Neuladen an.
 
 **Namensabfrage per Stift nur beim allerersten Start überhaupt**, nicht bei jedem neuen Verein.
 Gefragt wird nach einem **selbstgewählten Spielnamen** („Benno") — den bürgerlichen Namen vergibt
@@ -291,8 +321,9 @@ Gerätetokens** unschädlich gemacht — ein Knopf auf dem Gerät täte das nich
 
 ## Content
 
-Vereine, Profis, Dialoge und Tagespläne als **TypeScript-Objekte mit Schema-Validierung** in
-`apps/web/src/content/`. Neuer Verein = eine Datei + Bilderordner. Typsicher, und ein fehlendes
+Vereine, Profis und Dialoge als **TypeScript-Objekte mit Schema-Validierung** in
+`apps/web/src/content/`. Tagespläne stehen dort **nicht** mehr — siehe „Woher die Übungen des
+Tages kommen". Neuer Verein = eine Datei + Bilderordner. Typsicher, und ein fehlendes
 Feld gibt einen Fehler statt eines leeren Bildschirms.
 
 Anpassungen des Therapeuten sind **Overrides in der DB**, die über den Content gelegt werden —
@@ -317,6 +348,12 @@ Pausenmenü. Zwei Minispiele statt einem: **Ball hochhalten** und **Platzwart**.
 
 Offen aus Phase 1: **Onboarding beim ersten Spiel** (Pfeile + Erklärung des Profis) und das
 Minispiel **Linie malen**.
+
+**Wenn ein neues Minispiel dazukommt**, muss es an zwei Stellen eingetragen werden:
+`apps/web/src/spiele/katalog.ts` (Titel, Anweisung, Rolle, Bereiche) und
+`apps/api/Auswertung/Spielkatalog.cs` (Rolle, Bereiche). Vergisst man den Server, verschwindet
+es nicht still — es gilt als normale Übung ohne Bereich und taucht im Wochenbericht unter „Ohne
+Zuordnung" mit einem Hinweis auf.
 
 **Arbeitsteilung für 3 Personen:** so schneiden, dass jedes Minispiel isoliert baubar ist und
 niemand in denselben Dateien arbeitet. Zwei Regeln haben sich als bindend erwiesen: **eine Person

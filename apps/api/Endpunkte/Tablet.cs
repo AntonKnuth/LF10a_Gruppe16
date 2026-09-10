@@ -67,7 +67,11 @@ public static class Tablet
 
             var kind = await db.Klienten
                 .Where(k => k.Id == klientId)
-                .Select(k => new { k.Spielname, k.PausenDauerSek, k.PausenInhalt })
+                .Select(k => new
+                {
+                    k.Spielname, k.PausenDauerSek, k.PausenInhalt,
+                    k.AnzahlAufwaermen, k.AnzahlUebungen, k.AnzahlSonder,
+                })
                 .SingleAsync();
 
             var einstellungen = await db.Einstellungen
@@ -82,7 +86,9 @@ public static class Tablet
             // selbstgewählte Spielname ausgesprochen (C5).
             return Results.Ok(new
             {
-                kind.Spielname, kind.PausenDauerSek, kind.PausenInhalt, Einstellungen = einstellungen,
+                kind.Spielname, kind.PausenDauerSek, kind.PausenInhalt,
+                kind.AnzahlAufwaermen, kind.AnzahlUebungen, kind.AnzahlSonder,
+                Einstellungen = einstellungen,
             });
         }).RequireAuthorization("Geraet");
 

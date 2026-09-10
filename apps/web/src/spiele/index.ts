@@ -1,22 +1,12 @@
 import type { ComponentType } from 'react'
 import type { SpielErgebnis } from '../engine/segmente'
 import type { Verein } from '../content/typen'
+import { KATALOG, type Spieldaten } from './katalog'
 import { BallHochhalten } from './ballhochhalten'
 import { Platzwart } from './rasenmaehen'
 import { Platzhalter } from './Platzhalter'
 
-/**
- * Fähigkeitsbereiche für die Auswertung. Ein Spiel kann mehrere tragen — ohne diese
- * Tags lassen sich unterschiedliche Spiele im Bericht nicht zusammenfassen.
- */
-export type Kategorie =
-  | 'gerade-striche'
-  | 'wellen'
-  | 'schreiben'
-  | 'druckdosierung'
-  | 'hand-auge'
-  | 'pinzettengriff'
-  | 'inhibition'
+export type { Kategorie, Rolle } from './katalog'
 
 /**
  * Schnittstelle jedes Minispiels. Jedes Spiel ist eine eigene Datei in diesem Ordner und
@@ -40,77 +30,25 @@ export type SpielProps = {
   onFertig: (ergebnis: SpielErgebnis) => void
 }
 
-export type Minispiel = {
-  titel: string
-  /** Genau ein Satz (A5), wird vorgelesen. */
-  anweisung: string
-  tags: Kategorie[]
+export type Minispiel = Spieldaten & {
   Komponente: ComponentType<SpielProps>
 }
 
 /**
- * Noch nicht gebaute Spiele zeigen den Platzhalter. Titel, Anweisung und Tags sind schon
- * echt — sie gehören zum Tagesplan, nicht zur Umsetzung.
+ * Titel, Anweisung, Rolle und Bereiche kommen aus `katalog.ts`; hier steht nur, welche
+ * Komponente ein Spiel zeichnet. Noch nicht gebaute Spiele zeigen den `Platzhalter` —
+ * ihre Daten sind trotzdem schon echt, sie gehören zum Tagesplan und nicht zur Umsetzung.
+ *
+ * Ein Spiel fertigstellen heißt: Datei danebenlegen und hier den Eintrag tauschen.
  */
-export const SPIELE: Record<string, Minispiel> = {
-  aufwaermen: {
-    titel: 'Aufwärmen',
-    anweisung: 'Fahre den Dribbel-Parcours fünfmal nach.',
-    tags: ['wellen', 'hand-auge'],
-    Komponente: Platzhalter,
-  },
-  linie: {
-    titel: 'Linie malen',
-    anweisung: 'Ziehe den Ball auf der Linie zum Tor.',
-    tags: ['gerade-striche'],
-    Komponente: Platzhalter,
-  },
-  autogramme: {
-    titel: 'Autogrammstunde',
-    anweisung: 'Schreibe dein Autogramm auf jedes Trikot.',
-    tags: ['schreiben', 'pinzettengriff'],
-    Komponente: Platzhalter,
-  },
-  rasenmaehen: {
-    titel: 'Platzwart',
-    anweisung: 'Mähe den Rasen — nicht zu fest und nicht zu leicht drücken.',
-    tags: ['druckdosierung'],
-    Komponente: Platzwart,
-  },
-  stationentour: {
-    titel: 'Stadionführung',
-    anweisung: 'Schreibe die Stadionfakten in gleichmäßigem Tempo ab.',
-    tags: ['schreiben', 'druckdosierung'],
-    Komponente: Platzhalter,
-  },
-  startelf: {
-    titel: 'Startelf',
-    anweisung: 'Schreibe Namen und Rückennummer der Spieler auf.',
-    tags: ['schreiben'],
-    Komponente: Platzhalter,
-  },
-  elfmeter: {
-    titel: 'Elfmeter',
-    anweisung: 'Schieße mit einem schnellen, gleichmäßigen Strich aufs Tor.',
-    tags: ['hand-auge', 'druckdosierung'],
-    Komponente: Platzhalter,
-  },
-  dribbeln: {
-    titel: 'Dribbeln mit Pfiff',
-    anweisung: 'Halte beim Pfiff an, aber hebe den Stift nicht ab.',
-    tags: ['inhibition', 'wellen'],
-    Komponente: Platzhalter,
-  },
-  ballhochhalten: {
-    titel: 'Ball hochhalten',
-    anweisung: 'Tippe den Ball an und drücke so fest auf, dass er im violetten Band umkehrt.',
-    tags: ['hand-auge', 'druckdosierung'],
-    Komponente: BallHochhalten,
-  },
-  abschiedsgeschenk: {
-    titel: 'Abschiedsgeschenk',
-    anweisung: 'Schreibe den Satz auf Papier und fotografiere ihn ab.',
-    tags: ['schreiben'],
-    Komponente: Platzhalter,
-  },
+const KOMPONENTEN: Record<string, ComponentType<SpielProps>> = {
+  ballhochhalten: BallHochhalten,
+  rasenmaehen: Platzwart,
 }
+
+export const SPIELE: Record<string, Minispiel> = Object.fromEntries(
+  Object.entries(KATALOG).map(([id, daten]) => [
+    id,
+    { ...daten, Komponente: KOMPONENTEN[id] ?? Platzhalter },
+  ]),
+)

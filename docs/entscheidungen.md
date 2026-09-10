@@ -291,6 +291,37 @@ kennt nur die Beschriftungen. **Ein neues Minispiel muss dort eingetragen werden
 es, verschwindet es nicht still, sondern landet unter „Ohne Zuordnung" und der Bericht schreibt
 einen Hinweis. Genau das ist im Test `KategorienTests` festgehalten.
 
+### Tagesplan: gewürfelt statt fest
+
+**Der gemeldete Fehler war strukturell.** `tagesplan()` filterte die feste Spieleliste eines
+Vereinstages gegen die Einstellungen. `linie` und `aufwaermen` standen an je 9 von 10 Tagen —
+wer eines abwählte, höhlte fast jeden Tag aus. Im Extremfall (nur ein Spiel aktiv) waren **8 von
+10 Tagen leer**, die Einheit lief durch, meldete „fertig" und schob den Fortschritt weiter.
+
+Behoben in zwei Schritten. Zuerst die Absicherung: eine Einheit ohne Übung startet nicht mehr.
+Danach die Ursache: **es gibt keine Tagesliste mehr.**
+
+- **Rollen** (`aufwaermen` / `normal` / `sonder`) stehen am Spiel und werden vom Content
+  vergeben, nicht vom Therapeuten. Der stellt Anzahl je Rolle und den Topf ein.
+- **Geordneter Zufall**, Startwert aus Verein + Tag. Nicht `Math.random()`: derselbe Tag muss
+  denselben Plan ergeben, sonst bekommt Ben nach einem Abbruch etwas anderes und der Generator
+  ist nicht testbar. Ohne Kind-Kennung, weil das Tablet seine `KlientId` nicht kennt.
+- **Abwechslung über Fähigkeitsbereiche**, nicht über Spiel-IDs: aufeinanderfolgende Übungen
+  sollen möglichst wenig gemeinsame Bereiche haben.
+- **Grenzfall, bewusst dokumentiert:** bei nur einem Spiel im Topf kann „nicht dreimal
+  hintereinander" nicht gelten. Erreichbar ist das nur unter Umgehung der Speichersperre; ein
+  Test hält es fest, damit niemand es später für einen Fehler hält.
+- **Speichersperre auf beiden Seiten:** die Oberfläche warnt und zeigt „8 von 8 aktiv — zu
+  wenige für die eingestellten Plätze", der Server lehnt mit einer Meldung ab. Die Oberfläche
+  ist die Bequemlichkeit, der Server die Regel.
+- **Verworfen:** die Tagesliste als „Vorschlag" behalten und nur auffüllen — das hätte die
+  Variation wieder an den Verein gebunden. Der Verein prägt über seine *Inhalte*
+  (Kaderliste, Fakten, Sprüche), nicht über die Auswahl der Übungen.
+
+Der Katalog liegt jetzt zweimal: `apps/web/src/spiele/katalog.ts` (Daten, ohne React, damit die
+Engine ihn ohne Canvas und WebAudio lesen kann) und `apps/api/Auswertung/Spielkatalog.cs` (Rolle
+und Bereiche für Prüfung und Bericht). Ein vergessener Eintrag fällt auf, statt still zu wirken.
+
 ## 9. Offen
 
 - Aufteilung der Arbeitspakete: regelt die Gruppe selbst. **Eine Regel bleibt technisch bindend:**
