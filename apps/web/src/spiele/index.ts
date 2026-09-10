@@ -2,6 +2,7 @@ import type { ComponentType } from 'react'
 import type { SpielErgebnis } from '../engine/segmente'
 import type { Verein } from '../content/typen'
 import { KATALOG, type Spieldaten } from './katalog'
+import { Aufwaermen } from './aufwaermen'
 import { Autogrammstunde } from './autogramme'
 import { BallHochhalten } from './ballhochhalten'
 import { LinieMalen } from './linie'
@@ -44,6 +45,7 @@ export type Minispiel = Spieldaten & {
  * Ein Spiel fertigstellen heißt: Datei danebenlegen und hier den Eintrag ergänzen.
  */
 const KOMPONENTEN: Record<string, ComponentType<SpielProps>> = {
+  aufwaermen: Aufwaermen,
   autogramme: Autogrammstunde,
   ballhochhalten: BallHochhalten,
   linie: LinieMalen,
