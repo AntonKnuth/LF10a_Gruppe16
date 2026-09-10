@@ -18,6 +18,9 @@ export type Fortschritt = { vereinIndex: number; tag: number }
 
 const P = 'tk.profil'
 const F = 'tk.fortschritt'
+const B = 'tk.bestwerte'
+const G = 'tk.gesehen'
+const TAG = 'tk.heute'
 
 const lies = <T,>(key: string): T | null => {
   const roh = localStorage.getItem(key)
@@ -38,8 +41,54 @@ export function naechsteEinheit(f: Fortschritt): Fortschritt {
 
 export const speichereFortschritt = (f: Fortschritt) => localStorage.setItem(F, JSON.stringify(f))
 
+/**
+ * C5: persönliche Bestleistung je Übung.
+ *
+ * Verglichen wird die grobe Genauigkeit aus dem Browser. Für einen Bericht taugt sie nicht —
+ * dafür rechnet C# aus den Rohdaten — für ein „das war deine beste Runde" reicht sie genau:
+ * es ist dieselbe Zahl, aus der auch die Sterne kommen.
+ *
+ * Beim allerersten Mal gibt es nichts zu übertreffen. Der Wert wird gemerkt, gelobt wird nicht:
+ * sonst wäre jede erste Übung eine Bestleistung und das Lob wertlos.
+ */
+export function pruefeBestwert(spielId: string, wert: number): boolean {
+  const alle = lies<Record<string, number>>(B) ?? {}
+  const alt = alle[spielId]
+  if (alt !== undefined && wert <= alt) return false
+  localStorage.setItem(B, JSON.stringify({ ...alle, [spielId]: wert }))
+  return alt !== undefined
+}
+
+/** Onboarding: erklärt wird jedes Spiel genau einmal, beim ersten Mal (C2 — Hilfe statt Abbruch). */
+export const schonGesehen = (spielId: string) => (lies<string[]>(G) ?? []).includes(spielId)
+
+export function merkeGesehen(spielId: string) {
+  const alle = lies<string[]>(G) ?? []
+  if (!alle.includes(spielId)) localStorage.setItem(G, JSON.stringify([...alle, spielId]))
+}
+
+/**
+ * B3: eine Einheit pro Tag.
+ *
+ * Verkrampfungsprävention wirkt nicht, wenn Ben die Zwangspause damit überschreibt, sofort die
+ * nächste Einheit zu starten. Wie lang eine Einheit ist, stellt Thomas ohnehin über Anzahl und
+ * Dauer der Übungen ein — die Obergrenze ist deshalb eine feste Zahl und keine weitere
+ * Einstellung.
+ */
+export const EINHEITEN_PRO_TAG = 1
+
+/** Zählt nur, was zu Ende gespielt wurde. Ein Abbruch nach 90 Sekunden war kein Training. */
+export const einheitenHeute = (): number => {
+  const z = lies<{ datum: string; anzahl: number }>(TAG)
+  return z?.datum === heute() ? z.anzahl : 0
+}
+
+export const zaehleEinheit = () =>
+  localStorage.setItem(TAG, JSON.stringify({ datum: heute(), anzahl: einheitenHeute() + 1 }))
+
+const heute = () => new Date().toDateString()
+
 /** D4 / Art. 17 DSGVO: Profil vollständig löschbar. */
 export function loescheProfil() {
-  localStorage.removeItem(P)
-  localStorage.removeItem(F)
+  for (const key of [P, F, B, G, TAG]) localStorage.removeItem(key)
 }

@@ -3,7 +3,9 @@ import { SPIELE, type SpielProps } from '../spiele'
 import type { SpielErgebnis } from '../engine/segmente'
 import type { Verein } from '../content/typen'
 import { druckVon, feinEreignisse } from '../eingabe'
+import { merkeGesehen, schonGesehen } from '../profil'
 import { neueAufzeichnung } from '../rohdaten'
+import { DialogScreen } from './DialogScreen'
 import { useVorlesen } from '../ui/vorlesen'
 
 /**
@@ -38,7 +40,16 @@ export function SpielScreen({
 }) {
   const spiel = SPIELE[spielId]
   const [rest, setRest] = useState(dauerSek)
-  useVorlesen(spiel?.anweisung ?? '')
+
+  /**
+   * Onboarding (C2: Hilfe statt Abbruch): Beim allerersten Mal erklärt der Profi das Spiel,
+   * bevor es losgeht. Danach nie wieder — eine Erklärung, die jedes Mal kommt, wird übersprungen
+   * und dann fehlt sie an dem Tag, an dem sie gebraucht wird.
+   */
+  const [erklaerung, setErklaerung] = useState(() => !schonGesehen(spielId))
+
+  // Während der Erklärung schweigt der Rahmen: sonst redet er der Sprechblase ins Wort.
+  useVorlesen(erklaerung ? '' : (spiel?.anweisung ?? ''))
 
   const flaeche = useRef<HTMLElement>(null)
   const aufzeichnung = useRef(neueAufzeichnung())
@@ -48,10 +59,10 @@ export function SpielScreen({
   // Angehalten steht auch die Uhr. Sonst kostet eine Pause Ben Spielzeit — A3 verlangt
   // 3 bis 5 Minuten Übung, nicht 3 bis 5 Minuten Bildschirm.
   useEffect(() => {
-    if (angehalten) return
+    if (angehalten || erklaerung) return
     const id = setInterval(() => setRest((r) => Math.max(0, r - 1)), 1000)
     return () => clearInterval(id)
-  }, [angehalten])
+  }, [angehalten, erklaerung])
 
   const nimmAuf = useCallback((e: React.PointerEvent, druckWert?: number) => {
     const r = flaeche.current?.getBoundingClientRect()
@@ -84,6 +95,23 @@ export function SpielScreen({
   )
 
   if (!spiel) return <p className="p-8 text-2xl">Unbekanntes Spiel: {spielId}</p>
+
+  if (erklaerung) {
+    return (
+      <DialogScreen
+        verein={verein}
+        text={`${name}, pass auf: ${spiel.anweisung}`}
+        knopf="Los geht's"
+        onWeiter={() => {
+          merkeGesehen(spielId)
+          // Die Rohdatenuhr beginnt erst jetzt: `t` zählt ab Segmentstart, und die Zeit vor dem
+          // Knopf war Zuhören, keine Bewegung.
+          beginn.current = performance.now()
+          setErklaerung(false)
+        }}
+      />
+    )
+  }
 
   const props: SpielProps = {
     stufe, verein, name, angehalten, zeitAbgelaufen: rest === 0, onFertig: fertig,
