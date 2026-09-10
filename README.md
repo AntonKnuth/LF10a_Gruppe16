@@ -107,8 +107,8 @@ Die Kennzahlen für den Bericht rechnet später C# aus der Rohdaten-Punktfolge.
 
 ### Vorlage: „Ball hochhalten"
 
-Fertig sind zwei Spiele: `src/spiele/ballhochhalten/` und `src/spiele/rasenmaehen/`. Das erste ist
-bewusst in vier Dateien geteilt, damit man jede einzeln erklären kann:
+Fertig sind vier Spiele, jedes im selben Schnitt aus vier Dateien — `ballhochhalten`,
+`rasenmaehen`, `linie` und `autogramme`. Am Beispiel des ersten:
 
 | Datei | Inhalt |
 |---|---|
@@ -124,7 +124,8 @@ die Lage des Stifts zur Ballmitte die Richtung. Ohne Stift greift der Ersatz aus
 
 ## Noch offen
 
-- Weitere Minispiele — fertig sind „Ball hochhalten" und „Platzwart", der Rest zeigt `Platzhalter`
+- Weitere Minispiele — fertig sind „Ball hochhalten", „Platzwart", „Linie malen" und
+  „Autogrammstunde"; der Rest zeigt `Platzhalter`. B2 verlangt fünf
 - Onboarding beim ersten Spiel (Pfeile + Erklärung des Profis)
 - Abschiedsgeschenk per Kamera und der Upload der Arbeitsproben (Schema steht, Endpunkt fehlt)
 - HTTPS unter festem Namen — nötig für echte iPads, sonst stürzt die App beim Sessionstart ab

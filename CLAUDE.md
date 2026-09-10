@@ -32,7 +32,8 @@ damit nicht dieselben Fragen erneut aufgemacht werden.
 Gebaut und im Zusammenspiel geprüft: Server mit Anmeldung, Gerätekopplung, Datenannahme und
 Auswertung · Therapeuten-App mit Klientenauswahl, Einstellungen, Verlauf, Wochenbericht und
 Gerätesperre · Kind-App mit Kopplung, Rohdatenaufzeichnung, Upload und Pausenmenü.
-Zwei Minispiele fertig: **Ball hochhalten** und **Platzwart**.
+Vier Minispiele fertig: **Ball hochhalten**, **Platzwart**, **Linie malen** und
+**Autogrammstunde**. B2 verlangt fünf.
 
 Starten: `powershell -File start.ps1` → Kindmodus `http://localhost:5099/`,
 Therapeutenbereich `/therapeut/`. Demo-Konto `thomas@praxis.test` / `travelkickers`.
@@ -344,10 +345,10 @@ vereinsspezifischen Aufgabeninhalte** (Kaderliste, Fakten, Sprüche) — siehe L
 Erledigt: Gerüst und Startbildschirm · Erstlauf mit Spielnamen per Stift · Ansage · Segment-Engine ·
 Lob → Selbsteinschätzung → Pause mit Timer · Abschluss-Fragebogen · Therapeuten-App mit
 Einstellungen und Verlauf · Gerätekopplung, Datenannahme, Auswertung in C#, Wochenbericht ·
-Pausenmenü. Zwei Minispiele statt einem: **Ball hochhalten** und **Platzwart**.
+Pausenmenü. Vier Minispiele statt einem: **Ball hochhalten**, **Platzwart**, **Linie malen**,
+**Autogrammstunde**.
 
-Offen aus Phase 1: **Onboarding beim ersten Spiel** (Pfeile + Erklärung des Profis) und das
-Minispiel **Linie malen**.
+Offen aus Phase 1: **Onboarding beim ersten Spiel** (Pfeile + Erklärung des Profis).
 
 **Wenn ein neues Minispiel dazukommt**, muss es an zwei Stellen eingetragen werden:
 `apps/web/src/spiele/katalog.ts` (Titel, Anweisung, Rolle, Bereiche) und
@@ -386,7 +387,5 @@ Bericht). Bild-Upload der Arbeitsproben — das Schema steht, der Endpunkt kommt
   - **Tour Guide / Stationentour** (Tempo + Druck): Fakten in gleichmäßigem Tempo und Druck
     nachschreiben — zu schnell oder zu langsam, und die Besucher gehen
   - **11 Meter** (Hand-Auge): Schnelligkeit und gleichmäßiger Druck; sonst hält der Torwart
-  - **Autogrammstunde** (Grafomotorik + Pinzettengriff): Unterschriften auf Trikots
-  - **Linie malen** (gerade Striche) — steht noch aus Phase 1 aus
   - Weitere in `Übungs Ideen.md` (Security, UFO/Müll einsammeln, Startelf-Namen schreiben)
 - Ob echte Vereinsassets durch fiktive ersetzt werden
