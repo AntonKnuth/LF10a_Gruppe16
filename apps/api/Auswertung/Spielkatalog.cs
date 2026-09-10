@@ -40,6 +40,7 @@ public static class Spielkatalog
         ["startelf"] = new(Rolle.Normal, ["schreiben"]),
         ["elfmeter"] = new(Rolle.Normal, ["hand-auge", "druckdosierung"]),
         ["dribbeln"] = new(Rolle.Normal, ["inhibition", "wellen"]),
+        ["brezelverkauf"] = new(Rolle.Normal, ["gerade-striche", "hand-auge"]),
         ["ballhochhalten"] = new(Rolle.Normal, ["hand-auge", "druckdosierung"]),
         ["abschiedsgeschenk"] = new(Rolle.Sonder, ["schreiben"]),
     };

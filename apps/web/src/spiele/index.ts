@@ -4,6 +4,7 @@ import type { Verein } from '../content/typen'
 import { KATALOG, type Spieldaten } from './katalog'
 import { Aufwaermen } from './aufwaermen'
 import { Autogrammstunde } from './autogramme'
+import { Brezelverkauf } from './brezelverkauf'
 import { BallHochhalten } from './ballhochhalten'
 import { LinieMalen } from './linie'
 import { Platzwart } from './rasenmaehen'
@@ -47,6 +48,7 @@ export type Minispiel = Spieldaten & {
 const KOMPONENTEN: Record<string, ComponentType<SpielProps>> = {
   aufwaermen: Aufwaermen,
   autogramme: Autogrammstunde,
+  brezelverkauf: Brezelverkauf,
   ballhochhalten: BallHochhalten,
   linie: LinieMalen,
   rasenmaehen: Platzwart,

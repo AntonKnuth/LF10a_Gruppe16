@@ -94,9 +94,10 @@ Test abgesichert — sie umzudrehen macht die Messung wertlos.
 
 ## Ein Minispiel bauen
 
-Neue Datei in `src/spiele/`, die `SpielProps` entgegennimmt und `onFertig(ergebnis)` aufruft.
-Danach in `src/spiele/index.ts` beim passenden Eintrag `Komponente` austauschen. Sonst nichts —
-zwei Personen arbeiten dadurch nie in derselben Datei.
+Neuer Ordner in `src/spiele/`, dessen `index.tsx` `SpielProps` entgegennimmt und
+`onFertig(ergebnis)` aufruft. Danach in `src/spiele/index.ts` unter `KOMPONENTEN` eintragen.
+Steht das Spiel noch nicht im Katalog, kommen **drei** Einträge dazu — siehe „Ein Spiel
+registrieren" unten. Sonst nichts; zwei Personen arbeiten dadurch nie in derselben Datei.
 
 Eine Pflicht gibt es: **auf `angehalten` reagieren** und die Bildschleife anhalten. Sonst läuft
 das Spiel weiter, während das Pausenmenü offen ist. Zum Ausprobieren einzelner Spiele gibt es
@@ -107,8 +108,9 @@ Die Kennzahlen für den Bericht rechnet später C# aus der Rohdaten-Punktfolge.
 
 ### Vorlage: „Ball hochhalten"
 
-Fertig sind fünf Spiele, jedes im selben Schnitt aus vier Dateien — `aufwaermen`,
-`ballhochhalten`, `rasenmaehen`, `linie` und `autogramme`. Am Beispiel des zweiten:
+Fertig sind sechs Spiele, jedes im selben Schnitt aus vier Dateien — `aufwaermen`,
+`ballhochhalten`, `rasenmaehen`, `linie`, `autogramme` und `brezelverkauf`. Am Beispiel des
+zweiten:
 
 | Datei | Inhalt |
 |---|---|
@@ -122,10 +124,22 @@ die Lage des Stifts zur Ballmitte die Richtung. Ohne Stift greift der Ersatz aus
 (Maustaste = Stift auf Papier, Ziffern 1–9 = 10–90 % Druck, 0 = 100 %); solche Werte werden als
 `synthetisch` markiert, sonst mischen sie sich mit echten Pencil-Druckkurven.
 
+### Ein Spiel registrieren
+
+Ein **neues** Spiel — eines, das noch in keinem Katalog steht — braucht vier Einträge. Die
+Komponente in `src/spiele/index.ts` ist der fünfte und der einzige, den man nicht vergessen kann:
+
+| Datei | Was fehlt sonst |
+|---|---|
+| `apps/web/src/spiele/katalog.ts` | Titel, Anweisung, Rolle, Bereiche — ohne den Eintrag kommt das Spiel im Tagesplan gar nicht vor |
+| `apps/api/Auswertung/Spielkatalog.cs` | Rolle und Bereiche auf dem Server; sonst landet es im Wochenbericht unter „Ohne Zuordnung" |
+| `apps/api/Daten/Seed.cs` | die Einstellungszeile des Demo-Kindes; sonst kann Thomas Stufe und Dauer nicht einstellen |
+| `apps/therapeut/src/api.ts` | der Klartextname; sonst steht in der Therapeuten-App die rohe Spiel-ID |
+
 ## Noch offen
 
-- Weitere Minispiele — fertig sind „Aufwärmen", „Ball hochhalten", „Platzwart", „Linie malen"
-  und „Autogrammstunde"; der Rest zeigt `Platzhalter`. B2 (fünf) ist damit erfüllt
+- Weitere Minispiele — fertig sind „Aufwärmen", „Ball hochhalten", „Platzwart", „Linie malen",
+  „Autogrammstunde" und „Brezelverkauf"; der Rest zeigt `Platzhalter`. B2 (fünf) ist erfüllt
 - Pfeile im Onboarding — der Profi erklärt das Spiel beim ersten Mal, zeigt aber auf nichts
 - Abschiedsgeschenk per Kamera und der Upload der Arbeitsproben (Schema steht, Endpunkt fehlt)
 - HTTPS unter festem Namen — nötig für echte iPads, sonst stürzt die App beim Sessionstart ab

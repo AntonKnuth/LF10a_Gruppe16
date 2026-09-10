@@ -32,9 +32,9 @@ damit nicht dieselben Fragen erneut aufgemacht werden.
 Gebaut und im Zusammenspiel geprüft: Server mit Anmeldung, Gerätekopplung, Datenannahme und
 Auswertung · Therapeuten-App mit Klientenauswahl, Einstellungen, Verlauf, Wochenbericht und
 Gerätesperre · Kind-App mit Kopplung, Rohdatenaufzeichnung, Upload und Pausenmenü.
-**B2 erfüllt — fünf Minispiele:** **Aufwärmen** (Dribbel-Parcours), **Ball hochhalten**,
-**Platzwart**, **Linie malen** und **Autogrammstunde**. Bis dahin war die Rolle `aufwaermen`
-unbesetzt, jede Einheit begann mit dem `Platzhalter`.
+**B2 erfüllt — sechs Minispiele:** **Aufwärmen** (Dribbel-Parcours), **Ball hochhalten**,
+**Platzwart**, **Linie malen**, **Autogrammstunde** und **Brezelverkauf**. Bis zum Aufwärmen war
+die Rolle `aufwaermen` unbesetzt, jede Einheit begann mit dem `Platzhalter`.
 
 Ebenfalls fertig: **C5** (der Profi lobt eine persönliche Bestleistung namentlich — verglichen
 wird je Spiel gegen den bisher besten Wert, `pruefeBestwert` in `profil.ts`), **B3-Tagesobergrenze**
@@ -352,18 +352,22 @@ vereinsspezifischen Aufgabeninhalte** (Kaderliste, Fakten, Sprüche) — siehe L
 Erledigt: Gerüst und Startbildschirm · Erstlauf mit Spielnamen per Stift · Ansage · Segment-Engine ·
 Lob → Selbsteinschätzung → Pause mit Timer · Abschluss-Fragebogen · Therapeuten-App mit
 Einstellungen und Verlauf · Gerätekopplung, Datenannahme, Auswertung in C#, Wochenbericht ·
-Pausenmenü · Onboarding beim ersten Spiel. Fünf Minispiele statt einem: **Aufwärmen**,
-**Ball hochhalten**, **Platzwart**, **Linie malen**, **Autogrammstunde**.
+Pausenmenü · Onboarding beim ersten Spiel. Sechs Minispiele statt einem: **Aufwärmen**,
+**Ball hochhalten**, **Platzwart**, **Linie malen**, **Autogrammstunde**, **Brezelverkauf**.
 
 Phase 1 ist damit abgearbeitet. Das Onboarding erklärt der Profi in einer Sprechblase; **Pfeile
 auf einzelne Spielelemente gibt es nicht** — die bräuchten pro Spiel Wissen über dessen Canvas.
 Nachrüsten, falls sich beim Ausprobieren mit Ben zeigt, dass der Satz allein nicht trägt.
 
-**Wenn ein neues Minispiel dazukommt**, muss es an zwei Stellen eingetragen werden:
-`apps/web/src/spiele/katalog.ts` (Titel, Anweisung, Rolle, Bereiche) und
-`apps/api/Auswertung/Spielkatalog.cs` (Rolle, Bereiche). Vergisst man den Server, verschwindet
-es nicht still — es gilt als normale Übung ohne Bereich und taucht im Wochenbericht unter „Ohne
-Zuordnung" mit einem Hinweis auf.
+**Wenn ein neues Minispiel dazukommt**, muss es an vier Stellen eingetragen werden — die
+Komponente selbst (`apps/web/src/spiele/index.ts`) nicht mitgezählt:
+
+| Datei | Was fehlt sonst |
+|---|---|
+| `apps/web/src/spiele/katalog.ts` | Titel, Anweisung, Rolle, Bereiche — ohne den Eintrag kommt das Spiel im Tagesplan gar nicht vor |
+| `apps/api/Auswertung/Spielkatalog.cs` | Rolle und Bereiche auf dem Server. Fehlt es, gilt es als normale Übung ohne Bereich und taucht im Wochenbericht unter „Ohne Zuordnung" mit einem Hinweis auf |
+| `apps/api/Daten/Seed.cs` | die Einstellungszeile des Demo-Kindes. Ohne sie kann Thomas Stufe und Dauer für dieses Spiel nicht einstellen |
+| `apps/therapeut/src/api.ts` (`SPIEL_TITEL`) | der Klartextname. Ohne ihn steht in der Therapeuten-App die rohe Spiel-ID |
 
 **Arbeitsteilung für 3 Personen:** so schneiden, dass jedes Minispiel isoliert baubar ist und
 niemand in denselben Dateien arbeitet. Zwei Regeln haben sich als bindend erwiesen: **eine Person

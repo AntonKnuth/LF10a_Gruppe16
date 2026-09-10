@@ -207,6 +207,7 @@ export const SPIEL_TITEL: Record<string, string> = {
   elfmeter: 'Elfmeter',
   dribbeln: 'Dribbeln mit Pfiff',
   ballhochhalten: 'Ball hochhalten',
+  brezelverkauf: 'Brezelverkauf',
   abschiedsgeschenk: 'Abschiedsgeschenk',
 }
 

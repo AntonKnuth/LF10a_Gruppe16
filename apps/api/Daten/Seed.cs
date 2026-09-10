@@ -54,7 +54,8 @@ public static class Seed
         string[] spiele =
         [
             "aufwaermen", "linie", "autogramme", "rasenmaehen", "stationentour",
-            "startelf", "elfmeter", "dribbeln", "ballhochhalten", "abschiedsgeschenk",
+            "startelf", "elfmeter", "dribbeln", "ballhochhalten", "brezelverkauf",
+            "abschiedsgeschenk",
         ];
 
         db.Einstellungen.AddRange(spiele.Select((spielId, i) => new Einstellung
