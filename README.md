@@ -107,8 +107,8 @@ Die Kennzahlen für den Bericht rechnet später C# aus der Rohdaten-Punktfolge.
 
 ### Vorlage: „Ball hochhalten"
 
-Fertig sind vier Spiele, jedes im selben Schnitt aus vier Dateien — `ballhochhalten`,
-`rasenmaehen`, `linie` und `autogramme`. Am Beispiel des ersten:
+Fertig sind fünf Spiele, jedes im selben Schnitt aus vier Dateien — `aufwaermen`,
+`ballhochhalten`, `rasenmaehen`, `linie` und `autogramme`. Am Beispiel des zweiten:
 
 | Datei | Inhalt |
 |---|---|
@@ -124,9 +124,9 @@ die Lage des Stifts zur Ballmitte die Richtung. Ohne Stift greift der Ersatz aus
 
 ## Noch offen
 
-- Weitere Minispiele — fertig sind „Ball hochhalten", „Platzwart", „Linie malen" und
-  „Autogrammstunde"; der Rest zeigt `Platzhalter`. B2 verlangt fünf
-- Onboarding beim ersten Spiel (Pfeile + Erklärung des Profis)
+- Weitere Minispiele — fertig sind „Aufwärmen", „Ball hochhalten", „Platzwart", „Linie malen"
+  und „Autogrammstunde"; der Rest zeigt `Platzhalter`. B2 (fünf) ist damit erfüllt
+- Pfeile im Onboarding — der Profi erklärt das Spiel beim ersten Mal, zeigt aber auf nichts
 - Abschiedsgeschenk per Kamera und der Upload der Arbeitsproben (Schema steht, Endpunkt fehlt)
 - HTTPS unter festem Namen — nötig für echte iPads, sonst stürzt die App beim Sessionstart ab
 - Vereinsassets sind Platzhalter mit echten Bezügen und müssen vor einer Veröffentlichung ersetzt werden

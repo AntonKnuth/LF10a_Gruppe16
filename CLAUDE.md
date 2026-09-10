@@ -27,13 +27,20 @@ damit nicht dieselben Fragen erneut aufgemacht werden.
 
 **Design-Referenz:** `docs/mockup-startbildschirm.png` (vom User erstellt).
 
-### Stand (04.09.2026)
+### Stand (10.09.2026)
 
 Gebaut und im Zusammenspiel geprüft: Server mit Anmeldung, Gerätekopplung, Datenannahme und
 Auswertung · Therapeuten-App mit Klientenauswahl, Einstellungen, Verlauf, Wochenbericht und
 Gerätesperre · Kind-App mit Kopplung, Rohdatenaufzeichnung, Upload und Pausenmenü.
-Vier Minispiele fertig: **Ball hochhalten**, **Platzwart**, **Linie malen** und
-**Autogrammstunde**. B2 verlangt fünf.
+**B2 erfüllt — fünf Minispiele:** **Aufwärmen** (Dribbel-Parcours), **Ball hochhalten**,
+**Platzwart**, **Linie malen** und **Autogrammstunde**. Bis dahin war die Rolle `aufwaermen`
+unbesetzt, jede Einheit begann mit dem `Platzhalter`.
+
+Ebenfalls fertig: **C5** (der Profi lobt eine persönliche Bestleistung namentlich — verglichen
+wird je Spiel gegen den bisher besten Wert, `pruefeBestwert` in `profil.ts`), **B3-Tagesobergrenze**
+(**eine Einheit pro Tag**, fest im Client; wie lang eine Einheit ist, stellt Thomas ohnehin über
+Anzahl und Dauer der Übungen ein) und das **Onboarding** (beim allerersten Mal erklärt der Profi
+das Spiel, danach nie wieder; Uhr und Spiel stehen solange).
 
 Starten: `powershell -File start.ps1` → Kindmodus `http://localhost:5099/`,
 Therapeutenbereich `/therapeut/`. Demo-Konto `thomas@praxis.test` / `travelkickers`.
@@ -345,10 +352,12 @@ vereinsspezifischen Aufgabeninhalte** (Kaderliste, Fakten, Sprüche) — siehe L
 Erledigt: Gerüst und Startbildschirm · Erstlauf mit Spielnamen per Stift · Ansage · Segment-Engine ·
 Lob → Selbsteinschätzung → Pause mit Timer · Abschluss-Fragebogen · Therapeuten-App mit
 Einstellungen und Verlauf · Gerätekopplung, Datenannahme, Auswertung in C#, Wochenbericht ·
-Pausenmenü. Vier Minispiele statt einem: **Ball hochhalten**, **Platzwart**, **Linie malen**,
-**Autogrammstunde**.
+Pausenmenü · Onboarding beim ersten Spiel. Fünf Minispiele statt einem: **Aufwärmen**,
+**Ball hochhalten**, **Platzwart**, **Linie malen**, **Autogrammstunde**.
 
-Offen aus Phase 1: **Onboarding beim ersten Spiel** (Pfeile + Erklärung des Profis).
+Phase 1 ist damit abgearbeitet. Das Onboarding erklärt der Profi in einer Sprechblase; **Pfeile
+auf einzelne Spielelemente gibt es nicht** — die bräuchten pro Spiel Wissen über dessen Canvas.
+Nachrüsten, falls sich beim Ausprobieren mit Ben zeigt, dass der Satz allein nicht trägt.
 
 **Wenn ein neues Minispiel dazukommt**, muss es an zwei Stellen eingetragen werden:
 `apps/web/src/spiele/katalog.ts` (Titel, Anweisung, Rolle, Bereiche) und
