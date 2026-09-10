@@ -273,7 +273,7 @@ export function aktualisiere(w: Welt, dt: number) {
 
 /**
  * ACHTUNG — `vollstaendigkeit` und `genauigkeit` sind **unmaßgeblich**. Sie entstehen im
- * Browser für das Sofortfeedback aus A1 (Sterne nach dem Lob) und dürfen nie in einem
+ * Browser für das Sofortfeedback aus A1 und dürfen nie in einem
  * Bericht landen. Die maßgeblichen Kennzahlen rechnet C# aus der Rohdaten-Punktfolge.
  *
  * `vollstaendigkeit` misst hier gegen die fünf Durchgänge, denn genau die sind die Aufgabe.

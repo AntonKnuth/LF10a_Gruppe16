@@ -119,8 +119,12 @@ nicht kennt.
 ### Zweistufige Auswertung — der Kern der Architektur
 
 - **Browser:** Sofortfeedback unter 100 ms — Strich erscheint, **Soundeffekt, Partikel**,
-  Sterne/Pokale. Das gehört zu A1 und ist keine Kür. Die dabei berechnete Bewertung ist grob und
-  wird **nie in einem Bericht verwendet**; im Code als unmaßgeblich markieren.
+  Ball rollt, Hütchen kippt. Das gehört zu A1 und ist keine Kür. Die dabei berechnete Bewertung
+  ist grob und wird **nie in einem Bericht verwendet**; im Code als unmaßgeblich markieren.
+  **Aber sie wird Ben auch nicht gezeigt:** Rückmeldung ja, Note nein. Nach einer Übung gibt es
+  keine Sterne und keine Zahl — siehe „Selbsteinschätzung" weiter unten. Ein Punktestand
+  *innerhalb* eines Spiels ist etwas anderes und bleibt: er gehört zur Spielmechanik, nicht zur
+  Bewertung der Feinmotorik.
 - **C#:** die maßgeblichen Kennzahlen, gerechnet aus der Rohdaten-Punktfolge. Getestet mit xUnit.
 
 Das erfüllt A1, B4 und die Zusage „Auswertung in C#" gleichzeitig.
@@ -269,9 +273,18 @@ mehrere pro Spiel möglich, für die Auswertung nach Fähigkeitsbereich.
 
 ### Selbsteinschätzung (C3) — Reihenfolge ist kritisch
 
-**Frage → Lob des Profis → Ergebnis.** Wird zuerst das Ergebnis gezeigt oder gelobt, misst man
-nicht die Selbsteinschätzung, sondern die Fähigkeit, ein Ergebnis abzulesen — und die Differenz,
-also der ganze Zweck von C3, ist wertlos.
+**Frage → Lob des Profis.** Ein Ergebnis kommt danach **nicht** mehr. Ursprünglich stand hier
+„Frage → Lob → Ergebnis" mit ein bis drei Sternen auf dem Lob-Bildschirm; die sind entfernt.
+
+Zwei Gründe. Erstens: die Sterne kamen aus der groben Browser-Genauigkeit, die das Projekt selbst
+als *unmaßgeblich* führt und aus jedem Bericht heraushält — als Note für ein Kind taugt sie erst
+recht nicht, und „ein Stern" liest sich wie ein Scheitern (C2). Zweitens C3 selbst: wird direkt
+nach der Selbsteinschätzung ein Urteil gezeigt, lernt Ben, seine Antwort daran auszurichten statt
+an seinem Gefühl — und die Differenz, also der ganze Zweck von C3, wird wertlos. C3 verlangt den
+Abgleich ausdrücklich **nur für Thomas**.
+
+Fortschritt sieht Ben trotzdem: auf der Landkarte (C4) und daran, dass der Profi eine persönliche
+Bestleistung benennt (C5).
 
 Drei Smileys, nicht fünf. **Die Antwort wird nie korrigiert oder kommentiert** — kein
 „Das war doch super!", das entwertet Bens Wahrnehmung und verstößt gegen C2.

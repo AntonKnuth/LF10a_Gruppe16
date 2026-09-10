@@ -39,6 +39,23 @@ body {
   touch-action: manipulation;
 }
 
+@keyframes auftritt {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Einmalig beim Erscheinen, nicht in einer Schleife: das Lob soll festlich wirken und nicht
+   flackern. Bei `prefers-reduced-motion` schaltet die Regel unten alles ab. */
+@utility auftritt {
+  animation: auftritt 0.32s ease-out both;
+}
+
 @keyframes pulsieren {
   0%,
   100% {

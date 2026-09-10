@@ -450,6 +450,34 @@ Der Schalter heißt deshalb „Bildschirm dunkler" und nicht „Helligkeit".
 zwischengespeicherten App-Rumpf — die App lädt vom Server. Bricht die Verbindung **während** einer
 Einheit ab, wird zu Ende gespielt und der Schnappschuss später nachgesendet (Abschnitt 6).
 
+### Lob-Bildschirm: keine Sterne, keine Zahl
+
+Nach jeder Übung standen ein bis drei Sterne unter dem Lob des Profis, berechnet aus der groben
+Browser-Genauigkeit. **Entfernt.** Drei Gründe, in dieser Reihenfolge:
+
+1. **Die Zahl ist unmaßgeblich.** Genau dafür ist sie im ganzen Projekt markiert: sie entsteht im
+   Browser für das Sofortfeedback aus A1 und darf in keinen Bericht. Was für einen Bericht nicht
+   gut genug ist, ist als Note für ein Kind erst recht nicht gut genug.
+2. **C3 misst sonst das Falsche.** Die Selbsteinschätzung steht unmittelbar davor. Zeigt man
+   danach ein Urteil, lernt Ben, seine Antwort daran auszurichten statt an seinem Gefühl — und die
+   Differenz, der ganze Zweck von C3, wird wertlos. C3 verlangt den Abgleich ausdrücklich **nur
+   für Thomas**.
+3. **„Ein Stern" ist ein Verliererzustand** (C2), auch wenn kein „Game Over" dabeisteht.
+
+Die Reihenfolge in `CLAUDE.md` heißt deshalb jetzt **Frage → Lob**, nicht mehr
+„Frage → Lob → Ergebnis". Fortschritt sieht Ben weiterhin: auf der Landkarte (C4) und daran, dass
+der Profi eine persönliche Bestleistung benennt (C5).
+
+**Der Punktestand innerhalb eines Spiels bleibt.** Die Anzeigetafel in „Ball hochhalten" zählt
+Treffer dieses Spiels — Spielmechanik und unmittelbare Belohnung (A1), keine Bewertung der
+Feinmotorik. Der Unterschied ist nicht Haarspalterei: das eine ist ein Spiel, das andere eine Note.
+
+An die Stelle der Sterne tritt ein eigener Lob-Bildschirm (`screens/LobScreen.tsx`) mit
+Stadionkulisse in Vereinsfarben, Wappen, großem Profi und Namensschild. Grund: C5 verlangt, dass
+das Lob **von der Spielfigur** kommt, und die Leitidee verlangt, dass es sich nach *diesem* Verein
+anfühlt. Beides war auf dem allgemeinen Dialogbildschirm nicht zu erkennen — es sah aus wie ein
+Systemhinweis mit Sternen.
+
 ## 11. Verworfen — und warum
 
 | Verworfen | Grund |

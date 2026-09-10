@@ -45,8 +45,8 @@ export const speichereFortschritt = (f: Fortschritt) => localStorage.setItem(F, 
  * C5: persönliche Bestleistung je Übung.
  *
  * Verglichen wird die grobe Genauigkeit aus dem Browser. Für einen Bericht taugt sie nicht —
- * dafür rechnet C# aus den Rohdaten — für ein „das war deine beste Runde" reicht sie genau:
- * es ist dieselbe Zahl, aus der auch die Sterne kommen.
+ * dafür rechnet C# aus den Rohdaten — für ein „das war deine beste Runde" reicht sie genau.
+ * Sie wird Ben nie als Zahl gezeigt, sondern nur als Satz des Profis.
  *
  * Beim allerersten Mal gibt es nichts zu übertreffen. Der Wert wird gemerkt, gelobt wird nicht:
  * sonst wäre jede erste Übung eine Bestleistung und das Lob wertlos.

@@ -904,7 +904,10 @@ function effekte(g: CanvasRenderingContext2D, w: Welt) {
   g.globalAlpha = 1
 }
 
-/** Derselbe Stern wie auf dem Lob-Bildschirm, damit es dieselbe Belohnung bleibt. */
+/**
+ * Der Stern auf der Anzeigetafel. Er steht neben dem laufenden Punktestand **dieses Spiels** und
+ * ist damit Spielmechanik, keine Bewertung der Übung — die Sterne nach dem Lob sind entfernt.
+ */
 let sternPfad: Path2D | null = null
 
 function stern(g: CanvasRenderingContext2D, x: number, y: number, r: number) {

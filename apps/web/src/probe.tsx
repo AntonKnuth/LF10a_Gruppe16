@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import { vereine } from './content'
 import type { SpielErgebnis } from './engine/segmente'
+import { LobScreen } from './screens/LobScreen'
 import { SpielScreen } from './screens/SpielScreen'
 import { SPIELE } from './spiele'
 
@@ -16,6 +17,7 @@ import { SPIELE } from './spiele'
  *
  *   http://localhost:5173/probe.html
  *   http://localhost:5173/probe.html?spiel=rasenmaehen&stufe=3&dauer=45
+ *   http://localhost:5173/probe.html?lob=1   — nur der Lob-Bildschirm (C5)
  *
  * Bindet bewusst den **echten** `SpielScreen` ein: Anweisung, Vorlesen und der sichtbare
  * Timer aus A3 verhalten sich hier genau wie im Tagesplan. Was auf der Probebühne läuft,
@@ -34,6 +36,9 @@ export function Probe() {
   const [lauf, setLauf] = useState(0)
   const [ergebnis, setErgebnis] = useState<SpielErgebnis | null>(null)
   const [angehalten, setAngehalten] = useState(false)
+  // Das Lob liegt im Tagesplan hinter einem ganzen Spiel und einer Smiley-Frage. Zum
+  // Gestalten ist das derselbe unbrauchbare Umweg, gegen den es diese Seite gibt.
+  const [lobOffen, setLobOffen] = useState(p.get('lob') === '1')
 
   const verein = vereine.find((v) => v.id === vereinId) ?? vereine[0]
 
@@ -116,6 +121,13 @@ export function Probe() {
         {/* Zum Prüfen, ob ein Spiel das Anhalten wirklich beachtet: Bild und Uhr müssen
             stehen bleiben, und die gemessene Dauer darf die Pausenzeit nicht enthalten. */}
         <button
+          onClick={() => setLobOffen(true)}
+          className="rounded bg-slate-600 px-4 py-1 font-bold text-white"
+        >
+          Lob
+        </button>
+
+        <button
           onClick={() => setAngehalten((a) => !a)}
           className="rounded bg-slate-600 px-4 py-1 font-bold text-white"
         >
@@ -128,7 +140,13 @@ export function Probe() {
       </div>
 
       <div className="min-h-0 flex-1">
-        {ergebnis ? (
+        {lobOffen ? (
+          <LobScreen
+            verein={verein}
+            text={verein.profi.lob[0].text.replaceAll('{name}', 'Ben')}
+            onWeiter={() => setLobOffen(false)}
+          />
+        ) : ergebnis ? (
           <Auswertung ergebnis={ergebnis} onNochmal={neu} />
         ) : (
           <SpielScreen

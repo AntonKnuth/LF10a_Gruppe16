@@ -75,6 +75,45 @@ export function Stadion({ x, y }: { x: number; y: number }) {
   )
 }
 
+/**
+ * Vereinswappen als Schild mit Kürzel.
+ *
+ * Setzt wie die Profi-Figur voraus, dass die Primärfarbe die dunklere der beiden ist — die
+ * Schrift steht in der Sekundärfarbe darauf. Bei einem Verein mit hellem Primärton müsste hier
+ * (und im Trikot) getauscht werden; die beiden vorhandenen Pakete sind dunkel auf weiß.
+ */
+export function Wappen({
+  farben,
+  kuerzel,
+}: {
+  farben: { primaer: string; sekundaer: string }
+  kuerzel: string
+}) {
+  return (
+    <svg viewBox="0 0 100 118" className="h-full w-full" aria-hidden="true">
+      <path
+        d="M8 8 h84 v56 q0 32 -42 46 q-42 -14 -42 -46z"
+        fill={farben.primaer}
+        stroke="#ffffff"
+        strokeWidth="7"
+        strokeLinejoin="round"
+      />
+      <path d="M50 11 v97" stroke={farben.sekundaer} strokeWidth="3" opacity="0.25" />
+      <text
+        x="50"
+        y="62"
+        textAnchor="middle"
+        fontSize="34"
+        fontWeight="900"
+        fill={farben.sekundaer}
+        fontFamily="system-ui"
+      >
+        {kuerzel}
+      </text>
+    </svg>
+  )
+}
+
 /** Profispieler als Gesprächspartner (C5). Trägt die Vereinsfarben. */
 export function ProfiFigur({ farben }: { farben: { primaer: string; sekundaer: string } }) {
   return (

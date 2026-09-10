@@ -19,6 +19,7 @@ import {
   zaehleEinheit,
 } from './profil'
 import { DialogScreen } from './screens/DialogScreen'
+import { LobScreen } from './screens/LobScreen'
 import { KopplungScreen } from './screens/KopplungScreen'
 import { NameScreen } from './screens/NameScreen'
 import { PauseScreen } from './screens/PauseScreen'
@@ -296,21 +297,14 @@ export default function App() {
 
       case 'lob': {
         const lob = verein.profi.lob[(lauf.ergebnisse.length - 1) % verein.profi.lob.length]
-        const sterne = Math.max(1, Math.round((lauf.ergebnisse.at(-1)?.genauigkeit ?? 0) * 3))
         // C5: War es die beste Runde bisher, sagt der Profi genau das — statt des Standardlobs,
         // nicht zusätzlich. Zwei Sprechblasen hintereinander wären eine Menüebene zu viel (A2).
         return (
-          <DialogScreen
+          <LobScreen
             verein={verein}
             text={mitName(bestleistung ? verein.profi.bestleistung.text : lob.text)}
             onWeiter={() => dispatch({ art: 'weiter' })}
-          >
-            <div className="flex gap-3" aria-label={`${sterne} von 3 Sternen`}>
-              {[1, 2, 3].map((i) => (
-                <Stern key={i} an={i <= sterne} />
-              ))}
-            </div>
-          </DialogScreen>
+          />
         )
       }
 
@@ -361,18 +355,4 @@ function zuEinstellungen(kind: KindVomServer | null): Einstellungen {
     anzahlSonder: kind.anzahlSonder,
     spiele: Object.fromEntries(kind.einstellungen.map((e) => [e.spielId, e])),
   }
-}
-
-function Stern({ an }: { an: boolean }) {
-  return (
-    <svg viewBox="-12 -12 24 24" className="h-14 w-14">
-      <path
-        d="M0 -11 L3.2 -3.6 11 -3.4 4.9 1.4 7.1 8.9 0 4.6 -7.1 8.9 -4.9 1.4 -11 -3.4 -3.2 -3.6 Z"
-        fill={an ? '#f6b81c' : '#e2e8f0'}
-        stroke={an ? '#c98f0a' : '#cbd5e1'}
-        strokeWidth="1.2"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
 }
