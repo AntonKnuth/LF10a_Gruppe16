@@ -1,14 +1,8 @@
-import karteBild from '../assets/karte.png'
 import { vereine } from '../content'
 import { Maskottchen, Pin, Stadion } from '../ui/Figuren'
 
-/**
- * Kartenfläche im SVG. `karte.x/y` eines Vereins sind Prozent davon.
- *
- * Deckungsgleich mit dem Kartenbild: dadurch sind die Prozentwerte im Content zugleich die
- * Position auf der Zeichnung, und ein neuer Verein braucht nur zwei Zahlen.
- */
-const KARTE = { x: 0, y: 262, b: 1000, h: 480 }
+/** Kartenfläche im SVG. `karte.x/y` eines Vereins sind Prozent davon. */
+const KARTE = { x: 110, y: 330, b: 780, h: 380 }
 const auf = (k: { x: number; y: number }) => ({
   x: KARTE.x + (k.x / 100) * KARTE.b,
   y: KARTE.y + (k.y / 100) * KARTE.h,
@@ -65,16 +59,9 @@ export function StartScreen({ aktiverVereinIndex, onStart }: Props) {
         </g>
       </g>
 
-      {/* Der Globus ist jetzt eine Zeichnung. Der weiße Himmel darüber ist freigestellt,
-          deshalb liegt sie einfach über dem Himmelsverlauf. */}
-      <image
-        href={karteBild}
-        x={KARTE.x}
-        y={KARTE.y}
-        width={KARTE.b}
-        height={KARTE.h}
-        preserveAspectRatio="none"
-      />
+      {/* Globus-Andeutung: sehr großer Kreis, von dem nur die obere Wölbung sichtbar ist. */}
+      <circle cx="500" cy="1780" r="1470" fill="#f2f6f9" />
+      <Europa />
 
       {/* Nicht besuchte Vereine zuerst, damit der aktive Verein oben liegt. */}
       {vereine.map((v, i) => {
@@ -126,6 +113,23 @@ function Wolke({ x, y, s }: { x: number; y: number; s: number }) {
       <ellipse cx="-38" cy="8" rx="34" ry="19" />
       <ellipse cx="36" cy="7" rx="38" ry="21" />
       <ellipse cx="-6" cy="-18" rx="32" ry="22" />
+    </g>
+  )
+}
+
+/**
+ * Vereinfachter Umriss. ponytail: bewusst grob gehalten — die Nadeln tragen die
+ * Funktion (C4), die Kartengrafik ist Deko. Gegen ein echtes Europa-SVG austauschen,
+ * ohne die Koordinatenrechnung oben anzufassen.
+ */
+function Europa() {
+  return (
+    <g fill="#ccd5dd" stroke="#b9c3cd" strokeWidth="2">
+      <path d="M176 606 L170 565 L205 548 L258 542 L300 548 L330 540 L322 512 L300 492 L318 468 L352 452 L392 444 L420 458 L452 446 L490 438 L530 442 L578 432 L626 438 L680 428 L728 440 L786 452 L830 478 L848 516 L820 548 L772 556 L726 548 L690 566 L662 596 L630 610 L604 592 L566 576 L540 596 L528 636 L506 672 L482 690 L470 672 L492 634 L500 592 L486 566 L452 556 L414 566 L380 580 L344 578 L330 600 L300 626 L252 646 L206 638 Z" />
+      <path d="M300 428 L288 398 L300 372 L318 362 L330 382 L344 392 L338 414 L322 432 L310 442 Z" />
+      <path d="M262 410 L256 392 L268 382 L284 388 L286 408 L272 418 Z" />
+      <path d="M470 420 L456 392 L452 356 L470 330 L496 336 L512 362 L528 352 L546 368 L538 398 L516 418 L494 426 Z" />
+      <path d="M546 368 L556 336 L580 330 L596 352 L588 388 L562 398 Z" />
     </g>
   )
 }
