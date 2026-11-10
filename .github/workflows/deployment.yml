@@ -22,9 +22,9 @@ jobs:
       with:
         dotnet-version: 8.0.x
     - name: Restore Dependencies
-      run: dotnet restore ./apps\api\TravelKickers.Api.csproj
+      run: dotnet restore ./apps/api/TravelKickers.Api.csproj
     - name: Build
-      run:  dotnet build ./apps\api\TravelKickers.Api.csproj --no-restore
+      run:  dotnet build ./apps/api/TravelKickers.Api.csproj --no-restore
     - name: Artifact Upload
       uses: actions/upload-artifact@v4
       with:
@@ -41,9 +41,9 @@ jobs:
           name: build-artifact
           path: ./
       - name: C# Lint
-        run: dotnet format ./apps\api\TravelKickers.Api.csproj -v detailed --verify-no-changes
+        run: dotnet format ./apps/api/TravelKickers.Api.csproj -v detailed --verify-no-changes
       - name: Test
-        run: dotnet test ./apps\api\TravelKickers.Api.Tests/ --verbosity minimal
+        run: dotnet test ./apps/api/TravelKickers.Api.Tests/ --verbosity minimal
   Docker-Deploy:
      runs-on: ubuntu-latest
      needs: CI-test
