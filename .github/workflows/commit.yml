@@ -40,4 +40,4 @@ jobs:
       - name: C# Lint
         run: dotnet format ./apps/api/TravelKickers.Api.csproj -v detailed --verify-no-changes
       - name: Test
-        run: dotnet test ./apps/api.Tests/TravelKickers.Api.Tests.csproj --verbosity minimal
+        run: dotnet test ./apps/api.tests/ --verbosity minimal
