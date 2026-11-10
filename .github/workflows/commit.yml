@@ -1,0 +1,43 @@
+
+name: .NET Core Desktop
+
+on:
+  push:
+    branches:
+    - 'release/**'
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest                    
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Settup .NET
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: 8.0.x
+    - name: Restore Dependencies
+      run: dotnet restore ./apps\api\TravelKickers.Api.csproj
+    - name: Build
+      run:  dotnet build ./apps\api\TravelKickers.Api.csproj --no-restore
+    - name: Artifact Upload
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-artifact
+        path: ./        
+
+  test:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifact
+          path: ./
+      - name: C# Lint
+        run: dotnet format ./apps\api\TravelKickers.Api.csproj -v detailed --verify-no-changes
+      - name: Test
+        run: dotnet test ./apps\api\TravelKickers.Api.Tests/ --verbosity minimal
