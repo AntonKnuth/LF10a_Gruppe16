@@ -43,7 +43,7 @@ jobs:
       - name: C# Lint
         run: dotnet format ./apps/api/TravelKickers.Api.csproj -v detailed --verify-no-changes
       - name: Test
-        run: dotnet test ./apps/api/TravelKickers.Api.Tests/ --verbosity minimal
+        run: dotnet test ./apps/api.Tests/ --verbosity minimal
   Docker-Deploy:
      runs-on: ubuntu-latest
      needs: CI-test
