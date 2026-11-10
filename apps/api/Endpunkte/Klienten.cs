@@ -98,7 +98,12 @@ public static class Klienten
                 .Where(k => k.Id == id)
                 .Select(k => new
                 {
-                    k.Id, k.Vorname, k.Nachname, k.Spielname, k.PausenDauerSek, k.PausenInhalt,
+                    k.Id,
+                    k.Vorname,
+                    k.Nachname,
+                    k.Spielname,
+                    k.PausenDauerSek,
+                    k.PausenInhalt,
                 })
                 .SingleOrDefaultAsync();
 

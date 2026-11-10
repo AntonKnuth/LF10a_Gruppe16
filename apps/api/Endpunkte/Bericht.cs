@@ -75,8 +75,12 @@ public static class Bericht
                 {
                     e.SessionId,
                     e.Session!.EmpfangenAm,
-                    e.SpielId, e.Stufe, e.Eingabegeraet,
-                    e.SynthetischerDruck, e.Abgebrochen, e.Selbsteinschaetzung,
+                    e.SpielId,
+                    e.Stufe,
+                    e.Eingabegeraet,
+                    e.SynthetischerDruck,
+                    e.Abgebrochen,
+                    e.Selbsteinschaetzung,
                     Roh = e.Rohdaten!.Werte,
                 })
                 .ToListAsync();
@@ -109,7 +113,11 @@ public static class Bericht
                     s.Status,
                     Ergebnisse = s.Ergebnisse.Select(e => new
                     {
-                        e.SpielId, e.Stufe, e.DauerMs, e.Abgebrochen, e.Selbsteinschaetzung,
+                        e.SpielId,
+                        e.Stufe,
+                        e.DauerMs,
+                        e.Abgebrochen,
+                        e.Selbsteinschaetzung,
                         Roh = e.Rohdaten!.Werte,
                     }).ToList(),
                 })
@@ -121,7 +129,10 @@ public static class Bericht
                 .SelectMany(s => s.Ergebnisse)
                 .Select(e => new
                 {
-                    e.SpielId, e.Stufe, e.DauerMs, e.Selbsteinschaetzung,
+                    e.SpielId,
+                    e.Stufe,
+                    e.DauerMs,
+                    e.Selbsteinschaetzung,
                     Kennzahl = e.Roh is null ? null : Kennzahlen.Berechne(e.Roh),
                 })
                 .ToList();
