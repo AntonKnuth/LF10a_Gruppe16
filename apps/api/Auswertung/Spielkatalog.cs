@@ -28,6 +28,9 @@ public static class Spielkatalog
 {
     public const string OhneZuordnung = "ohne-zuordnung";
 
+    /// <summary>Die Urkunde (Sonderspiel am letzten Tag). Nur sie hat Unterschrift-Kennzahlen.</summary>
+    public const string UrkundeId = "abschiedsgeschenk";
+
     private record Eintrag(Rolle Rolle, string[] Kategorien);
 
     private static readonly Dictionary<string, Eintrag> Spiele = new()

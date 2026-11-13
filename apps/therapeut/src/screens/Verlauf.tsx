@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { api, titel, type KlientDetail, type VerlaufPunkt } from '../api'
 
 /**
@@ -61,7 +61,8 @@ export function Verlauf({ klient }: { klient: KlientDetail }) {
           </thead>
           <tbody>
             {gefiltert.map((p, i) => (
-              <tr key={`${p.sessionId}-${i}`} className="border-t border-slate-100">
+              <Fragment key={`${p.sessionId}-${i}`}>
+              <tr className="border-t border-slate-100">
                 <td className="p-3">{new Date(p.datum).toLocaleDateString('de-DE')}</td>
                 <td className="p-3 font-semibold text-slate-700">{titel(p.spielId)}</td>
                 <td className="p-3">
@@ -97,6 +98,18 @@ export function Verlauf({ klient }: { klient: KlientDetail }) {
                   )}
                 </td>
               </tr>
+              {p.unterschrift && (
+                <tr className="bg-slate-50 text-slate-700">
+                  <td colSpan={11} className="px-3 py-2">
+                    <span className="font-semibold">Unterschrift:</span>{' '}
+                    Höhe {p.unterschrift.hoehe.toFixed(2)} · Breite {p.unterschrift.breite.toFixed(2)}{' '}
+                    (jeweils in Bandhöhen) · Abstand zur Grundlinie{' '}
+                    {p.unterschrift.grundlinienabweichung.toFixed(2)} · Schräglage{' '}
+                    {p.unterschrift.schraeglage.toFixed(1)}° · Neustarts {p.unterschrift.neustarts}
+                  </td>
+                </tr>
+              )}
+              </Fragment>
             ))}
           </tbody>
         </table>

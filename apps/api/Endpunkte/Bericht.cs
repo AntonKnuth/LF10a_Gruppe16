@@ -15,7 +15,8 @@ public record VerlaufPunkt(
     bool SynthetischerDruck,
     bool Abgebrochen,
     int? Selbsteinschaetzung,
-    Kennzahl? Kennzahlen);
+    Kennzahl? Kennzahlen,
+    UnterschriftKennzahl? Unterschrift);
 
 public record SpielZeile(
     string SpielId,
@@ -82,13 +83,19 @@ public static class Bericht
                     e.Abgebrochen,
                     e.Selbsteinschaetzung,
                     Roh = e.Rohdaten!.Werte,
+                    e.Extra,
                 })
                 .ToListAsync();
 
+            // Die Unterschrift-Kennzahlen gibt es nur bei der Urkunde. Bei allen anderen Spielen
+            // bleibt das Feld leer, auch wenn deren extra ein JSON ist.
             return Results.Ok(zeilen.Select(z => new VerlaufPunkt(
                 z.SessionId, z.EmpfangenAm, z.SpielId, z.Stufe, z.Eingabegeraet,
                 z.SynthetischerDruck, z.Abgebrochen, z.Selbsteinschaetzung,
-                z.Roh is null ? null : Kennzahlen.Berechne(z.Roh))));
+                z.Roh is null ? null : Kennzahlen.Berechne(z.Roh),
+                z.Roh is null || z.SpielId != Spielkatalog.UrkundeId
+                    ? null
+                    : Unterschrift.Berechne(z.Roh, z.Extra))));
         });
 
         app.MapGet("/api/klienten/{id:int}/wochenbericht", async (

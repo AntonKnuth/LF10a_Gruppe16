@@ -64,6 +64,14 @@ export type Kennzahl = {
   absetzer: number
 }
 
+export type UnterschriftKennzahl = {
+  hoehe: number
+  breite: number
+  grundlinienabweichung: number
+  schraeglage: number
+  neustarts: number
+}
+
 export type VerlaufPunkt = {
   sessionId: string
   datum: string
@@ -74,6 +82,8 @@ export type VerlaufPunkt = {
   abgebrochen: boolean
   selbsteinschaetzung: number | null
   kennzahlen: Kennzahl | null
+  /** Nur bei Urkunden gefüllt, sonst null. */
+  unterschrift: UnterschriftKennzahl | null
 }
 
 export type SpielZeile = {
