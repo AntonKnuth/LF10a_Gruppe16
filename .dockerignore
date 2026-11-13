@@ -1,0 +1,19 @@
+# Lokale Build-Reste dürfen nicht ins Image: node_modules von Windows läuft unter Linux nicht,
+# und eine mitkopierte .db würde die frische Datenbank im Container ersetzen.
+**/node_modules/
+**/dist/
+**/dev-dist/
+**/.vite/
+**/bin/
+**/obj/
+**/.vs/
+**/*.user
+**/*.db
+**/*.db-shm
+**/*.db-wal
+**/*.tsbuildinfo
+apps/api/wwwroot/
+.git/
+.github/
+.claude/
+docs/

@@ -62,6 +62,6 @@ jobs:
          uses: docker/build-push-action@v6
          with:
            context: .
-           file: ./app/Dockerfile
+           file: ./Dockerfile
            push: true
            tags: fiatmann/travelkickers:latest
