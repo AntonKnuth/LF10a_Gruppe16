@@ -3,8 +3,9 @@ name: .NET Core Desktop
 
 on:
   push:
-    branches:
-    - 'release/**'
+    branches-ignore:
+    - main
+    - master
 
 jobs:
 
