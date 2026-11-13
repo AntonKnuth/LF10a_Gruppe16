@@ -365,6 +365,56 @@ als ein Knopf auf dem Gerät, weil es auch bei einem verlorenen Tablet wirkt.
 > die Trennung ist stärker als vorher (eigene Anwendung, echte Anmeldung statt Kindersicherung),
 > aber ohne diesen Satz liest ein Prüfer die verschwundene PIN als nicht erfüllte Anforderung.
 
+#### Textbaustein D1 — wörtlich für den Bericht
+
+Der folgende Absatz gehört in das Kapitel zur Anforderungserfüllung, direkt zu D1. Er steht hier
+und nicht im Berichtsdokument, weil das Dokument nicht im Repository liegt — beim Einfügen bitte
+gegen die dortige Nummerierung und Zitierweise prüfen.
+
+> **D1 — Zwei Ansichten (während der Implementierung geändert, Anforderung erfüllt)**
+>
+> LN1 sah als zweite Ansicht einen Therapeutenbereich vor, der innerhalb der Kind-Anwendung
+> über eine PIN erreichbar ist. Umgesetzt wurden stattdessen **zwei getrennte Anwendungen**: die
+> Kind-Anwendung unter `/` und die Therapeuten-Anwendung unter `/therapeut/`, letztere mit
+> eigener Anmeldung über E-Mail und Passwort. In der Kind-Anwendung gibt es keine PIN-Abfrage
+> und keinen verborgenen Bereich mehr.
+>
+> **Diese Änderung ist nicht Teil der Planung, sondern während der Implementierung entstanden.**
+> Der Planungsteil wurde am 29.08.2026 abgegeben und beschrieb den PIN-Bereich noch so. Am
+> 03.09.2026 entstand die Therapeuten-Anwendung als eigene Anwendung — eine Folge der
+> Entscheidung für ein Backend (siehe Abweichung zu D4). Damit wäre ein PIN-Bereich in der
+> Kind-Anwendung eine zweite Oberfläche für dieselben Funktionen gewesen, die zusätzlich
+> schlechter geschützt ist. Der PIN-Bereich wurde deshalb am selben Tag entfernt und durch das
+> Pausenmenü ersetzt, das nur noch Ton, Lautstärke und Abdunkeln enthält. Der Verlauf ist in der
+> Versionsgeschichte des Projekts nachvollziehbar.
+>
+> Die Anforderung „zwei Ansichten, Kindmodus als Standard, therapeutische Funktionen geschützt"
+> ist damit erfüllt, und zwar strenger als ursprünglich geplant. Eine PIN ist eine
+> Kindersicherung: Sie verbirgt eine Oberfläche, die auf dem Gerät weiterhin vorhanden ist,
+> und schützt die dahinterliegenden Daten nicht. Die getrennte Anwendung dagegen verlangt eine
+> echte Anmeldung, und die Daten liegen serverseitig. Auf dem Tablet des Kindes befindet sich
+> dadurch zu keinem Zeitpunkt eine Klientenliste, ein Verlauf oder ein Wochenbericht — auch
+> nicht verborgen.
+>
+> Praktisch wirkt sich das an drei Stellen aus. Erstens ist die Zuordnung Gerät zu Kind nicht
+> mehr Sache der Bedienung, sondern eines Gerätetokens, das bei der Kopplung in der Praxis
+> vergeben wird; die Kind-Anwendung sendet niemals eine Kennung des Kindes mit, sie steht im
+> Token. Zweitens wird ein verlorenes oder entwendetes Tablet dadurch unschädlich gemacht, dass
+> der Therapeut das Token serverseitig sperrt — ein Knopf auf dem Gerät selbst könnte das nicht
+> leisten. Drittens wird die Löschung eines Profils nach Art. 17 DSGVO in der Therapeuten-
+> Anwendung ausgelöst, also dort, wo die Daten tatsächlich liegen.
+>
+> Unverändert bleibt, dass es **keinen Elternbereich** gibt (D1) und der Wochenbericht
+> Gesprächsgrundlage für den Therapeuten ist, nicht für die Eltern (D3).
+
+Der Vollständigkeit halber: Die zweite Abweichung von LN1 betrifft **D4** (Backend statt rein
+lokaler Speicherung, Vor- **und** Nachname statt Vorname und Jahrgang). Auch sie entstand
+**während der Implementierung** und nicht in der Planung — sie geht auf die Vorgabe der Lehrkraft
+zurück, ein Backend zu bauen. Begründet ist sie in Abschnitt 1 und Abschnitt 8 dieses Dokuments;
+im Bericht gehört sie an dieselbe Stelle wie dieser Absatz — beide Abweichungen zusammen und
+beide als das gekennzeichnet, was sie sind: nachträgliche Änderungen an einer abgegebenen Planung,
+nicht übersehene Anforderungen.
+
 **Statt des Langdrucks ein offenes Pausenmenü** (`ui/PausenMenue.tsx`, gebaut). Erreichbar im
 Startbildschirm, in jedem Spiel **und in der Zwangspause**, ohne Verzögerung und ohne PIN. Beim
 Öffnen steht „Das Spiel wartet auf dich." — Ben soll nicht glauben, ihm laufe gerade die Zeit
@@ -399,6 +449,34 @@ Der Schalter heißt deshalb „Bildschirm dunkler" und nicht „Helligkeit".
 **Verbindung ist beim Start nötig, danach nicht mehr.** Ohne Service Worker gibt es keinen
 zwischengespeicherten App-Rumpf — die App lädt vom Server. Bricht die Verbindung **während** einer
 Einheit ab, wird zu Ende gespielt und der Schnappschuss später nachgesendet (Abschnitt 6).
+
+### Lob-Bildschirm: keine Sterne, keine Zahl
+
+Nach jeder Übung standen ein bis drei Sterne unter dem Lob des Profis, berechnet aus der groben
+Browser-Genauigkeit. **Entfernt.** Drei Gründe, in dieser Reihenfolge:
+
+1. **Die Zahl ist unmaßgeblich.** Genau dafür ist sie im ganzen Projekt markiert: sie entsteht im
+   Browser für das Sofortfeedback aus A1 und darf in keinen Bericht. Was für einen Bericht nicht
+   gut genug ist, ist als Note für ein Kind erst recht nicht gut genug.
+2. **C3 misst sonst das Falsche.** Die Selbsteinschätzung steht unmittelbar davor. Zeigt man
+   danach ein Urteil, lernt Ben, seine Antwort daran auszurichten statt an seinem Gefühl — und die
+   Differenz, der ganze Zweck von C3, wird wertlos. C3 verlangt den Abgleich ausdrücklich **nur
+   für Thomas**.
+3. **„Ein Stern" ist ein Verliererzustand** (C2), auch wenn kein „Game Over" dabeisteht.
+
+Die Reihenfolge in `CLAUDE.md` heißt deshalb jetzt **Frage → Lob**, nicht mehr
+„Frage → Lob → Ergebnis". Fortschritt sieht Ben weiterhin: auf der Landkarte (C4) und daran, dass
+der Profi eine persönliche Bestleistung benennt (C5).
+
+**Der Punktestand innerhalb eines Spiels bleibt.** Die Anzeigetafel in „Ball hochhalten" zählt
+Treffer dieses Spiels — Spielmechanik und unmittelbare Belohnung (A1), keine Bewertung der
+Feinmotorik. Der Unterschied ist nicht Haarspalterei: das eine ist ein Spiel, das andere eine Note.
+
+An die Stelle der Sterne tritt ein eigener Lob-Bildschirm (`screens/LobScreen.tsx`) mit
+Stadionkulisse in Vereinsfarben, Wappen, großem Profi und Namensschild. Grund: C5 verlangt, dass
+das Lob **von der Spielfigur** kommt, und die Leitidee verlangt, dass es sich nach *diesem* Verein
+anfühlt. Beides war auf dem allgemeinen Dialogbildschirm nicht zu erkennen — es sah aus wie ein
+Systemhinweis mit Sternen.
 
 ## 11. Verworfen — und warum
 

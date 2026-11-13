@@ -26,7 +26,10 @@ export type Profi = {
   begruessung: Dialog
   /** Zufällig gewähltes Lob nach einer Übung. */
   lob: Dialog[]
-  /** Bei persönlicher Bestleistung. `{name}` und `{wert}` werden ersetzt. */
+  /**
+   * Statt des Lobs, wenn eine Übung besser lief als je zuvor (C5). `{name}` wird ersetzt.
+   * Bewusst ohne Zahl im Text: Prozentwerte gehören in den Therapeutenmodus (C4).
+   */
   bestleistung: Dialog
 }
 

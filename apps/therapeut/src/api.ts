@@ -201,6 +201,14 @@ export const api = {
       method: 'POST',
     }),
 
+  /**
+   * B3: Gibt für heute eine weitere Einheit frei. Der Zähler steht auf dem Tablet, deshalb
+   * wirkt der Knopf erst beim nächsten Start dort — die Kind-App holt die Einstellungen vor
+   * jeder Einheit neu.
+   */
+  tageslimitFreigeben: (klientId: number) =>
+    hole<{ limitFreigabeAm: string }>(`/api/klienten/${klientId}/tageslimit`, { method: 'POST' }),
+
   geraetSperren: (geraetId: number) =>
     hole<void>(`/api/geraete/${geraetId}/sperren`, { method: 'POST' }),
 }
@@ -217,10 +225,29 @@ export const SPIEL_TITEL: Record<string, string> = {
   elfmeter: 'Elfmeter',
   dribbeln: 'Dribbeln mit Pfiff',
   ballhochhalten: 'Ball hochhalten',
+  brezelverkauf: 'Brezelverkauf',
   abschiedsgeschenk: 'Abschiedsgeschenk',
 }
 
 export const titel = (spielId: string) => SPIEL_TITEL[spielId] ?? spielId
+
+/**
+ * Vorlagen für den Inhalt der Zwangspause (B3).
+ *
+ * Die Kind-App erkennt diese Übungen am gespeicherten Text und zeigt dann eine Figur, die sie
+ * vormacht — für ein Kind, das noch unsicher liest, ist die Bewegung die eigentliche Anweisung.
+ * **Die Schreibweise muss deshalb zu den Stichwörtern in `apps/web/src/ui/pausenUebungen.ts`
+ * passen.** Gespeichert wird weiterhin nur ein freier Text; wer etwas Eigenes einträgt, bekommt
+ * genau seinen Satz, dann eben ohne Figur.
+ */
+export const PAUSEN_VORLAGEN = [
+  'Hampelmänner machen',
+  'Hände ausschütteln',
+  'Faust auf, Faust zu',
+  'Schultern kreisen',
+  'Zum Himmel strecken',
+  'Tief durchatmen',
+]
 
 /**
  * Anzeigenamen der Fähigkeitsbereiche. Die Zuordnung Spiel → Bereich macht der Server

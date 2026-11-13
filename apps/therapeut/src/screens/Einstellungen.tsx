@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
-import { api, rolleVon, titel, type Einstellung, type KlientDetail, type Rolle, type Tagesform } from '../api'
+import {
+  PAUSEN_VORLAGEN, api, rolleVon, titel,
+  type Einstellung, type KlientDetail, type Rolle, type Tagesform,
+} from '../api'
 
 /**
  * B1: Toleranz, Zielgeschwindigkeit und Mindesttrefferquote je Übungstyp.
@@ -33,10 +36,12 @@ export function Einstellungen({ klient }: { klient: KlientDetail }) {
   const [pauseDauer, setPauseDauer] = useState(klient.pausenDauerSek)
   const [pauseInhalt, setPauseInhalt] = useState(klient.pausenInhalt)
   const [gespeichert, setGespeichert] = useState(false)
+  const [freigegeben, setFreigegeben] = useState(false)
   const [fehler, setFehler] = useState('')
 
   useEffect(() => {
     setGespeichert(false)
+    setFreigegeben(false)
     setFehler('')
     setPauseDauer(klient.pausenDauerSek)
     setPauseInhalt(klient.pausenInhalt)
@@ -68,6 +73,16 @@ export function Einstellungen({ klient }: { klient: KlientDetail }) {
       setGespeichert(true)
     } catch (e) {
       setFehler(e instanceof Error ? e.message : 'Speichern fehlgeschlagen.')
+    }
+  }
+
+  async function freigeben() {
+    setFehler('')
+    try {
+      await api.tageslimitFreigeben(klient.id)
+      setFreigegeben(true)
+    } catch (e) {
+      setFehler(e instanceof Error ? e.message : 'Freigabe fehlgeschlagen.')
     }
   }
 
@@ -188,6 +203,25 @@ export function Einstellungen({ klient }: { klient: KlientDetail }) {
               className="w-32 rounded-lg border border-slate-300 px-3 py-2"
             />
           </label>
+          <label className="text-sm">
+            <span className="mb-1 block font-semibold text-slate-600">Übung</span>
+            <select
+              value={PAUSEN_VORLAGEN.includes(pauseInhalt) ? pauseInhalt : ''}
+              onChange={(e) => {
+                if (!e.target.value) return
+                setGespeichert(false)
+                setPauseInhalt(e.target.value)
+              }}
+              className="rounded-lg border border-slate-300 px-3 py-2"
+            >
+              <option value="">Eigener Text …</option>
+              {PAUSEN_VORLAGEN.map((v) => (
+                <option key={v} value={v}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </label>
           <label className="flex-1 text-sm">
             <span className="mb-1 block font-semibold text-slate-600">Inhalt</span>
             <input
@@ -201,8 +235,40 @@ export function Einstellungen({ klient }: { klient: KlientDetail }) {
           </label>
         </div>
         <p className="mt-2 text-xs text-slate-500">
-          Die Pause kann von Ben angehalten, aber nicht übersprungen werden (A3).
+          Die Pause kann von Ben angehalten, aber nicht übersprungen werden (A3). Zu den Übungen
+          aus der Liste zeigt die Kind-App eine Figur, die die Übung vormacht — eigener Text
+          erscheint nur als Satz.
         </p>
+      </section>
+
+      <section>
+        <h3 className="mb-3 text-lg font-bold text-slate-800">Tageslimit</h3>
+        <div className="rounded-xl border border-slate-200 bg-white p-4">
+          <p className="text-sm text-slate-600">
+            Es ist <strong>eine Einheit pro Tag</strong> vorgesehen — Teil der
+            Verkrampfungsprävention (B3). Ist etwas schiefgegangen, etwa ein Absturz oder ein
+            versehentlicher Abbruch, gibt dieser Knopf <strong>eine</strong> weitere Einheit für
+            heute frei.
+          </p>
+          <div className="mt-4 flex flex-wrap items-center gap-4">
+            <button
+              onClick={freigeben}
+              className="rounded-lg border border-slate-300 px-5 py-2 font-bold text-slate-700"
+            >
+              Weitere Einheit freigeben
+            </button>
+            {freigegeben && (
+              <span className="font-semibold text-green-700">
+                Freigegeben — wirkt, sobald Ben am Tablet auf Start tippt.
+              </span>
+            )}
+          </div>
+          <p className="mt-3 text-xs text-slate-500">
+            Der Zähler steht auf dem Tablet, nicht hier: nur dort ist bekannt, ob eine
+            abgebrochene Einheit überhaupt noch ankommt. Deshalb wirkt die Freigabe erst beim
+            nächsten Start — und genau einmal.
+          </p>
+        </div>
       </section>
 
       <div className="flex flex-wrap items-center gap-4">

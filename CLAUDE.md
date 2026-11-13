@@ -27,13 +27,21 @@ damit nicht dieselben Fragen erneut aufgemacht werden.
 
 **Design-Referenz:** `docs/mockup-startbildschirm.png` (vom User erstellt).
 
-### Stand (04.09.2026)
+### Stand (10.09.2026)
 
 Gebaut und im Zusammenspiel geprüft: Server mit Anmeldung, Gerätekopplung, Datenannahme und
 Auswertung · Therapeuten-App mit Klientenauswahl, Einstellungen, Verlauf, Wochenbericht und
 Gerätesperre · Kind-App mit Kopplung, Rohdatenaufzeichnung, Upload und Pausenmenü.
-Vier Minispiele fertig: **Ball hochhalten**, **Platzwart**, **Linie malen** und
-**Autogrammstunde**. B2 verlangt fünf.
+**B2 erfüllt — sechs Minispiele:** **Aufwärmen** (Dribbel-Parcours), **Ball hochhalten**,
+**Platzwart**, **Linie malen**, **Autogrammstunde** und **Brezelverkauf**. Bis zum Aufwärmen war
+die Rolle `aufwaermen` unbesetzt, jede Einheit begann mit dem `Platzhalter`.
+
+Ebenfalls fertig: **C5** (der Profi lobt eine persönliche Bestleistung namentlich — verglichen
+wird je Spiel gegen den bisher besten Wert, `pruefeBestwert` in `profil.ts`), **B3-Tagesobergrenze**
+(**eine Einheit pro Tag**, fest im Client; wie lang eine Einheit ist, stellt Thomas ohnehin über
+Anzahl und Dauer der Übungen ein — und im Therapeutenbereich gibt ein Knopf für einen Tag
+**eine** weitere Einheit frei, falls etwas schiefgegangen ist) und das **Onboarding** (beim allerersten Mal erklärt der Profi
+das Spiel, danach nie wieder; Uhr und Spiel stehen solange).
 
 Starten: `powershell -File start.ps1` → Kindmodus `http://localhost:5099/`,
 Therapeutenbereich `/therapeut/`. Demo-Konto `thomas@praxis.test` / `travelkickers`.
@@ -111,8 +119,12 @@ nicht kennt.
 ### Zweistufige Auswertung — der Kern der Architektur
 
 - **Browser:** Sofortfeedback unter 100 ms — Strich erscheint, **Soundeffekt, Partikel**,
-  Sterne/Pokale. Das gehört zu A1 und ist keine Kür. Die dabei berechnete Bewertung ist grob und
-  wird **nie in einem Bericht verwendet**; im Code als unmaßgeblich markieren.
+  Ball rollt, Hütchen kippt. Das gehört zu A1 und ist keine Kür. Die dabei berechnete Bewertung
+  ist grob und wird **nie in einem Bericht verwendet**; im Code als unmaßgeblich markieren.
+  **Aber sie wird Ben auch nicht gezeigt:** Rückmeldung ja, Note nein. Nach einer Übung gibt es
+  keine Sterne und keine Zahl — siehe „Selbsteinschätzung" weiter unten. Ein Punktestand
+  *innerhalb* eines Spiels ist etwas anderes und bleibt: er gehört zur Spielmechanik, nicht zur
+  Bewertung der Feinmotorik.
 - **C#:** die maßgeblichen Kennzahlen, gerechnet aus der Rohdaten-Punktfolge. Getestet mit xUnit.
 
 Das erfüllt A1, B4 und die Zusage „Auswertung in C#" gleichzeitig.
@@ -216,7 +228,14 @@ Zweck verstößt gegen D4.
 
 - Sichtbarer Timer **im Spiel** (A3).
 - Danach **Zwangspause**. Sie lässt sich **nicht überspringen**; „Weiter" erscheint erst bei 0.
-- Inhalt und Dauer der Pause stellt Thomas ein (z. B. 10 Hampelmänner, Stifthaltung, Hand lockern).
+- Inhalt und Dauer der Pause stellt Thomas ein. Sechs Übungen stehen als Vorlage bereit
+  (Hampelmänner, Hände ausschütteln, Faust auf/zu, Schultern kreisen, Zum Himmel strecken, Tief
+  durchatmen); **zu jeder macht eine Figur die Übung vor** (`ui/PausenFigur.tsx`). Ben ist sieben
+  und liest noch unsicher — die Bewegung ist die eigentliche Anweisung, der Satz bleibt daneben
+  stehen und wird vorgelesen (A5).
+- **Keine neue Spalte dafür:** gespeichert ist weiterhin ein freier Text, die Übung wird an
+  Stichwörtern darin erkannt. Damit funktioniert auch, was schon in der Datenbank steht, und
+  eigener Text bleibt möglich — dann eben ohne Figur.
 
 **Anhalten geht überall über denselben Knopf oben rechts** (`ui/PausenMenue.tsx`) — im
 Startbildschirm, im Spiel und in der Zwangspause. Dahinter: Ton, Lautstärke, Bildschirm dunkler,
@@ -261,9 +280,18 @@ mehrere pro Spiel möglich, für die Auswertung nach Fähigkeitsbereich.
 
 ### Selbsteinschätzung (C3) — Reihenfolge ist kritisch
 
-**Frage → Lob des Profis → Ergebnis.** Wird zuerst das Ergebnis gezeigt oder gelobt, misst man
-nicht die Selbsteinschätzung, sondern die Fähigkeit, ein Ergebnis abzulesen — und die Differenz,
-also der ganze Zweck von C3, ist wertlos.
+**Frage → Lob des Profis.** Ein Ergebnis kommt danach **nicht** mehr. Ursprünglich stand hier
+„Frage → Lob → Ergebnis" mit ein bis drei Sternen auf dem Lob-Bildschirm; die sind entfernt.
+
+Zwei Gründe. Erstens: die Sterne kamen aus der groben Browser-Genauigkeit, die das Projekt selbst
+als *unmaßgeblich* führt und aus jedem Bericht heraushält — als Note für ein Kind taugt sie erst
+recht nicht, und „ein Stern" liest sich wie ein Scheitern (C2). Zweitens C3 selbst: wird direkt
+nach der Selbsteinschätzung ein Urteil gezeigt, lernt Ben, seine Antwort daran auszurichten statt
+an seinem Gefühl — und die Differenz, also der ganze Zweck von C3, wird wertlos. C3 verlangt den
+Abgleich ausdrücklich **nur für Thomas**.
+
+Fortschritt sieht Ben trotzdem: auf der Landkarte (C4) und daran, dass der Profi eine persönliche
+Bestleistung benennt (C5).
 
 Drei Smileys, nicht fünf. **Die Antwort wird nie korrigiert oder kommentiert** — kein
 „Das war doch super!", das entwertet Bens Wahrnehmung und verstößt gegen C2.
@@ -316,6 +344,13 @@ Einstellbar: Schwierigkeit/Toleranz/Zielgeschwindigkeit/Mindesttrefferquote je �
 weglassen, Reihenfolge, Übungen verlängern/verkürzen, Pausendauer und -inhalt. Dazu Verlauf,
 Wochenbericht, Gerätekopplung samt Sperre und **Profil löschen (Art. 17)**.
 
+**Tageslimit freigeben (B3).** Gezählt wird die eine Einheit pro Tag auf dem Tablet — nur dort ist
+bekannt, ob eine abgebrochene Einheit überhaupt noch ankommt. Der Knopf setzt deshalb keinen
+Zähler zurück, sondern einen **Zeitpunkt** (`Klient.LimitFreigabeAm`); das Tablet holt die
+Einstellungen vor jedem Start neu, sieht einen neueren Zeitpunkt als den zuletzt beachteten und
+setzt daraufhin seinen Zähler zurück. Ein Schalter statt eines Zeitpunkts müsste zurückgestellt
+werden, und wer das vergisst, hebt die Obergrenze dauerhaft auf.
+
 Gelöscht wird hier und nicht auf dem Tablet: dort läge die Funktion hinter einer Kindersicherung,
 und die Daten liegen ohnehin auf dem Server. Ein verlorenes Tablet wird durch **Sperren des
 Gerätetokens** unschädlich gemacht — ein Knopf auf dem Gerät täte das nicht.
@@ -333,8 +368,8 @@ der Content bleibt unversehrt und updatebar.
 Jeder Dialogtext hat ein **optionales Audio-Feld** (A5 verlangt Vorlesen). Phase 1: Text groß +
 Web Speech API. Später echte Aufnahmen: MP3 reinlegen, kein Codeumbau.
 
-**Vereinsassets:** HSV-Logo und echte Bezüge erstmal drin, werden später ersetzt (Wappen sind
-Marken, Spielernamen Persönlichkeitsrechte). Deshalb ist ein Verein nur ein Datenpaket — der
+**Vereinsassets:** Echte Bezüge erstmal drin, Reise **1. FC Köln → HSV → Ajax Amsterdam**. Sie
+werden später ersetzt (Wappen sind Marken, Spielernamen Persönlichkeitsrechte). Deshalb ist ein Verein nur ein Datenpaket — der
 Austausch gegen fiktive Vereine darf keinen Code anfassen, nur Content-Dateien.
 
 Ein Vereinspaket enthält daher: Wappen, Farben, Stadion, Profi-Figur mit Sprechtexten **und die
@@ -345,16 +380,27 @@ vereinsspezifischen Aufgabeninhalte** (Kaderliste, Fakten, Sprüche) — siehe L
 Erledigt: Gerüst und Startbildschirm · Erstlauf mit Spielnamen per Stift · Ansage · Segment-Engine ·
 Lob → Selbsteinschätzung → Pause mit Timer · Abschluss-Fragebogen · Therapeuten-App mit
 Einstellungen und Verlauf · Gerätekopplung, Datenannahme, Auswertung in C#, Wochenbericht ·
-Pausenmenü. Vier Minispiele statt einem: **Ball hochhalten**, **Platzwart**, **Linie malen**,
-**Autogrammstunde**.
+Pausenmenü · Onboarding beim ersten Spiel. Sechs Minispiele statt einem: **Aufwärmen**,
+**Ball hochhalten**, **Platzwart**, **Linie malen**, **Autogrammstunde**, **Brezelverkauf**.
 
-Offen aus Phase 1: **Onboarding beim ersten Spiel** (Pfeile + Erklärung des Profis).
+Phase 1 ist damit abgearbeitet. Das Onboarding erklärt der Profi in einer Sprechblase; **Pfeile
+auf einzelne Spielelemente gibt es nicht** — die bräuchten pro Spiel Wissen über dessen Canvas.
+Nachrüsten, falls sich beim Ausprobieren mit Ben zeigt, dass der Satz allein nicht trägt.
 
-**Wenn ein neues Minispiel dazukommt**, muss es an zwei Stellen eingetragen werden:
-`apps/web/src/spiele/katalog.ts` (Titel, Anweisung, Rolle, Bereiche) und
-`apps/api/Auswertung/Spielkatalog.cs` (Rolle, Bereiche). Vergisst man den Server, verschwindet
-es nicht still — es gilt als normale Übung ohne Bereich und taucht im Wochenbericht unter „Ohne
-Zuordnung" mit einem Hinweis auf.
+**Wenn ein neues Minispiel dazukommt**, muss es an drei Stellen eingetragen werden — die
+Komponente selbst (`apps/web/src/spiele/index.ts`) nicht mitgezählt:
+
+| Datei | Was fehlt sonst |
+|---|---|
+| `apps/web/src/spiele/katalog.ts` | Titel, Anweisung, Rolle, Bereiche — ohne den Eintrag kommt das Spiel im Tagesplan gar nicht vor |
+| `apps/api/Auswertung/Spielkatalog.cs` | Rolle und Bereiche auf dem Server. Fehlt es, gilt es als normale Übung ohne Bereich und taucht im Wochenbericht unter „Ohne Zuordnung" mit einem Hinweis auf |
+| `apps/therapeut/src/api.ts` (`SPIEL_TITEL`) | der Klartextname. Ohne ihn steht in der Therapeuten-App die rohe Spiel-ID |
+
+Die **Einstellungszeilen legt der Seed bei jedem Start nach** (`ErgaenzeEinstellungen`, IDs aus
+`Spielkatalog.cs`). Das war einmal ein vierter Eintrag von Hand, und genau der wurde vergessen:
+die Datenbank existierte schon, also fehlte dem bestehenden Kind die Zeile für das neue Spiel.
+Gespielt wurde es trotzdem — die Kind-App nimmt für Unbekanntes ihre Vorgabe — aber im
+Therapeutenbereich war es unsichtbar und ließ sich weder einstellen noch abwählen.
 
 **Arbeitsteilung für 3 Personen:** so schneiden, dass jedes Minispiel isoliert baubar ist und
 niemand in denselben Dateien arbeitet. Zwei Regeln haben sich als bindend erwiesen: **eine Person
@@ -376,7 +422,9 @@ Bericht). Bild-Upload der Arbeitsproben — das Schema steht, der Endpunkt kommt
 - **HTTPS unter festem Namen** (Hosts-Eintrag + Zertifikat mit diesem Namen im SAN). Umgebungs-
   arbeit, kein Code — aber ohne sie stürzt die App auf dem iPad beim Sessionstart ab, siehe
   Speicher-Fallstricke.
-- **D1 im Bericht neu zuordnen** (siehe Hinweis unter der Anforderungstabelle).
+- **D1-Absatz in das Berichtsdokument einfügen.** Der fertige Text steht in
+  `docs/entscheidungen.md` unter „Textbaustein D1"; das Berichtsdokument selbst liegt nicht im
+  Repo, deshalb bleibt das Einfügen Handarbeit.
 
 **Danach:**
 

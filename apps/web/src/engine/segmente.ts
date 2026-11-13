@@ -18,7 +18,7 @@ export type Segment =
    * Selbsteinschätzung, sondern die Fähigkeit, ein Ergebnis abzulesen.
    */
   | { art: 'selbsteinschaetzung' }
-  /** Lob des Profis, danach das Ergebnis (C5). */
+  /** Lob des Profis (C5). Ohne Ergebnisanzeige — siehe `screens/LobScreen.tsx`. */
   | { art: 'lob' }
   /** A3: anhaltbar, aber nicht überspringbar. */
   | { art: 'pause'; dauerSek: number; inhalt: string }
@@ -33,7 +33,7 @@ export type Smiley = 1 | 2 | 3
  * Rückgabe jedes Minispiels: fester Kern + freies Extra.
  *
  * ACHTUNG — die Zahlen hier sind **unmaßgeblich**. Sie entstehen im Browser für das
- * Sofortfeedback aus A1 (Strich, Sound, Partikel, Sterne) und dürfen nie in einem
+ * Sofortfeedback aus A1 (Strich, Sound, Partikel) und dürfen nie in einem
  * Bericht landen. Die maßgeblichen Kennzahlen rechnet C# aus der Rohdaten-Punktfolge.
  */
 export type SpielErgebnis = {

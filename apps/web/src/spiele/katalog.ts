@@ -89,6 +89,12 @@ export const KATALOG: Record<string, Spieldaten> = {
     rolle: 'normal',
     tags: ['inhibition', 'wellen'],
   },
+  brezelverkauf: {
+    titel: 'Brezelverkauf',
+    anweisung: 'Zeichne den Weg zu dem Zuschauer, der etwas bestellt hat.',
+    rolle: 'normal',
+    tags: ['gerade-striche', 'hand-auge'],
+  },
   ballhochhalten: {
     titel: 'Ball hochhalten',
     anweisung: 'Tippe den Ball an und drücke so fest auf, dass er im violetten Band umkehrt.',

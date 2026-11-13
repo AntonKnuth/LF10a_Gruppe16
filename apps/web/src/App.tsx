@@ -8,8 +8,18 @@ import type { SessionAction, SessionState } from './engine/session'
 import type { Einstellungen } from './engine/tagesplan'
 import { ansageText, hatUebung, standardEinstellungen, tagesplan } from './engine/tagesplan'
 import { gleicherTag, hole, merke, vergiss } from './persistenz'
-import { ladeFortschritt, naechsteEinheit, speichereFortschritt } from './profil'
+import {
+  EINHEITEN_PRO_TAG,
+  beachteFreigabe,
+  einheitenHeute,
+  ladeFortschritt,
+  naechsteEinheit,
+  pruefeBestwert,
+  speichereFortschritt,
+  zaehleEinheit,
+} from './profil'
 import { DialogScreen } from './screens/DialogScreen'
+import { LobScreen } from './screens/LobScreen'
 import { KopplungScreen } from './screens/KopplungScreen'
 import { NameScreen } from './screens/NameScreen'
 import { PauseScreen } from './screens/PauseScreen'
@@ -28,6 +38,9 @@ export default function App() {
   const [wiederaufnahme, setWiederaufnahme] = useState<SessionState | null>(null)
   const [menueOffen, setMenueOffen] = useState(false)
   const [keinTraining, setKeinTraining] = useState(false)
+  const [tagesgrenze, setTagesgrenze] = useState(false)
+  /** C5: War die eben gespielte Übung eine persönliche Bestleistung? Gilt fürs nächste Lob. */
+  const [bestleistung, setBestleistung] = useState(false)
 
   const verein = vereine[fortschritt.vereinIndex]
   const name = kind?.spielname ?? 'Kicker'
@@ -85,7 +98,12 @@ export default function App() {
       // Bleibt liegen und geht beim nächsten Start raus.
     }
 
-    const naechste = fertigeEinheit.status === 'fertig' ? naechsteEinheit(fortschritt) : fortschritt
+    // B3: nur eine zu Ende gespielte Einheit zählt gegen die Tagesobergrenze. Wer nach 90
+    // Sekunden abbricht, hat nicht trainiert und soll es heute noch einmal versuchen dürfen.
+    const fertig = fertigeEinheit.status === 'fertig'
+    if (fertig) zaehleEinheit()
+
+    const naechste = fertig ? naechsteEinheit(fortschritt) : fortschritt
     speichereFortschritt(naechste)
     setFortschritt(naechste)
     setLauf(null)
@@ -109,6 +127,13 @@ export default function App() {
     } catch {
       // Weiter mit dem, was wir haben.
     }
+
+    // B3: erst die Freigabe des Therapeuten beachten, dann die Obergrenze prüfen. Ohne
+    // Verbindung bleibt es beim lokalen Zähler — die Grenze gilt dann weiter, und das ist die
+    // sichere Richtung: lieber eine Einheit zu wenig als eine Verkrampfungsprävention, die
+    // sich mit einem gezogenen Netzstecker aushebeln lässt.
+    beachteFreigabe(aktuell?.limitFreigabeAm)
+    if (einheitenHeute() >= EINHEITEN_PRO_TAG) return setTagesgrenze(true)
 
     const plan = tagesplan(
       verein.id,
@@ -168,6 +193,19 @@ export default function App() {
           text={mitName('Heute ist noch kein Training eingerichtet, {name}. Wir sagen Bescheid!')}
           knopf="Zurück"
           onWeiter={() => setKeinTraining(false)}
+        />
+      )
+    }
+
+    if (tagesgrenze) {
+      // B3: kein Sperrbildschirm und keine Begründung mit Zahlen (A2, C2) — der Profi
+      // verabschiedet, wie er es nach einer Einheit auch täte.
+      return (
+        <DialogScreen
+          verein={verein}
+          text={mitName('Für heute reicht es, {name}. Wir sehen uns beim nächsten Training!')}
+          knopf="Zurück"
+          onWeiter={() => setTagesgrenze(false)}
         />
       )
     }
@@ -239,7 +277,12 @@ export default function App() {
             verein={verein}
             name={name}
             angehalten={menueOffen}
-            onFertig={(ergebnis) => dispatch({ art: 'spiel_fertig', ergebnis })}
+            onFertig={(ergebnis) => {
+              // C5: hier und nicht im Lob-Segment — der Bestwert muss genau einmal je Übung
+              // geprüft werden, und ein Bildschirm kann mehrfach neu zeichnen.
+              setBestleistung(!ergebnis.abgebrochen && pruefeBestwert(ergebnis.spielId, ergebnis.genauigkeit))
+              dispatch({ art: 'spiel_fertig', ergebnis })
+            }}
           />
         )
 
@@ -254,19 +297,14 @@ export default function App() {
 
       case 'lob': {
         const lob = verein.profi.lob[(lauf.ergebnisse.length - 1) % verein.profi.lob.length]
-        const sterne = Math.max(1, Math.round((lauf.ergebnisse.at(-1)?.genauigkeit ?? 0) * 3))
+        // C5: War es die beste Runde bisher, sagt der Profi genau das — statt des Standardlobs,
+        // nicht zusätzlich. Zwei Sprechblasen hintereinander wären eine Menüebene zu viel (A2).
         return (
-          <DialogScreen
+          <LobScreen
             verein={verein}
-            text={mitName(lob.text)}
+            text={mitName(bestleistung ? verein.profi.bestleistung.text : lob.text)}
             onWeiter={() => dispatch({ art: 'weiter' })}
-          >
-            <div className="flex gap-3" aria-label={`${sterne} von 3 Sternen`}>
-              {[1, 2, 3].map((i) => (
-                <Stern key={i} an={i <= sterne} />
-              ))}
-            </div>
-          </DialogScreen>
+          />
         )
       }
 
@@ -317,18 +355,4 @@ function zuEinstellungen(kind: KindVomServer | null): Einstellungen {
     anzahlSonder: kind.anzahlSonder,
     spiele: Object.fromEntries(kind.einstellungen.map((e) => [e.spielId, e])),
   }
-}
-
-function Stern({ an }: { an: boolean }) {
-  return (
-    <svg viewBox="-12 -12 24 24" className="h-14 w-14">
-      <path
-        d="M0 -11 L3.2 -3.6 11 -3.4 4.9 1.4 7.1 8.9 0 4.6 -7.1 8.9 -4.9 1.4 -11 -3.4 -3.2 -3.6 Z"
-        fill={an ? '#f6b81c' : '#e2e8f0'}
-        stroke={an ? '#c98f0a' : '#cbd5e1'}
-        strokeWidth="1.2"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
 }

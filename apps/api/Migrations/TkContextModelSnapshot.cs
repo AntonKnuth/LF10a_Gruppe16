@@ -188,6 +188,9 @@ namespace TravelKickers.Api.Migrations
                     b.Property<DateTime>("ErstelltAm")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime?>("LimitFreigabeAm")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Nachname")
                         .IsRequired()
                         .HasColumnType("TEXT");
