@@ -389,3 +389,17 @@ Bericht). Bild-Upload der Arbeitsproben — das Schema steht, der Endpunkt kommt
   - **11 Meter** (Hand-Auge): Schnelligkeit und gleichmäßiger Druck; sonst hält der Torwart
   - Weitere in `Übungs Ideen.md` (Security, UFO/Müll einsammeln, Startelf-Namen schreiben)
 - Ob echte Vereinsassets durch fiktive ersetzt werden
+
+## Agent skills
+
+### Issue tracker
+
+Issues leben als GitHub Issues in `AntonKnuth/LF10a_Gruppe16`, bedient über die `gh` CLI. Siehe `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Die fünf kanonischen Rollen mit unveränderten Labelnamen: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. Siehe `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: ein `CONTEXT.md` und `docs/adr/` im Repo-Wurzelverzeichnis (beide existieren noch nicht und werden bei Bedarf angelegt). Siehe `docs/agents/domain.md`.
