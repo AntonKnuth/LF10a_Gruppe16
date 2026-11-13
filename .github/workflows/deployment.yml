@@ -48,11 +48,10 @@ jobs:
      runs-on: ubuntu-latest
      needs: CI-test
      steps:
-       - name: Download Build Artifact
-         uses: actions/download-artifact@v4
-         with:
-           name: build-artifact
-           path: ./
+       # Bewusst frischer Checkout statt des Build-Artefakts: upload-artifact lässt versteckte
+       # Dateien weg (.dockerignore fehlt dann), und das obj/ des Runners würde das
+       # project.assets.json aus dem Container überschreiben -> NETSDK1064 bei --no-restore.
+       - uses: actions/checkout@v4
        - name: Login to DockerHub
          uses: docker/login-action@v3
          with:
