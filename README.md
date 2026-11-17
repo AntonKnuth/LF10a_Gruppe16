@@ -3,7 +3,7 @@
 Ergotherapie-Lernapp zur Schreibmotorik. LF10a, Gruppe 16.
 Fachlicher Hintergrund und Anforderungs-IDs: siehe `CLAUDE.md`.
 
-## Starten
+## Starten (Veraltet)
 
 Alles zusammen, so wie es vorgeführt wird — baut beide Frontends und startet den Server:
 
@@ -11,7 +11,14 @@ Alles zusammen, so wie es vorgeführt wird — baut beide Frontends und startet 
 powershell -File start.ps1
 ```
 
-Danach: Kindmodus `http://localhost:5099/`, Therapeutenbereich `http://localhost:5099/therapeut/`.
+## Starten via Docker (lokal)
+
+1. docker build -t travel . --debug
+2. docker run -d -p 8080:8080 travel
+
+Die Webseite erreicht man mit `http://localhost:8080` und `http://localhost:8080/therapeut`
+
+~ Danach: Kindmodus `http://localhost:5099/`, Therapeutenbereich `http://localhost:5099/therapeut/`. ~
 
 Zum Entwickeln einzeln.
 
