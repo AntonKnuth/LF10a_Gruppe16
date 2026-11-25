@@ -230,6 +230,10 @@ tut: eine neue Spalte hieße „Datei löschen, alle Testdaten weg". Migrations 
 **Regel für drei Personen: vor `dotnet ef migrations add` immer erst mergen** — sonst kollidieren
 zwei Migrationen im Modell-Snapshot.
 
+> **Überholt (November 2026):** Das Abschiedsgeschenk-Foto entfällt, das Sonderspiel ist eine
+> Urkunde aus den Rohdaten (siehe „Sonderspiel: Urkunde aus Rohdaten statt Papierfoto" weiter
+> unten). Für die Handschriftprobe gilt der folgende Absatz weiter; gebaut ist der Upload nicht.
+
 **Handschriftprobe und Abschiedsgeschenk-Foto werden hochgeladen — aber es gibt keinen
 Elternbereich in der Software.** Beide Bilder liegen auf dem Server und werden Thomas angezeigt.
 Was die Eltern bekommen, entscheidet und übergibt Thomas im Gespräch, auf Papier. Damit bleiben
@@ -285,11 +289,11 @@ ist der Bereich, nicht die einzelne Übung.
 **Ein Spiel kann mehrere Bereiche tragen**, die Anzahlen summieren sich deshalb auf mehr als die
 Zahl der Übungen. Der Bericht schreibt das dazu, sonst wirkt er falsch addiert.
 
-Die Zuordnung Spiel → Bereich liegt in **`apps/api/Auswertung/Kategorien.cs`**, nicht im Frontend:
+Die Zuordnung Spiel → Bereich liegt in **`apps/api/Auswertung/Spielkatalog.cs`**, nicht im Frontend:
 die Zusammenfassung ist Auswertung, und die gehört laut Techstack nach C#. Die Therapeuten-App
 kennt nur die Beschriftungen. **Ein neues Minispiel muss dort eingetragen werden** — vergisst man
 es, verschwindet es nicht still, sondern landet unter „Ohne Zuordnung" und der Bericht schreibt
-einen Hinweis. Genau das ist im Test `KategorienTests` festgehalten.
+einen Hinweis. Genau das ist im Test `SpielkatalogTests` festgehalten.
 
 ### Tagesplan: gewürfelt statt fest
 
