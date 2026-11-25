@@ -25,6 +25,7 @@ import { LobScreen } from './screens/LobScreen'
 import { KopplungScreen } from './screens/KopplungScreen'
 import { NameScreen } from './screens/NameScreen'
 import { PauseScreen } from './screens/PauseScreen'
+import { ReiseScreen } from './screens/ReiseScreen'
 import { SmileyFrage } from './screens/SmileyFrage'
 import { SpielScreen } from './screens/SpielScreen'
 import { StartScreen } from './screens/StartScreen'
@@ -43,6 +44,8 @@ export default function App() {
   const [tagesgrenze, setTagesgrenze] = useState(false)
   /** C5: War die eben gespielte Übung eine persönliche Bestleistung? Gilt fürs nächste Lob. */
   const [bestleistung, setBestleistung] = useState(false)
+  /** C6: Der Verein, von dem Ben gerade abreist. Bewusst nur im Speicher: die Reise ist Anzeige. */
+  const [reiseVon, setReiseVon] = useState<number | null>(null)
 
   const verein = vereine[fortschritt.vereinIndex]
   const name = kind?.spielname ?? 'Kicker'
@@ -108,6 +111,8 @@ export default function App() {
     const naechste = fertig ? naechsteEinheit(fortschritt) : fortschritt
     speichereFortschritt(naechste)
     setFortschritt(naechste)
+    // C6: erst nach dem Speichern — ein Neuladen mitten in der Reise landet beim neuen Verein.
+    if (naechste.vereinIndex !== fortschritt.vereinIndex) setReiseVon(fortschritt.vereinIndex)
     setLauf(null)
   }
 
@@ -212,13 +217,20 @@ export default function App() {
       )
     }
 
-    if (!lauf) {
+    if (!lauf && reiseVon !== null) {
       return (
-        <StartScreen
-          aktiverVereinIndex={fortschritt.vereinIndex}
-          onStart={() => void beginneEinheit()}
+        <ReiseScreen
+          vonIndex={reiseVon}
+          fortschritt={fortschritt}
+          text={mitName(`Auf nach ${verein.stadt}, {name}!`)}
+          angehalten={menueOffen}
+          onWeiter={() => setReiseVon(null)}
         />
       )
+    }
+
+    if (!lauf) {
+      return <StartScreen fortschritt={fortschritt} onStart={() => void beginneEinheit()} />
     }
 
     const segment = aktuellesSegment(lauf)

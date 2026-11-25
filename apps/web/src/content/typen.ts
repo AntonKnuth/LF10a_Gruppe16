@@ -42,7 +42,7 @@ export type Verein = {
   id: string
   name: string
   stadt: string
-  /** Position auf der Europakarte, 0–100 % der Kartenfläche. */
+  /** Position auf der Europakarte, 0–100 % der Kartenfläche. Umrechnung siehe `ui/Karte.tsx`. */
   karte: { x: number; y: number }
   farben: { primaer: string; sekundaer: string }
   profi: Profi

@@ -5,7 +5,7 @@ export const ajax = {
   id: 'ajax',
   name: 'Ajax Amsterdam',
   stadt: 'Amsterdam',
-  karte: { x: 41, y: 33 },
+  karte: { x: 40.8, y: 37.5 },
   farben: { primaer: '#d2122e', sekundaer: '#ffffff' },
 
   profi: {

@@ -14,7 +14,15 @@ export type Profil = {
   nameBild?: string
 }
 
-export type Fortschritt = { vereinIndex: number; tag: number }
+export type Fortschritt = {
+  vereinIndex: number
+  tag: number
+  /**
+   * IDs der Vereine, bei denen Ben schon fertig ist. IDs und kein Zähler: kommt später ein Verein
+   * dazu, ist er noch nicht besucht. Fehlt in Ständen, die vor diesem Feld gespeichert wurden.
+   */
+  besucht?: string[]
+}
 
 const P = 'tk.profil'
 const F = 'tk.fortschritt'
@@ -36,8 +44,19 @@ export const ladeFortschritt = (): Fortschritt =>
 /** Nach einer abgeschlossenen Einheit: nächster Tag, nach 5 Tagen der nächste Verein. */
 export function naechsteEinheit(f: Fortschritt): Fortschritt {
   if (f.tag < 5) return { ...f, tag: f.tag + 1 }
-  return { vereinIndex: (f.vereinIndex + 1) % vereine.length, tag: 1 }
+  const besucht = vereine.filter((_, i) => i === f.vereinIndex || istBesucht(f, i)).map((v) => v.id)
+  return { vereinIndex: (f.vereinIndex + 1) % vereine.length, tag: 1, besucht }
 }
+
+/**
+ * C4: War Ben bei diesem Verein schon fertig?
+ *
+ * Alles vor dem aktuellen Verein ist besucht, weil die Reise immer dieselbe Reihenfolge hat — das
+ * gilt auch für alte Stände ohne `besucht`. Nach dem letzten Verein beginnt sie von vorn, dann
+ * sagt der Index nichts mehr, und die Liste hält die Nadeln farbig.
+ */
+export const istBesucht = (f: Fortschritt, i: number): boolean =>
+  i < f.vereinIndex || (f.besucht ?? []).includes(vereine[i].id)
 
 export const speichereFortschritt = (f: Fortschritt) => localStorage.setItem(F, JSON.stringify(f))
 

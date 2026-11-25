@@ -1,14 +1,9 @@
 import { vereine } from '../content'
-import { Maskottchen, Pin, Stadion } from '../ui/Figuren'
+import type { Fortschritt } from '../profil'
+import { Maskottchen, Stadion } from '../ui/Figuren'
+import { AndereNadeln, Erde, Himmel, VereinsPin, kartenpunkt } from '../ui/Karte'
 
-/** Kartenfläche im SVG. `karte.x/y` eines Vereins sind Prozent davon. */
-const KARTE = { x: 110, y: 330, b: 780, h: 380 }
-const auf = (k: { x: number; y: number }) => ({
-  x: KARTE.x + (k.x / 100) * KARTE.b,
-  y: KARTE.y + (k.y / 100) * KARTE.h,
-})
-
-type Props = { aktiverVereinIndex: number; onStart: () => void }
+type Props = { fortschritt: Fortschritt; onStart: () => void }
 
 /**
  * A2 begrenzt den Bildschirm auf wenige Elemente: Titel, Karte, Maskottchen und
@@ -18,9 +13,9 @@ type Props = { aktiverVereinIndex: number; onStart: () => void }
  * Die Karte ist zugleich die Fortschrittsanzeige aus C4 — besuchte Vereine haben eine
  * farbige Nadel, noch nicht besuchte eine blasse leere.
  */
-export function StartScreen({ aktiverVereinIndex, onStart }: Props) {
-  const aktiv = vereine[aktiverVereinIndex]
-  const aktivPos = auf(aktiv.karte)
+export function StartScreen({ fortschritt, onStart }: Props) {
+  const aktiv = vereine[fortschritt.vereinIndex]
+  const aktivPos = kartenpunkt(aktiv.karte)
 
   return (
     <svg
@@ -30,75 +25,41 @@ export function StartScreen({ aktiverVereinIndex, onStart }: Props) {
       onPointerDown={onStart}
     >
       <defs>
-        <linearGradient id="himmel" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#c6e9fb" />
-          <stop offset="100%" stopColor="#6cbfec" />
-        </linearGradient>
         <radialGradient id="leuchten">
           <stop offset="0%" stopColor="#b6ff6a" stopOpacity="0.9" />
           <stop offset="100%" stopColor="#b6ff6a" stopOpacity="0" />
         </radialGradient>
       </defs>
 
-      <rect width="1000" height="750" fill="url(#himmel)" />
+      <Himmel />
+      <Erde />
 
-      {/* Jede Wolke in einer eigenen Hülle mit eigenem Tempo — sonst schwebt der ganze
-          Himmel im Gleichschritt und sieht aus wie ein Fehler. */}
-      <g fill="#fff" opacity="0.92">
-        <g className="s-wolke" style={{ animationDuration: '24s' }}>
-          <Wolke x={120} y={150} s={1.1} />
-        </g>
-        <g className="s-wolke" style={{ animationDuration: '31s', animationDirection: 'reverse' }}>
-          <Wolke x={840} y={195} s={0.9} />
-        </g>
-        <g className="s-wolke" style={{ animationDuration: '38s' }}>
-          <Wolke x={330} y={95} s={0.7} />
-        </g>
-        <g className="s-wolke" style={{ animationDuration: '27s', animationDirection: 'reverse' }}>
-          <Wolke x={640} y={120} s={0.6} />
-        </g>
-      </g>
-
-      {/* Globus-Andeutung: sehr großer Kreis, von dem nur die obere Wölbung sichtbar ist. */}
-      <circle cx="500" cy="1780" r="1470" fill="#f2f6f9" />
-      <Europa />
-
-      {/* Die anderen Vereine zuerst, damit der aktive Verein oben liegt. */}
-      {vereine.map((v, i) => {
-        if (i === aktiverVereinIndex) return null
-        const p = auf(v.karte)
-        // Die Reise geht immer in derselben Reihenfolge: alles vor dem aktiven ist besucht (C4).
-        const besucht = i < aktiverVereinIndex
-        return (
-          <Pin
-            key={v.id}
-            x={p.x}
-            y={p.y}
-            farbe={besucht ? v.farben.primaer : undefined}
-            kuerzel={besucht ? v.id.toUpperCase().slice(0, 3) : undefined}
-          />
-        )
-      })}
-
+      {/* Leuchten und Stadion liegen unter allen Nadeln, die Nadel des aktiven Vereins ganz
+          oben: die drei Städte liegen dicht beieinander und dürfen sich nicht verdecken. */}
       <circle
         className="s-leuchten"
-        style={{ transformOrigin: `${aktivPos.x}px ${aktivPos.y + 44}px` }}
+        style={{ transformOrigin: `${aktivPos.x}px ${aktivPos.y}px` }}
         cx={aktivPos.x}
-        cy={aktivPos.y + 44}
-        r="70"
+        cy={aktivPos.y}
+        r="64"
         fill="url(#leuchten)"
       />
-      <Stadion x={aktivPos.x} y={aktivPos.y + 44} />
-      <Pin x={aktivPos.x} y={aktivPos.y} farbe={aktiv.farben.primaer} kuerzel={aktiv.id.toUpperCase().slice(0, 3)} />
+      <Stadion x={aktivPos.x} y={aktivPos.y + 6} s={0.8} />
+      <AndereNadeln
+        fortschritt={fortschritt}
+        ausser={fortschritt.vereinIndex}
+        ort={(v) => kartenpunkt(v.karte)}
+      />
+      <VereinsPin {...aktivPos} verein={aktiv} besucht s={1.2} />
 
       <Titel />
       <g className="s-schwebt">
-        <Maskottchen x={690} y={268} s={1.15} />
+        <Maskottchen x={700} y={238} s={1.15} />
       </g>
 
       <text
         x="500"
-        y="722"
+        y="708"
         textAnchor="middle"
         fontSize="40"
         fontWeight="900"
@@ -111,56 +72,85 @@ export function StartScreen({ aktiverVereinIndex, onStart }: Props) {
       >
         Drücke zum Start
       </text>
-
     </svg>
   )
 }
 
-function Wolke({ x, y, s }: { x: number; y: number; s: number }) {
-  return (
-    <g transform={`translate(${x} ${y}) scale(${s})`}>
-      <ellipse cx="0" cy="0" rx="54" ry="26" />
-      <ellipse cx="-38" cy="8" rx="34" ry="19" />
-      <ellipse cx="36" cy="7" rx="38" ry="21" />
-      <ellipse cx="-6" cy="-18" rx="32" ry="22" />
-    </g>
-  )
-}
-
 /**
- * Vereinfachter Umriss. ponytail: bewusst grob gehalten — die Nadeln tragen die
- * Funktion (C4), die Kartengrafik ist Deko. Gegen ein echtes Europa-SVG austauschen,
- * ohne die Koordinatenrechnung oben anzufassen.
+ * Jeder Buchstabe hat seine eigene Mitte. Nur so sitzen Feldlinien und Ball auf dem T, dem l und
+ * dem i, egal welche Systemschrift das Gerät hat: auf dem iPad ist es eine andere als am PC.
  */
-function Europa() {
-  return (
-    <g fill="#ccd5dd" stroke="#b9c3cd" strokeWidth="2">
-      <path d="M176 606 L170 565 L205 548 L258 542 L300 548 L330 540 L322 512 L300 492 L318 468 L352 452 L392 444 L420 458 L452 446 L490 438 L530 442 L578 432 L626 438 L680 428 L728 440 L786 452 L830 478 L848 516 L820 548 L772 556 L726 548 L690 566 L662 596 L630 610 L604 592 L566 576 L540 596 L528 636 L506 672 L482 690 L470 672 L492 634 L500 592 L486 566 L452 556 L414 566 L380 580 L344 578 L330 600 L300 626 L252 646 L206 638 Z" />
-      <path d="M300 428 L288 398 L300 372 L318 362 L330 382 L344 392 L338 414 L322 432 L310 442 Z" />
-      <path d="M262 410 L256 392 L268 382 L284 388 L286 408 L272 418 Z" />
-      <path d="M470 420 L456 392 L452 356 L470 330 L496 336 L512 362 L528 352 L546 368 L538 398 L516 418 L494 426 Z" />
-      <path d="M546 368 L556 336 L580 330 L596 352 L588 388 L562 398 Z" />
-    </g>
-  )
-}
+const TRAVEL = { text: 'Travel', x: [158, 218, 275, 339, 404, 454] }
+/** Mit „ı" ohne Punkt: den i-Punkt ersetzt der Ball. */
+const KICKERS = { text: 'Kıckers', x: [511, 568, 614, 676, 741, 797, 850] }
+/** Leichter Bogen wie im Mockup: zu den Rändern hin tiefer. */
+const bogen = (x: number) => 150 + ((x - 500) / 350) ** 2 * 22
 
 function Titel() {
-  return (
-    <text
-      className="s-titel"
-      x="500"
-      y="150"
-      textAnchor="middle"
-      fontSize="104"
-      fontWeight="900"
-      fontFamily="system-ui"
-      stroke="#fff"
-      strokeWidth="14"
-      paintOrder="stroke"
-      letterSpacing="-2"
-    >
-      <tspan fill="#5aa832">Travel</tspan>
-      <tspan fill="#f6b81c">Kickers</tspan>
+  // Erst der weiße Rand beider Wörter, dann die Farben — sonst schnitte der Rand jedes
+  // Buchstabens in den vorherigen.
+  const wort = (w: typeof TRAVEL, fill: string) => (
+    <text x={w.x.join(' ')} y={w.x.map(bogen).join(' ')} fill={fill} stroke={fill === '#fff' ? fill : 'none'}>
+      {w.text}
     </text>
+  )
+  const [tX, lX, iX] = [TRAVEL.x[0], TRAVEL.x[5], KICKERS.x[1]]
+
+  return (
+    <g className="s-titel" role="img" aria-label="TravelKickers">
+      <defs>
+        {/* Gemähter Rasen: helle und dunkle Streifen. */}
+        <pattern id="rasen" width="36" height="36" patternUnits="userSpaceOnUse">
+          <rect width="36" height="36" fill="#5aa832" />
+          <rect width="18" height="36" fill="#4a9629" />
+        </pattern>
+      </defs>
+      <g
+        textAnchor="middle"
+        fontSize="104"
+        fontWeight="900"
+        fontFamily="system-ui"
+        strokeWidth="18"
+        strokeLinejoin="round"
+      >
+        {wort(TRAVEL, '#fff')}
+        {wort(KICKERS, '#fff')}
+        {wort(TRAVEL, 'url(#rasen)')}
+        {wort(KICKERS, '#f6b81c')}
+      </g>
+      <Feldlinie x={tX} oben={-48} />
+      <Feldlinie x={lX} oben={-68} />
+      <Ball x={iX} y={bogen(iX) - 74} />
+    </g>
+  )
+}
+
+/** Mittellinie mit Anstoßkreis, auf dem Stamm eines Buchstabens. */
+function Feldlinie({ x, oben }: { x: number; oben: number }) {
+  return (
+    <g transform={`translate(${x} ${bogen(x)})`} stroke="#fff" strokeWidth="2.5" fill="none">
+      <path d={`M0 ${oben} V-6`} />
+      <circle cy={oben / 2 - 3} r="6" />
+    </g>
+  )
+}
+
+function Ball({ x, y }: { x: number; y: number }) {
+  return (
+    <g transform={`translate(${x} ${y})`}>
+      <circle r="17" fill="#fff" />
+      <circle r="13.5" fill="#fff" stroke="#2b2b2b" strokeWidth="2.5" />
+      <path d="M0 -6.5 L6.2 -2 L3.8 5.3 L-3.8 5.3 L-6.2 -2Z" fill="#2b2b2b" />
+      <path
+        d="M0 -6 V-9 M6 -2 L9 -3 M3.8 5 L5.5 7.5 M-3.8 5 L-5.5 7.5 M-6 -2 L-9 -3"
+        stroke="#2b2b2b"
+        strokeWidth="2"
+      />
+      {/* Am Rand angeschnittene Flecken, sonst liest sich das Fünfeck allein als Rad. */}
+      <path
+        d="M-4 -13 L0 -9 L4 -13Z M11 -8 L9 -3 L13.5 0Z M9 10 L5.5 7.5 L5 13Z M-9 10 L-5.5 7.5 L-5 13Z M-11 -8 L-9 -3 L-13.5 0Z"
+        fill="#2b2b2b"
+      />
+    </g>
   )
 }

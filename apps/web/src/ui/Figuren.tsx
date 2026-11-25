@@ -27,17 +27,19 @@ export function Maskottchen({ x = 0, y = 0, s = 1 }: { x?: number; y?: number; s
 export function Pin({
   x,
   y,
+  s = 1,
   farbe,
   kuerzel,
 }: {
   x: number
   y: number
+  s?: number
   farbe?: string
   kuerzel?: string
 }) {
   const besucht = Boolean(farbe)
   return (
-    <g transform={`translate(${x} ${y})`}>
+    <g transform={`translate(${x} ${y}) scale(${s})`}>
       <path
         d="M0 0 C-11 -15 -19 -24 -19 -34 A19 19 0 1 1 19 -34 C19 -24 11 -15 0 0 Z"
         fill={besucht ? '#fff' : '#eef2f6'}
@@ -63,9 +65,9 @@ export function Pin({
 }
 
 /** Stadion unter der Nadel des aktuellen Vereins. */
-export function Stadion({ x, y }: { x: number; y: number }) {
+export function Stadion({ x, y, s = 1 }: { x: number; y: number; s?: number }) {
   return (
-    <g transform={`translate(${x} ${y})`}>
+    <g transform={`translate(${x} ${y}) scale(${s})`}>
       <ellipse cx="0" cy="6" rx="46" ry="20" fill="#8bd44a" opacity="0.85" />
       <ellipse cx="0" cy="0" rx="36" ry="16" fill="#e6ebef" stroke="#b9c3cd" strokeWidth="2" />
       <ellipse cx="0" cy="-1" rx="24" ry="9" fill="#4caf50" />

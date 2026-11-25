@@ -5,8 +5,10 @@ import { vereine } from './content'
 import type { SpielErgebnis } from './engine/segmente'
 import { LobScreen } from './screens/LobScreen'
 import { PauseScreen } from './screens/PauseScreen'
+import { ReiseScreen } from './screens/ReiseScreen'
 import { StartScreen } from './screens/StartScreen'
 import { SpielScreen } from './screens/SpielScreen'
+import { naechsteEinheit } from './profil'
 import { SPIELE } from './spiele'
 import { VORGABE_REGLER, type Regler } from './spiele/regler'
 import { PAUSEN_UEBUNGEN } from './ui/pausenUebungen'
@@ -23,6 +25,7 @@ import { PAUSEN_UEBUNGEN } from './ui/pausenUebungen'
  *   http://localhost:5173/probe.html?spiel=rasenmaehen&stufe=3&dauer=45
  *   http://localhost:5173/probe.html?spiel=linie&toleranz=2&mindesttrefferquote=0.9
  *   http://localhost:5173/probe.html?start=1 — nur der Startbildschirm
+ *   http://localhost:5173/probe.html?reise=1 — die Reise zum gewählten Verein (C6)
  *   http://localhost:5173/probe.html?lob=1   — nur der Lob-Bildschirm (C5)
  *   http://localhost:5173/probe.html?pause=Hampelmänner%20machen   — nur die Zwangspause (A3)
  *
@@ -58,7 +61,14 @@ export function Probe() {
   // gerade gestaltet — Wolken, Maskottchen, Leuchten am Verein.
   const [startOffen, setStartOffen] = useState(p.get('start') === '1')
 
+  // Die Reise liegt sogar hinter fünf ganzen Einheiten. Sie geht zum gewählten Verein, vom
+  // vorherigen aus; beim ersten also vom letzten (zweite Runde).
+  const [reiseOffen, setReiseOffen] = useState(p.get('reise') === '1')
+
   const verein = vereine.find((v) => v.id === vereinId) ?? vereine[0]
+
+  const vereinIndex = vereine.indexOf(verein)
+  const vorher = (vereinIndex + vereine.length - 1) % vereine.length
 
   const neu = () => {
     setErgebnis(null)
@@ -164,6 +174,13 @@ export function Probe() {
         </button>
 
         <button
+          onClick={() => setReiseOffen(true)}
+          className="rounded bg-slate-600 px-4 py-1 font-bold text-white"
+        >
+          Reise
+        </button>
+
+        <button
           onClick={() => setLobOffen(true)}
           className="rounded bg-slate-600 px-4 py-1 font-bold text-white"
         >
@@ -202,8 +219,17 @@ export function Probe() {
       <div className="min-h-0 flex-1">
         {startOffen ? (
           <StartScreen
-            aktiverVereinIndex={Math.max(0, vereine.indexOf(verein))}
+            fortschritt={{ vereinIndex, tag: 1 }}
             onStart={() => setStartOffen(false)}
+          />
+        ) : reiseOffen ? (
+          <ReiseScreen
+            key={vereinId}
+            vonIndex={vorher}
+            fortschritt={naechsteEinheit({ vereinIndex: vorher, tag: 5 })}
+            text={`Auf nach ${verein.stadt}, Ben!`}
+            angehalten={angehalten}
+            onWeiter={() => setReiseOffen(false)}
           />
         ) : pause ? (
           <PauseScreen

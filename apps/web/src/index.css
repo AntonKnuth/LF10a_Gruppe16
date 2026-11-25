@@ -85,6 +85,28 @@ body {
 }
 .s-leuchten { animation: tk-leuchten 3.6s ease-in-out infinite; }
 
+/* ── Reise ───────────────────────────────────────────────────────────────────
+   Einmal vom alten zum neuen Verein, danach ist Ruhe. Das Ziel steht als Variable am Element,
+   weil es vom Verein abhängt. Bei `prefers-reduced-motion` kürzt die Regel unten die Dauer auf
+   praktisch null: das Maskottchen steht dann sofort am Ziel. */
+@keyframes tk-reise {
+  from { transform: translate(0, 0); }
+  to { transform: translate(var(--weg-x), var(--weg-y)); }
+}
+.r-figur { animation: tk-reise 3.5s ease-in-out both; }
+
+/* Sieben Hüpfer zu je einer halben Sekunde: genau so lang wie die Reise. */
+.r-huepft { animation: tk-schweben 0.5s ease-in-out 7; }
+
+@keyframes tk-ankunft {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.r-ankunft { animation: tk-ankunft 0.8s ease-out both; }
+
+/* Das Pausenmenü hält alles auf der Karte an, auch die Wolken. */
+.r-angehalten * { animation-play-state: paused; }
+
 /* ── Pausenübungen ───────────────────────────────────────────────────────────
    Die Figur in `ui/PausenFigur.tsx` macht die Übung vor. Bewegt wird nur hier, mit
    CSS-Keyframes: kein Bildschleifen-Code und nichts, was angehalten werden müsste.

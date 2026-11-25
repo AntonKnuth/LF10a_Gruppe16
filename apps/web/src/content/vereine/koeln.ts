@@ -17,7 +17,7 @@ export const koeln = {
   stadt: 'Köln',
   // Köln liegt südwestlich von Hamburg und südlich von Amsterdam — die Nadel muss auf der
   // Karte in dieser Beziehung zu den beiden anderen stehen, sonst stimmt die Reise nicht.
-  karte: { x: 46, y: 44 },
+  karte: { x: 44.5, y: 43.7 },
   farben: { primaer: '#ed1c24', sekundaer: '#ffffff' },
 
   profi: {

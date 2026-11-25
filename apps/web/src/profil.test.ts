@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest'
+import { vereine } from './content'
 import {
-  EINHEITEN_PRO_TAG, beachteFreigabe, einheitenHeute, loescheProfil, merkeGesehen, pruefeBestwert,
-  schonGesehen, speichereFortschritt, zaehleEinheit,
+  EINHEITEN_PRO_TAG, beachteFreigabe, einheitenHeute, istBesucht, ladeFortschritt, loescheProfil,
+  merkeGesehen, naechsteEinheit, pruefeBestwert, schonGesehen, speichereFortschritt, zaehleEinheit,
+  type Fortschritt,
 } from './profil'
 
 /**
@@ -90,6 +92,39 @@ describe('Tagesobergrenze (B3)', () => {
     expect(beachteFreigabe(null)).toBe(false)
     expect(beachteFreigabe(undefined)).toBe(false)
     expect(einheitenHeute()).toBe(1)
+  })
+})
+
+describe('Reise (C4, C6)', () => {
+  const letzter = vereine.length - 1
+  const besuchte = (f: Fortschritt) => vereine.map((_, i) => istBesucht(f, i))
+
+  it('bleibt fünf Tage bei einem Verein und zieht dann weiter', () => {
+    expect(naechsteEinheit({ vereinIndex: 0, tag: 4 })).toEqual({ vereinIndex: 0, tag: 5 })
+    expect(naechsteEinheit({ vereinIndex: 0, tag: 5 })).toMatchObject({ vereinIndex: 1, tag: 1 })
+  })
+
+  it('färbt nur, was hinter Ben liegt', () => {
+    const f = naechsteEinheit({ vereinIndex: 0, tag: 5 })
+    expect(besuchte(f)).toEqual(vereine.map((_, i) => i === 0))
+  })
+
+  it('lässt nach einer ganzen Runde alle Nadeln farbig, auch an den Tagen danach', () => {
+    let f: Fortschritt = { vereinIndex: 0, tag: 1 }
+    for (let i = 0; i < vereine.length * 5; i++) f = naechsteEinheit(f)
+    expect(f).toMatchObject({ vereinIndex: 0, tag: 1 })
+    expect(besuchte(f)).toEqual(vereine.map(() => true))
+
+    // Der nächste Tag und das Speichern dürfen die Liste nicht verlieren.
+    speichereFortschritt(naechsteEinheit(f))
+    expect(besuchte(ladeFortschritt())).toEqual(vereine.map(() => true))
+  })
+
+  it('verträgt einen alten Stand ohne das Feld', () => {
+    localStorage.setItem('tk.fortschritt', JSON.stringify({ vereinIndex: letzter, tag: 5 }))
+    const alt = ladeFortschritt()
+    expect(besuchte(alt)).toEqual(vereine.map((_, i) => i < letzter))
+    expect(besuchte(naechsteEinheit(alt))).toEqual(vereine.map(() => true))
   })
 })
 
