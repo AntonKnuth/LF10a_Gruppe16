@@ -32,17 +32,19 @@ damit nicht dieselben Fragen erneut aufgemacht werden.
 Gebaut und im Zusammenspiel geprüft: Server mit Anmeldung, Gerätekopplung, Datenannahme und
 Auswertung · Therapeuten-App mit Klientenauswahl, Einstellungen, Verlauf, Wochenbericht und
 Gerätesperre · Kind-App mit Kopplung, Rohdatenaufzeichnung, Upload und Pausenmenü.
-**B2 erfüllt — elf Minispiele und die Urkunde:** **Aufwärmen** (Dribbel-Parcours), **Ball
+**B2 erfüllt — zwölf Minispiele und die Urkunde:** **Aufwärmen** (Dribbel-Parcours), **Ball
 hochhalten**, **Platzwart**, **Linie malen**, **Autogrammstunde**, **Brezelverkauf**,
 **Einlasskontrolle** (Pinzettengriff), **Dribbeln mit Pfiff** (Impulskontrolle), **Elfmeter**,
-**Startelf** und **Stadionführung**. Kein Spiel zeigt mehr den `Platzhalter`; ein neues, noch nicht
+**Startelf**, **Stadionführung** und **Platz aufräumen**. Kein Spiel zeigt mehr den `Platzhalter`; ein neues, noch nicht
 gebautes Spiel bekommt in beiden Katalogen `inArbeit` und kommt dann in keinem Tagesplan vor.
 
 **B1 wirkt in den Spielen** (`apps/web/src/spiele/regler.ts`): Toleranz und Zieltempo sind Faktoren,
 die Mindesttrefferquote wiederholt eine Runde höchstens einmal mit Hilfe (C2) und wirkt erst über
 0,5. Was ein Spiel nicht nutzt, ist in den Einstellungen ausgeblendet. Die verwendeten Werte stehen
 in `extra.regler` und im Verlauf. Ebenfalls neu: Verlaufskurve, Abschluss-Fragebogen im
-Wochenbericht, Reise zum nächsten Verein (C6) und die Handballen-Regel im `SpielScreen`.
+Wochenbericht, Reise zum nächsten Verein (C6) und die Handballen-Regel im `SpielScreen`. Die
+Pfiffe aus dem Dribbeln wertet `Auswertung/Inhibition.cs` aus (Reaktionszeit, Stoppquote,
+Abheben, Fehlstart); im Verlauf stehen die Übungen einer Einheit in Spielreihenfolge.
 **Am echten Pencil ist davon noch nichts geprüft**, alle Druck- und Tempowerte sind Startwerte.
 
 Ebenfalls fertig: **C5** (der Profi lobt eine persönliche Bestleistung namentlich — verglichen
@@ -390,7 +392,7 @@ vereinsspezifischen Aufgabeninhalte** (Kaderliste, Fakten, Sprüche) — siehe L
 Erledigt: Gerüst und Startbildschirm · Erstlauf mit Spielnamen per Stift · Ansage · Segment-Engine ·
 Lob → Selbsteinschätzung → Pause mit Timer · Abschluss-Fragebogen · Therapeuten-App mit
 Einstellungen und Verlauf · Gerätekopplung, Datenannahme, Auswertung in C#, Wochenbericht ·
-Pausenmenü · Onboarding beim ersten Spiel. Elf Minispiele und die Urkunde statt einem Spiel.
+Pausenmenü · Onboarding beim ersten Spiel. Zwölf Minispiele und die Urkunde statt einem Spiel.
 
 Phase 1 ist damit abgearbeitet. Das Onboarding erklärt der Profi in einer Sprechblase; **Pfeile
 auf einzelne Spielelemente gibt es nicht** — die bräuchten pro Spiel Wissen über dessen Canvas.
@@ -442,9 +444,7 @@ Bericht). Bild-Upload der Arbeitsproben — das Schema steht, der Endpunkt kommt
   Dribbeln, Stadionführung) und Korridore (Startelf) sind geschätzt
 - **Content:** Kader auf elf Spieler auffüllen (es fehlen HSV 5, Köln 7, Ajax 7) und Nummern prüfen;
   mehr Stadionfakten (es fehlen Köln 1, HSV 2, Ajax 3)
-- C#-Auswertung der Pfiffzeiten aus dem Dribbeln (`extra.pfiffe` wird gespeichert, aber nicht gelesen)
-- Im Verlauf stehen die Übungen einer Einheit nicht in Spielreihenfolge
-- Weitere Minispiele aus der Ideenliste, z. B. *Platz aufräumen*
+- Die Schwellen der Pfiff-Auswertung (`Inhibition.cs`) mit echten Pencil-Daten prüfen
 - Ob echte Vereinsassets durch fiktive ersetzt werden
 
 ## Agent skills
