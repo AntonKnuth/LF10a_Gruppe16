@@ -32,6 +32,9 @@ export const SPIEL_ROLLE: Record<string, Rolle> = {
   abschiedsgeschenk: 'sonder',
 }
 
+/** Das Sonderspiel „Urkunde". Nur dessen Ergebnisse lassen sich ansehen und drucken. */
+export const URKUNDE_ID = 'abschiedsgeschenk'
+
 export const rolleVon = (spielId: string): Rolle => SPIEL_ROLLE[spielId] ?? 'normal'
 
 export type Tagesform = {
@@ -73,6 +76,7 @@ export type UnterschriftKennzahl = {
 }
 
 export type VerlaufPunkt = {
+  ergebnisId: string
   sessionId: string
   datum: string
   spielId: string
@@ -84,6 +88,33 @@ export type VerlaufPunkt = {
   kennzahlen: Kennzahl | null
   /** Nur bei Urkunden gefüllt, sonst null. */
   unterschrift: UnterschriftKennzahl | null
+}
+
+export type UrkundeAntwort = {
+  datum: string
+  stufe: number
+  eingabegeraet: string
+  synthetischerDruck: boolean
+  /** JSON-Text, so wie ihn die Kind-App geschrieben hat (`UrkundeExtra`). */
+  extra: string | null
+  /** Rohdaten-Blob als Base64. Fehlt, wenn Ben nichts geschrieben hat. */
+  werte: string | null
+}
+
+/** Der Teil von `extra`, den die Druckvorlage braucht. Geschrieben wird er in
+ *  `apps/web/src/spiele/abschiedsgeschenk/welt.ts`. */
+export type UrkundeExtra = {
+  urkunde: {
+    vereinId: string
+    vereinName: string
+    profi: string
+    primaer: string
+    sekundaer: string
+  }
+  /** In den Koordinaten der Rohdaten. `null`, wenn Ben nichts geschrieben hat. */
+  band: { x: number; y: number; breite: number; hoehe: number } | null
+  lineatur: 'vier' | 'zwei' | 'grund'
+  neustartsMs: number[]
 }
 
 export type SpielZeile = {
@@ -188,6 +219,9 @@ export const api = {
     }),
 
   verlauf: (id: number) => hole<VerlaufPunkt[]>(`/api/klienten/${id}/verlauf`),
+
+  urkunde: (id: number, ergebnisId: string) =>
+    hole<UrkundeAntwort>(`/api/klienten/${id}/urkunden/${ergebnisId}`),
 
   wochenbericht: (id: number, von?: string) =>
     hole<Wochenbericht>(

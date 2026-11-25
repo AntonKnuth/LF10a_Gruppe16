@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useState } from 'react'
-import { api, titel, type KlientDetail, type VerlaufPunkt } from '../api'
+import { api, titel, URKUNDE_ID, type KlientDetail, type VerlaufPunkt } from '../api'
+import { Urkunde } from './Urkunde'
 
 /**
  * C4 (Fortschritt) und C3 (Abgleich Selbsteinschätzung gegen Messwert).
@@ -13,11 +14,18 @@ import { api, titel, type KlientDetail, type VerlaufPunkt } from '../api'
 export function Verlauf({ klient }: { klient: KlientDetail }) {
   const [punkte, setPunkte] = useState<VerlaufPunkt[] | null>(null)
   const [spielId, setSpielId] = useState<string>('alle')
+  // Gesetzt, solange eine Urkunde offen ist. Sie ersetzt dann die Tabelle.
+  const [urkundeId, setUrkundeId] = useState<string | null>(null)
 
   useEffect(() => {
     setPunkte(null)
     void api.verlauf(klient.id).then(setPunkte)
   }, [klient])
+
+  if (urkundeId)
+    return (
+      <Urkunde klient={klient} ergebnisId={urkundeId} onZurueck={() => setUrkundeId(null)} />
+    )
 
   if (!punkte) return <p className="text-slate-500">Wird geladen…</p>
   if (punkte.length === 0)
@@ -64,7 +72,17 @@ export function Verlauf({ klient }: { klient: KlientDetail }) {
               <Fragment key={`${p.sessionId}-${i}`}>
               <tr className="border-t border-slate-100">
                 <td className="p-3">{new Date(p.datum).toLocaleDateString('de-DE')}</td>
-                <td className="p-3 font-semibold text-slate-700">{titel(p.spielId)}</td>
+                <td className="p-3 font-semibold text-slate-700">
+                  {titel(p.spielId)}
+                  {p.spielId === URKUNDE_ID && (
+                    <button
+                      onClick={() => setUrkundeId(p.ergebnisId)}
+                      className="mt-1 block rounded border border-slate-300 px-2 py-0.5 text-xs whitespace-nowrap hover:bg-slate-100"
+                    >
+                      Urkunde ansehen
+                    </button>
+                  )}
+                </td>
                 <td className="p-3">
                   <span className="rounded bg-slate-200 px-2 py-0.5 font-semibold">{p.stufe}</span>
                 </td>

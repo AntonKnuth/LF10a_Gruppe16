@@ -7,6 +7,7 @@ using TravelKickers.Api.Daten;
 namespace TravelKickers.Api.Endpunkte;
 
 public record VerlaufPunkt(
+    Guid ErgebnisId,
     Guid SessionId,
     DateTime Datum,
     string SpielId,
@@ -17,6 +18,17 @@ public record VerlaufPunkt(
     int? Selbsteinschaetzung,
     Kennzahl? Kennzahlen,
     UnterschriftKennzahl? Unterschrift);
+
+/// <summary>Alles, was die Therapeuten-App zum Zeichnen der Urkunde braucht. <c>Extra</c> geht
+/// ungelesen als JSON-Text durch; <c>Werte</c> ist der Rohdaten-Blob (im JSON als Base64) und
+/// fehlt, wenn nichts aufgezeichnet wurde.</summary>
+public record UrkundeAntwort(
+    DateTime Datum,
+    int Stufe,
+    string Eingabegeraet,
+    bool SynthetischerDruck,
+    string? Extra,
+    byte[]? Werte);
 
 public record SpielZeile(
     string SpielId,
@@ -74,6 +86,7 @@ public static class Bericht
                 .OrderBy(e => e.Session!.EmpfangenAm)
                 .Select(e => new
                 {
+                    e.Id,
                     e.SessionId,
                     e.Session!.EmpfangenAm,
                     e.SpielId,
@@ -90,12 +103,30 @@ public static class Bericht
             // Die Unterschrift-Kennzahlen gibt es nur bei der Urkunde. Bei allen anderen Spielen
             // bleibt das Feld leer, auch wenn deren extra ein JSON ist.
             return Results.Ok(zeilen.Select(z => new VerlaufPunkt(
-                z.SessionId, z.EmpfangenAm, z.SpielId, z.Stufe, z.Eingabegeraet,
+                z.Id, z.SessionId, z.EmpfangenAm, z.SpielId, z.Stufe, z.Eingabegeraet,
                 z.SynthetischerDruck, z.Abgebrochen, z.Selbsteinschaetzung,
                 z.Roh is null ? null : Kennzahlen.Berechne(z.Roh),
                 z.Roh is null || z.SpielId != Spielkatalog.UrkundeId
                     ? null
                     : Unterschrift.Berechne(z.Roh, z.Extra))));
+        });
+
+        // Die Urkunde zum Ansehen und Drucken. Gezeichnet wird im Browser aus den Rohdaten —
+        // ein Bild der Unterschrift gibt es nirgends.
+        app.MapGet("/api/klienten/{id:int}/urkunden/{ergebnisId:guid}", async (
+            int id, Guid ergebnisId, TkContext db, ClaimsPrincipal nutzer) =>
+        {
+            if (nutzer.TherapeutId() is not int therapeutId) return Results.Unauthorized();
+            if (!await Zugriff.DarfSehen(db, therapeutId, id)) return Results.Forbid();
+
+            var urkunde = await Zugriff.ErgebnisseFuer(db, therapeutId, id)
+                .Where(e => e.Id == ergebnisId && e.SpielId == Spielkatalog.UrkundeId)
+                .Select(e => new UrkundeAntwort(
+                    e.Session!.EmpfangenAm, e.Stufe, e.Eingabegeraet, e.SynthetischerDruck,
+                    e.Extra, e.Rohdaten!.Werte))
+                .SingleOrDefaultAsync();
+
+            return urkunde is null ? Results.NotFound() : Results.Ok(urkunde);
         });
 
         app.MapGet("/api/klienten/{id:int}/wochenbericht", async (

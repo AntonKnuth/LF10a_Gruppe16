@@ -11,6 +11,16 @@
     border: 0 !important;
     padding: 0 !important;
   }
+  /* Die Urkunde füllt das ganze Blatt. Das Querformat setzt der Bildschirm selbst (Urkunde.tsx):
+     eine feste @page-Regel hier würde auch den Wochenbericht drehen. */
+  .urkundenblatt {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    max-width: none !important;
+    height: 100vh;
+    background: white;
+  }
   @page {
     size: A4;
     margin: 15mm;
