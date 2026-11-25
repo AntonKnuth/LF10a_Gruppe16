@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { SPIELE, type SpielProps } from '../spiele'
+import { VORGABE_REGLER, type Regler } from '../spiele/regler'
 import type { SpielErgebnis } from '../engine/segmente'
 import type { Verein } from '../content/typen'
 import { druckVon, feinEreignisse } from '../eingabe'
@@ -24,6 +25,8 @@ export function SpielScreen({
   spielId,
   dauerSek,
   stufe,
+  // Ein Schnappschuss aus der Zeit vor B1 kennt die Regler nicht.
+  regler = VORGABE_REGLER,
   verein,
   name,
   angehalten,
@@ -32,6 +35,7 @@ export function SpielScreen({
   spielId: string
   dauerSek: number
   stufe: number
+  regler?: Regler
   verein: Verein
   name: string
   /** Das Pausenmenü ist offen. */
@@ -95,10 +99,13 @@ export function SpielScreen({
         // Platzhalter meldet sonst für jede Übung „platzhalter", und im Bericht des
         // Therapeuten steht dann nicht mehr, welche Übung Ben gemacht hat.
         spielId,
+        // Wie die Stufe: ohne die verwendeten Werte sähe eine geänderte Anforderung im Verlauf
+        // wie eine Veränderung von Ben aus.
+        extra: { ...ergebnis.extra, regler },
         rohdaten: aufzeichnung.current.fertig(),
       })
     },
-    [onFertig, spielId],
+    [onFertig, spielId, regler],
   )
 
   if (!spiel) return <p className="p-8 text-2xl">Unbekanntes Spiel: {spielId}</p>
@@ -121,7 +128,7 @@ export function SpielScreen({
   }
 
   const props: SpielProps = {
-    stufe, verein, name, angehalten, zeitAbgelaufen: rest === 0, onFertig: fertig,
+    stufe, regler, verein, name, angehalten, zeitAbgelaufen: rest === 0, onFertig: fertig,
   }
   const min = Math.floor(rest / 60)
   const sek = String(rest % 60).padStart(2, '0')

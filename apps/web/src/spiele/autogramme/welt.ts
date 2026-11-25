@@ -23,6 +23,7 @@ import type { Verein } from '../../content/typen'
 import type { Druck, Eingabegeraet } from '../../eingabe'
 import { druckKennzahlen } from '../../eingabe'
 import type { SpielErgebnis } from '../../engine/segmente'
+import { VORGABE_REGLER, musterNochmal, type Regler } from '../regler'
 
 /* ── Bühne ─────────────────────────────────────────────────────────────── */
 export const W = 900
@@ -46,10 +47,15 @@ export type Feld = { x: number; y: number; b: number; h: number }
 
    Kleineres Feld = feinerer Griff. Startwerte, kein Messwert — mit echtem Pencil auf dem
    Zielgerät nachziehen. */
-export const feldBreite = (stufe: number) => Math.max(150, 310 - stufe * 28)
 
-export function autogrammFeld(stufe: number): Feld {
-  const b = feldBreite(stufe)
+/** Breiter geht es nicht: das Feld läge sonst über der Rückennummer. */
+const FELD_B_MAX = 340
+
+export const feldBreite = (stufe: number, faktor = 1) =>
+  Math.min(FELD_B_MAX, Math.max(150, 310 - stufe * 28) * faktor)
+
+export function autogrammFeld(stufe: number, faktor = 1): Feld {
+  const b = feldBreite(stufe, faktor)
   const h = Math.round(b * 0.42)
   return { x: W / 2 - b / 2, y: TRIKOT_Y + TRIKOT_H - h - 74, b, h }
 }
@@ -59,7 +65,7 @@ export function autogrammFeld(stufe: number): Feld {
  * kleineres Feld verlangt sonst dieselbe Strecke auf weniger Platz und wird doppelt
  * schwer — die Stufe soll die Feinheit erhöhen, nicht die Menge.
  */
-export const zielTinte = (stufe: number) => feldBreite(stufe) * 2
+export const zielTinte = (stufe: number, faktor = 1) => feldBreite(stufe, faktor) * 2
 
 export const klemme = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v))
 
@@ -80,10 +86,12 @@ const ERSATZ_KADER: Spieler[] = [
 
 export type Welt = {
   stufe: number
+  /** B1: von Thomas eingestellt, während des Spiels fest. */
+  regler: Regler
   farben: Verein['farben']
   /** Kaderliste des Vereins — der Fan hält das Trikot eines echten Spielers hin. */
   kader: Spieler[]
-  /** Wievieltes Trikot insgesamt, ab 0. Bestimmt zugleich, wessen Trikot es ist. */
+  /** Wievielter Fan, ab 0. Bestimmt, wessen Trikot es ist; bleibt bei einer Wiederholung stehen. */
   trikot: number
   feld: Feld
   /** Geschriebene Strecke im Feld — **nur für das laufende Trikot**, treibt den Ring. */
@@ -93,6 +101,12 @@ export type Welt = {
      jedem neuen Trikot auf null geht. */
   tinteDrinGesamt: number
   tinteGesamt: number
+  /** Alle Strecke auf dem laufenden Trikot, auch die daneben — daran misst sich die
+   *  Mindesttrefferquote. */
+  tinteTrikot: number
+  /** Kommt derselbe Fan gerade zum zweiten Mal? Dann bleibt die Schreibhilfe im Feld stehen. */
+  wiederholung: boolean
+  wiederholungen: number
   schrift: Schriftpunkt[]
   /** Signierte Trikots. */
   signiert: number
@@ -110,16 +124,22 @@ export type Welt = {
 }
 
 /** `verein` ist optional, damit der Test die Welt ohne Content-Paket bauen kann. */
-export function neueWelt(stufe: number, verein?: Verein): Welt {
+export function neueWelt(
+  stufe: number, verein?: Verein, regler: Regler = VORGABE_REGLER,
+): Welt {
   return {
     stufe,
+    regler,
     farben: verein?.farben ?? { primaer: '#0a3a82', sekundaer: '#ffffff' },
     kader: verein?.kader?.length ? verein.kader : ERSATZ_KADER,
     trikot: 0,
-    feld: autogrammFeld(stufe),
+    feld: autogrammFeld(stufe, regler.toleranz),
     tinte: 0,
     tinteDrinGesamt: 0,
     tinteGesamt: 0,
+    tinteTrikot: 0,
+    wiederholung: false,
+    wiederholungen: 0,
     schrift: [],
     signiert: 0,
     schreibt: false,
@@ -137,7 +157,7 @@ export function neueWelt(stufe: number, verein?: Verein): Welt {
 export const spielerVon = (w: Welt): Spieler => w.kader[w.trikot % w.kader.length]
 
 /** 0–1, wie voll das laufende Autogramm ist. Treibt den Fortschrittsring (A1). */
-export const anteil = (w: Welt) => klemme(w.tinte / zielTinte(w.stufe), 0, 1)
+export const anteil = (w: Welt) => klemme(w.tinte / zielTinte(w.stufe, w.regler.toleranz), 0, 1)
 
 /* ── Schreiben ─────────────────────────────────────────────────────────── */
 
@@ -170,6 +190,7 @@ export function schreibe(w: Welt, x: number, y: number, d: Druck) {
   if (w.letzter) {
     const strecke = Math.hypot(x - w.letzter.x, y - w.letzter.y)
     w.tinteGesamt += strecke
+    w.tinteTrikot += strecke
     // Nur Strecke, die **ganz** im Feld liegt, zählt: Anfang und Ende drin.
     if (drin && imFeld(w.feld, w.letzter.x, w.letzter.y)) {
       w.tinte += strecke
@@ -178,7 +199,7 @@ export function schreibe(w: Welt, x: number, y: number, d: Druck) {
   }
   w.letzter = { x, y }
 
-  if (w.tinte >= zielTinte(w.stufe)) {
+  if (w.tinte >= zielTinte(w.stufe, w.regler.toleranz)) {
     w.signiert++
     w.jubelUhr = JUBEL_SEK
   }
@@ -186,7 +207,11 @@ export function schreibe(w: Welt, x: number, y: number, d: Druck) {
 
 /** Nach dem Jubel: nächster Fan, nächstes Trikot, leeres Feld. */
 function naechstesTrikot(w: Welt) {
-  w.trikot++
+  // Unter der Mindesttrefferquote möchte derselbe Fan noch eins, aber nie ein drittes.
+  w.wiederholung = !w.wiederholung && musterNochmal(w.regler, w.tinte, w.tinteTrikot)
+  if (w.wiederholung) w.wiederholungen++
+  else w.trikot++
+  w.tinteTrikot = 0
   w.tinte = 0
   w.schrift = []
   w.letzter = null
@@ -212,7 +237,7 @@ export function aktualisiere(w: Welt, dt: number) {
  * nicht da, und das laufende steckt bereits in `signiert`.
  */
 export function ergebnis(w: Welt, dauerMs: number, abgebrochen: boolean): SpielErgebnis {
-  const begonnen = w.trikot + 1
+  const begonnen = w.trikot + 1 + w.wiederholungen
   const geschafft = w.signiert + (w.jubelUhr > 0 ? 0 : anteil(w))
   const { mittel, streuung } = druckKennzahlen(w.druckWerte)
   return {
@@ -231,7 +256,8 @@ export function ergebnis(w: Welt, dauerMs: number, abgebrochen: boolean): SpielE
       trikotsBegonnen: begonnen,
       tinteImFeld: Math.round(w.tinteDrinGesamt),
       tinteGesamt: Math.round(w.tinteGesamt),
-      feldBreite: feldBreite(w.stufe),
+      feldBreite: w.feld.b,
+      wiederholungen: w.wiederholungen,
     },
   }
 }

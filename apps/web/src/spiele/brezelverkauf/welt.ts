@@ -25,6 +25,7 @@ import type { Verein } from '../../content/typen'
 import type { Druck, Eingabegeraet } from '../../eingabe'
 import { druckKennzahlen } from '../../eingabe'
 import type { SpielErgebnis } from '../../engine/segmente'
+import { VORGABE_REGLER, type Regler } from '../regler'
 
 /* ── Bühne ─────────────────────────────────────────────────────────────── */
 export const W = 900
@@ -141,10 +142,10 @@ export const DANK_SPRUECHE = [
    Startwerte, kein Messwert — mit echtem Pencil auf dem Zielgerät nachziehen. */
 
 /** Halbe Wegbreite in Bühnen-Pixeln. */
-export const toleranz = (stufe: number) => Math.max(14, 46 - stufe * 5)
+export const toleranz = (stufe: number, faktor = 1) => Math.max(14, 46 - stufe * 5) * faktor
 
 /** Schritttempo in Bühnen-Pixeln je Sekunde. */
-export const tempo = (stufe: number) => 150 + stufe * 20
+export const tempo = (stufe: number, faktor = 1) => (150 + stufe * 20) * faktor
 
 export const anzahlLaeufer = (stufe: number) => 1 + stufe
 
@@ -166,6 +167,8 @@ export type Ereignis = 'abgabe' | 'stoss' | null
 
 export type Welt = {
   stufe: number
+  /** B1: von Thomas eingestellt, während des Spiels fest. */
+  regler: Regler
   farben: Verein['farben']
   /** Der gezeichnete Weg. Erster Punkt ist immer der Standort des Verkäufers. */
   linie: Wegpunkt[]
@@ -199,9 +202,12 @@ export type Welt = {
 export const START: Punkt = aufEllipse(RAENGE[0].rx, RAENGE[0].ry, Math.PI / 2)
 
 /** `verein` ist optional, damit der Test die Welt ohne Content-Paket bauen kann. */
-export function neueWelt(stufe: number, verein?: Verein): Welt {
+export function neueWelt(
+  stufe: number, verein?: Verein, regler: Regler = VORGABE_REGLER,
+): Welt {
   const w: Welt = {
     stufe,
+    regler,
     farben: verein?.farben ?? { primaer: '#0a3a82', sekundaer: '#ffffff' },
     linie: [{ ...START, daneben: false }],
     gelaufen: 0,
@@ -261,7 +267,8 @@ export function abstandZumWeg(x: number, y: number): number {
   return beste
 }
 
-export const aufWeg = (w: Welt, x: number, y: number) => abstandZumWeg(x, y) <= toleranz(w.stufe)
+export const aufWeg = (w: Welt, x: number, y: number) =>
+  abstandZumWeg(x, y) <= toleranz(w.stufe, w.regler.toleranz)
 
 /** Gesamtlänge des gezeichneten Wegs in Pixeln. */
 export function wegLaenge(linie: Wegpunkt[]): number {
@@ -391,7 +398,7 @@ export function aktualisiere(w: Welt, dt: number): Ereignis {
   // Sitzreihen kommt sie kaum voran — die Wege sind der schnelle Weg, nicht der einzige.
   const figur = verkaeufer(w)
   const schnell = aufWeg(w, figur.x, figur.y)
-  const schritt = tempo(w.stufe) * (schnell ? 1 : NEBENWEG_TEMPO) * dt
+  const schritt = tempo(w.stufe, w.regler.zielgeschwindigkeit) * (schnell ? 1 : NEBENWEG_TEMPO) * dt
   w.gelaufen = Math.min(w.gelaufen + schritt, wegLaenge(w.linie))
 
   const jetzt = verkaeufer(w)
@@ -446,7 +453,7 @@ export function ergebnis(w: Welt, dauerMs: number, abgebrochen: boolean): SpielE
       zusammenstoesse: w.kollisionen,
       proben: w.proben,
       probenDrin: w.probenDrin,
-      toleranz: toleranz(w.stufe),
+      toleranz: toleranz(w.stufe, w.regler.toleranz),
     },
   }
 }

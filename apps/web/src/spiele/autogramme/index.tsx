@@ -16,7 +16,7 @@ import { berechneSicht, zeichne, type Sicht } from './zeichnen'
  * Die Rohdaten für B4 zeichnet der `SpielScreen` auf; hier steht keine Zeile dafür.
  */
 export function Autogrammstunde({
-  stufe, verein, zeitAbgelaufen, angehalten, onFertig,
+  stufe, regler, verein, zeitAbgelaufen, angehalten, onFertig,
 }: SpielProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const weltRef = useRef<Welt | null>(null)
@@ -26,7 +26,7 @@ export function Autogrammstunde({
   const zeitAus = useRef(false)
   const beiFertig = useRef(onFertig)
   // Der Verein bringt Farben und Kader mit — ein neuer Verein ist eine Content-Datei.
-  weltRef.current ??= neueWelt(stufe, verein)
+  weltRef.current ??= neueWelt(stufe, verein, regler)
 
   useEffect(() => {
     const cv = canvasRef.current

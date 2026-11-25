@@ -80,6 +80,7 @@ export function zeichne(
   tor(g, w)
   huetchen(g, w)
   spur(g, w)
+  vormachen(g, w)
   ball(g, w)
   durchgaenge(g, w)
   if (w.fertig) schild(g, 'Aufgewärmt!', 'Gut gedribbelt.')
@@ -102,7 +103,7 @@ function korridor(g: CanvasRenderingContext2D, w: Welt) {
   g.save()
   g.lineCap = 'round'
   g.lineJoin = 'round'
-  g.lineWidth = toleranz(w.stufe) * 2
+  g.lineWidth = toleranz(w.stufe, w.regler.toleranz) * 2
   g.strokeStyle = w.zieht && w.imKorridor ? F.drin : F.kreide
   g.globalAlpha = w.zieht && w.imKorridor ? 0.4 : 0.22
   bahnPfad(g, w.bahn)
@@ -232,6 +233,21 @@ function spur(g: CanvasRenderingContext2D, w: Welt) {
     g.lineTo(q.x, q.y)
     g.stroke()
   }
+  g.restore()
+}
+
+/**
+ * Hilfe bei einer Wiederholung (C2): ein blasser Ball rollt die Bahn vor, bis Ben den Stift
+ * aufsetzt. Bewegung statt Text — und kein Wort darüber, warum die Bahn noch einmal kommt.
+ */
+function vormachen(g: CanvasRenderingContext2D, w: Welt) {
+  if (!w.wiederholung || w.zieht || w.jubelUhr > 0) return
+  const p = punktAuf(w.bahn, (w.zeitGesamt % 4) / 4)
+  g.save()
+  g.globalAlpha = 0.6
+  g.fillStyle = F.ball
+  kreis(g, p.x, p.y, BALL_R)
+  g.fill()
   g.restore()
 }
 

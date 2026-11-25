@@ -4,6 +4,7 @@ import {
   JUBEL_SEK, aktualisiere, aufBahn, bahn, ballPunkt, ergebnis, klemme, neueWelt, punktAuf,
   toleranz, ziehe, type Welt,
 } from './welt'
+import { VORGABE_REGLER } from '../regler'
 
 const d = (wert = 0.5): Druck => ({ wert, synthetisch: true })
 
@@ -212,5 +213,41 @@ describe('Ergebnis', () => {
     const e = ergebnis(w, 1000, false)
     expect(e.vollstaendigkeit).toBe(klemme(e.vollstaendigkeit, 0, 1))
     expect(e.extra).toMatchObject({ tore: 3 })
+  })
+})
+
+describe('Regler (B1)', () => {
+  const danebenUndDurch = (w: Welt) => {
+    const p = punktAuf(w, 0.5)
+    for (let i = 0; i < 60; i++) ziehe(w, p.x, p.y + 200, d())
+    zieheAuf(w, 0, 1)
+    laufe(w, JUBEL_SEK + 0.2)
+  }
+
+  it('macht den Korridor um die Toleranz breiter oder schmaler', () => {
+    const trifft = (faktor: number) => {
+      const w = neueWelt(3, undefined, { ...VORGABE_REGLER, toleranz: faktor })
+      const p = punktAuf(w, 0.5)
+      ziehe(w, p.x, p.y + 40, d())
+      return w.imKorridor
+    }
+    // Stufe 3 hat 28 Pixel halbe Breite.
+    expect(trifft(1)).toBe(false)
+    expect(trifft(2)).toBe(true)
+  })
+
+  it('legt unter der Mindesttrefferquote dieselbe Bahn genau einmal noch aus', () => {
+    const w = neueWelt(3, undefined, { ...VORGABE_REGLER, mindesttrefferquote: 0.9 })
+    danebenUndDurch(w)
+    expect([w.runde, w.wiederholung, w.tore]).toEqual([0, true, 1]) // das Tor zählt trotzdem
+    danebenUndDurch(w)
+    expect([w.runde, w.wiederholung, w.tore]).toEqual([1, false, 2]) // keine Endlosschleife
+    expect(ergebnis(w, 1, false).extra).toMatchObject({ wiederholungen: 1, bahnenBegonnen: 3 })
+  })
+
+  it('wiederholt bei der Vorgabe nichts', () => {
+    const w = neueWelt(3)
+    danebenUndDurch(w)
+    expect([w.runde, w.wiederholung]).toEqual([1, false])
   })
 })

@@ -16,6 +16,7 @@ import type { Verein } from '../../content/typen'
 import type { Druck, Eingabegeraet } from '../../eingabe'
 import { druckKennzahlen } from '../../eingabe'
 import type { SpielErgebnis } from '../../engine/segmente'
+import { VORGABE_REGLER, type Regler } from '../regler'
 import { klang } from './klang'
 
 /* ── Bühne ─────────────────────────────────────────────────────────────── */
@@ -277,7 +278,9 @@ const zuf = (a = 1, b = 0) => b + Math.random() * (a - b)
 const waehle = <T>(a: T[]): T => a[Math.floor(Math.random() * a.length)]
 
 /* ── Aufbau ────────────────────────────────────────────────────────────── */
-export function neueWelt(stufe: number, verein?: Verein): Welt {
+export function neueWelt(
+  stufe: number, verein?: Verein, regler: Regler = VORGABE_REGLER,
+): Welt {
   const w: Welt = {
     stufe,
     deko: dekoAus(verein),
@@ -287,7 +290,12 @@ export function neueWelt(stufe: number, verein?: Verein): Welt {
       gesicht: 'idle', gesichtT: 0, lebt: true, scheitelDa: true, letzteKraft: 0.5,
       wartet: true, wippe: 0, ruheY: 420,
     },
-    band: { y: 305, h: bandHoehe(stufe), phase: zuf(6.3), tempo: bandTempo(stufe) },
+    band: {
+      y: 305,
+      h: bandHoehe(stufe) * regler.toleranz,
+      phase: zuf(6.3),
+      tempo: bandTempo(stufe) * regler.zielgeschwindigkeit,
+    },
     laden: { an: false, ox: 0, px: 0, py: 0, druck: 0.5, synthetisch: true },
     ballons: [],
     puffs: [],

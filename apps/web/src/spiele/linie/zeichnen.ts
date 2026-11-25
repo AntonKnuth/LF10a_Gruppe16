@@ -9,7 +9,7 @@
  * Kind Willkür: der Ball bliebe stehen, ohne dass zu sehen ist, warum.
  */
 
-import { BALL_R, H, W, ballPunkt, toleranz, type Punkt, type Welt } from './welt'
+import { BALL_R, H, W, ballPunkt, punktAuf, toleranz, type Punkt, type Welt } from './welt'
 
 const F = {
   himmel: '#7ecdfb',
@@ -69,6 +69,7 @@ export function zeichne(g: CanvasRenderingContext2D, w: Welt, sicht: Sicht, brei
   tor(g, w)
   anstoss(g, w)
   spur(g, w)
+  vormachen(g, w)
   ball(g, w)
   if (w.jubelUhr > 0) jubel(g)
 }
@@ -88,7 +89,7 @@ function rasen(g: CanvasRenderingContext2D) {
 function korridor(g: CanvasRenderingContext2D, w: Welt) {
   g.save()
   g.lineCap = 'round'
-  g.lineWidth = toleranz(w.stufe) * 2
+  g.lineWidth = toleranz(w.stufe, w.regler.toleranz) * 2
   g.strokeStyle = w.zieht && w.imKorridor ? F.drin : F.korridor
   g.globalAlpha = w.zieht && w.imKorridor ? 0.4 : 0.22
   strecke(g, w.a, w.b)
@@ -172,6 +173,21 @@ function spur(g: CanvasRenderingContext2D, w: Welt) {
     strecke(g, p, q)
     g.stroke()
   }
+  g.restore()
+}
+
+/**
+ * Hilfe bei einer Wiederholung (C2): ein blasser Ball rollt die Bahn vor, bis Ben den Stift
+ * aufsetzt. Bewegung statt Text — und kein Wort darüber, warum die Bahn noch einmal kommt.
+ */
+function vormachen(g: CanvasRenderingContext2D, w: Welt) {
+  if (!w.wiederholung || w.zieht || w.jubelUhr > 0) return
+  const p = punktAuf(w, (w.zeitGesamt % 3) / 3)
+  g.save()
+  g.globalAlpha = 0.6
+  g.fillStyle = F.ball
+  kreis(g, p.x, p.y, BALL_R)
+  g.fill()
   g.restore()
 }
 

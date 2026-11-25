@@ -26,6 +26,7 @@ import type { Verein } from '../../content/typen'
 import type { Druck, Eingabegeraet } from '../../eingabe'
 import { druckKennzahlen } from '../../eingabe'
 import type { SpielErgebnis } from '../../engine/segmente'
+import { VORGABE_REGLER, musterNochmal, type Regler } from '../regler'
 
 /* ── Bühne ─────────────────────────────────────────────────────────────── */
 export const W = 900
@@ -86,9 +87,11 @@ export function zoneVon(sp: number, ze: number, platz: number): Zone {
    Bei Stufe 3 ist das halbe Band 0,21 — die Bänder der Zonen überlappen sich also
    teilweise. Das ist Absicht: ein 7-Jähriger trifft mit dem Pencil keine exakten Werte,
    und C2 verlangt Nachsicht. Unter 0,125 wären drei getrennte Andrücke erzwungen. */
-export const halbesBand = (stufe: number) => Math.max(0.08, 0.3 - 0.03 * stufe)
-export const bandUnten = (stufe: number, zone: Zone) => ZONE_MITTE[zone] - halbesBand(stufe)
-export const bandOben = (stufe: number, zone: Zone) => ZONE_MITTE[zone] + halbesBand(stufe)
+export const halbesBand = (stufe: number, faktor = 1) => Math.max(0.08, 0.3 - 0.03 * stufe) * faktor
+export const bandUnten = (stufe: number, zone: Zone, faktor = 1) =>
+  ZONE_MITTE[zone] - halbesBand(stufe, faktor)
+export const bandOben = (stufe: number, zone: Zone, faktor = 1) =>
+  ZONE_MITTE[zone] + halbesBand(stufe, faktor)
 
 export const klemme = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v))
 
@@ -97,19 +100,24 @@ export type Zelle = 'ungemaeht' | 'gut' | 'kaputt'
 export type Urteil = 'zu-leicht' | 'gut' | 'zu-fest'
 
 /** Andruck → Urteil. Einzige Stelle, an der die Toleranz ausgewertet wird. */
-export function urteil(druck: number, stufe: number, zone: Zone): Urteil {
-  if (druck < bandUnten(stufe, zone)) return 'zu-leicht'
-  if (druck > bandOben(stufe, zone)) return 'zu-fest'
+export function urteil(druck: number, stufe: number, zone: Zone, faktor = 1): Urteil {
+  if (druck < bandUnten(stufe, zone, faktor)) return 'zu-leicht'
+  if (druck > bandOben(stufe, zone, faktor)) return 'zu-fest'
   return 'gut'
 }
 
 export type Welt = {
   stufe: number
+  /** B1: von Thomas eingestellt, während des Spiels fest. */
+  regler: Regler
   /** SPALTEN × ZEILEN, zeilenweise abgelegt. Immer der **laufende** Platz. */
   zellen: Zelle[]
   farben: Verein['farben']
-  /** Wievielter Platz, ab 0. Verschiebt zugleich das Zonenmuster. */
+  /** Wievieltes Zonenmuster, ab 0. Bleibt bei einer Wiederholung stehen. */
   platz: number
+  /** Kommt das Muster gerade zum zweiten Mal? Dann zeigt der Balken den Zielpunkt. */
+  wiederholung: boolean
+  wiederholungen: number
   /** Summen der bereits **abgeschlossenen** Plätze, für das Ergebnis. */
   erledigt: { gut: number; kaputt: number; zellen: number }
   /** Position des Mähers in Bühnenkoordinaten. */
@@ -129,12 +137,17 @@ export type Welt = {
 }
 
 /** `verein` ist optional, damit der Test die Welt ohne Content-Paket bauen kann. */
-export function neueWelt(stufe: number, verein?: Verein): Welt {
+export function neueWelt(
+  stufe: number, verein?: Verein, regler: Regler = VORGABE_REGLER,
+): Welt {
   return {
     stufe,
+    regler,
     zellen: Array<Zelle>(SPALTEN * ZEILEN).fill('ungemaeht'),
     farben: verein?.farben ?? { primaer: '#0a3a82', sekundaer: '#ffffff' },
     platz: 0,
+    wiederholung: false,
+    wiederholungen: 0,
     erledigt: { gut: 0, kaputt: 0, zellen: 0 },
     maeher: { x: W / 2, y: RASEN_Y + RASEN_H + 40, drin: false },
     druck: { wert: 0.5, synthetisch: true },
@@ -164,7 +177,7 @@ function beruehre(w: Welt, sp: number, ze: number, druck: number, zone: Zone) {
   // Einmal geschnitten oder kaputt ist endgültig: ein Rückweg über schon gemähtes Gras
   // soll gute Arbeit nicht nachträglich zerstören.
   if (w.zellen[i] !== 'ungemaeht') return
-  const u = urteil(druck, w.stufe, zone)
+  const u = urteil(druck, w.stufe, zone, w.regler.toleranz)
   // 'zu-leicht' lässt die Zelle bewusst unberührt — das ist die unbegrenzte
   // Wiederholung aus C2 und kein Fehlerzustand.
   if (u === 'zu-leicht') return
@@ -236,7 +249,10 @@ function naechsterPlatz(w: Welt) {
   w.erledigt.gut += gut
   w.erledigt.kaputt += kaputt
   w.erledigt.zellen += gesamt
-  w.platz++
+  // Unter der Mindesttrefferquote dasselbe Muster noch einmal, aber nie ein drittes Mal.
+  w.wiederholung = !w.wiederholung && musterNochmal(w.regler, gut, gesamt)
+  if (w.wiederholung) w.wiederholungen++
+  else w.platz++
   w.zellen.fill('ungemaeht')
   w.platzFertig = false
   w.fertigUhr = 0
@@ -285,7 +301,9 @@ export function ergebnis(w: Welt, dauerMs: number, abgebrochen: boolean): SpielE
     stufe: w.stufe,
     abgebrochen,
     extra: {
-      plaetzeFertig: w.platz,
+      plaetzeFertig: w.platz + w.wiederholungen,
+      wiederholungen: w.wiederholungen,
+      halbesBand: halbesBand(w.stufe, w.regler.toleranz),
       zellenGesamt: ausgegeben,
       gut,
       kaputt,

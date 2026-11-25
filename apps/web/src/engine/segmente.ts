@@ -1,4 +1,5 @@
 import type { Aufzeichnung } from '../rohdaten'
+import type { Regler } from '../spiele/regler'
 
 /**
  * Ein Trainingstag ist eine lineare Liste von Segmenten — kein Zustandsautomat
@@ -12,7 +13,9 @@ export type Segment =
   | { art: 'ankommen' }
   /** Ansage des groben Plans: Dauer, Anzahl Übungen und Pausen (A5: ein Satz). */
   | { art: 'ansage' }
-  | { art: 'spiel'; spielId: string; dauerSek: number; stufe: number }
+  /** `regler` fehlt in Schnappschüssen aus der Zeit vor B1; der `SpielScreen` nimmt dann die
+   *  Vorgaben. */
+  | { art: 'spiel'; spielId: string; dauerSek: number; stufe: number; regler?: Regler }
   /**
    * C3: Die Frage steht **vor** Lob und Ergebnis. Andersherum misst man nicht die
    * Selbsteinschätzung, sondern die Fähigkeit, ein Ergebnis abzulesen.

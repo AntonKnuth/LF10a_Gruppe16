@@ -82,6 +82,16 @@ describe('tagesplan', () => {
     expect(letzterTag.filter((id) => KATALOG[id].rolle === 'sonder')).toHaveLength(1)
   })
 
+  it('gibt die Regler je Übung ins Segment (B1)', () => {
+    const e = nur(['linie'])
+    e.spiele.linie = { ...e.spiele.linie, toleranz: 2, zielgeschwindigkeit: 0.5, mindesttrefferquote: 0.8 }
+    const segment = tagesplan('hsv', 1, e, false).find((s) => s.art === 'spiel')
+    expect(segment).toMatchObject({
+      spielId: 'linie',
+      regler: { toleranz: 2, zielgeschwindigkeit: 0.5, mindesttrefferquote: 0.8 },
+    })
+  })
+
   it('lässt abgewählte Spiele weg (B1)', () => {
     const ohneLinie = nur(Object.keys(KATALOG).filter((id) => id !== 'linie'))
     for (const tag of [1, 2, 3, 4, 5]) {

@@ -5,6 +5,7 @@ import {
   aktualisiere, bandOben, bandUnten, ergebnis, halbesBand, maehe, neueWelt, urteil,
   zaehle, zoneBei, zoneVon, type Welt, type Zone,
 } from './welt'
+import { VORGABE_REGLER } from '../regler'
 
 const ALLE_ZONEN: Zone[] = ['jung', 'normal', 'hoch']
 const FELDER = SPALTEN * ZEILEN
@@ -281,5 +282,39 @@ describe('Ergebnis', () => {
     // Ohne diese Markierung mischen sich echte Pencil-Druckkurven mit Tastaturwerten.
     expect(e.synthetischerDruck).toBe(true)
     expect(e.stufe).toBe(4)
+  })
+})
+
+describe('Regler (B1)', () => {
+  /** Ein ganzer Platz mit viel zu festem Andruck. */
+  const zuFest = (w: Welt) => {
+    for (let ze = 0; ze < ZEILEN; ze++) for (let sp = 0; sp < SPALTEN; sp++) tippe(w, sp, ze, 1)
+    laufe(w, FERTIG_SEK + 0.5)
+  }
+
+  it('macht das Druckfenster um die Toleranz breiter oder schmaler', () => {
+    const zelle = (faktor: number) => {
+      const w = neueWelt(3, undefined, { ...VORGABE_REGLER, toleranz: faktor })
+      const { sp, ze } = zelleIn('normal')
+      tippe(w, sp, ze, 0.8) // Stufe 3: erlaubt sind 0,29 bis 0,71
+      return w.zellen[ze * SPALTEN + sp]
+    }
+    expect(zelle(1)).toBe('kaputt')
+    expect(zelle(2)).toBe('gut')
+  })
+
+  it('legt unter der Mindesttrefferquote dasselbe Muster genau einmal noch aus', () => {
+    const w = neueWelt(3, undefined, { ...VORGABE_REGLER, mindesttrefferquote: 0.9 })
+    zuFest(w)
+    expect([w.platz, w.wiederholung]).toEqual([0, true])
+    zuFest(w)
+    expect([w.platz, w.wiederholung]).toEqual([1, false])
+    expect(ergebnis(w, 1, false).extra).toMatchObject({ plaetzeFertig: 2, wiederholungen: 1 })
+  })
+
+  it('wiederholt bei der Vorgabe nichts', () => {
+    const w = neueWelt(3)
+    zuFest(w)
+    expect([w.platz, w.wiederholung]).toEqual([1, false])
   })
 })

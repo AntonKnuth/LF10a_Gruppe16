@@ -134,14 +134,15 @@ function feld(g: CanvasRenderingContext2D, w: Welt) {
   rundRect(g, f.x, f.y, f.b, f.h, 10)
   g.fillStyle = F.papier
   g.fill()
-  g.strokeStyle = F.feldRand
-  g.lineWidth = 3
+  // Hilfe bei einer Wiederholung (C2): kräftiger Rand, und Linie samt Hinweis bleiben stehen.
+  g.strokeStyle = w.wiederholung ? F.fortschritt : F.feldRand
+  g.lineWidth = w.wiederholung ? 6 : 3
   g.stroke()
 
   // Schreiblinie und Hinweis nur, solange **im Feld** nichts steht. Auf `schrift` zu
   // prüfen wäre falsch: ein Strich daneben nähme Ben genau die Hilfe weg, die er
   // offensichtlich noch braucht.
-  if (w.tinte > 0) return
+  if (w.tinte > 0 && !w.wiederholung) return
   g.save()
   g.setLineDash([8, 8])
   g.strokeStyle = F.hinweis

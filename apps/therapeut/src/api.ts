@@ -37,6 +37,35 @@ export const URKUNDE_ID = 'abschiedsgeschenk'
 
 export const rolleVon = (spielId: string): Rolle => SPIEL_ROLLE[spielId] ?? 'normal'
 
+/** Die drei Regler aus B1. */
+export type ReglerName = 'toleranz' | 'zielgeschwindigkeit' | 'mindesttrefferquote'
+
+/**
+ * Welche Regler in welchem Spiel wirken. Ein Regler ohne Wirkung wird nicht angezeigt — sonst
+ * stellt Thomas etwas ein, das nirgends ankommt. Der gespeicherte Wert bleibt unverändert.
+ * Fehlt ein Spiel hier, zeigt die Oberfläche keinen Regler.
+ */
+export const SPIEL_REGLER: Record<string, ReglerName[]> = {
+  // Kein Zieltempo: der Ball liegt am Stift, das Tempo bestimmt Ben.
+  aufwaermen: ['toleranz', 'mindesttrefferquote'],
+  // Kein Zieltempo: wie beim Aufwärmen, der Ball folgt dem Stift ohne eigenes Tempo.
+  linie: ['toleranz', 'mindesttrefferquote'],
+  // Kein Zieltempo: ein Autogramm hat kein richtiges Tempo, und Hetzen verkrampft (B3).
+  autogramme: ['toleranz', 'mindesttrefferquote'],
+  // Kein Zieltempo: bewertet wird nur der Andruck, der Mäher folgt dem Stift.
+  rasenmaehen: ['toleranz', 'mindesttrefferquote'],
+  // Keine Trefferquote: jeder Schuss steht für sich, es gibt keine Runde zum Wiederholen.
+  ballhochhalten: ['toleranz', 'zielgeschwindigkeit'],
+  // Keine Trefferquote: nach der Abgabe steht die Figur am Ziel, der Weg lässt sich nicht noch
+  // einmal gehen — und daneben zu zeichnen bremst sie schon unterwegs.
+  brezelverkauf: ['toleranz', 'zielgeschwindigkeit'],
+  // Gar keiner: bei der Urkunde muss nichts bestanden werden, und das Tempo bestimmt Ben.
+  abschiedsgeschenk: [],
+}
+
+export const hatRegler = (spielId: string, regler: ReglerName) =>
+  SPIEL_REGLER[spielId]?.includes(regler) ?? false
+
 export type Tagesform = {
   anzahlAufwaermen: number
   anzahlUebungen: number

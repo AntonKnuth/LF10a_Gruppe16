@@ -17,7 +17,9 @@ import { berechneSicht, zeichne, type Sicht } from './zeichnen'
  * Der sichtbare Timer aus A3 gehört dem SpielScreen — das Spiel selbst endet nicht von
  * allein, es läuft, bis `zeitAbgelaufen` gesetzt wird. Kein Verliererzustand (C2).
  */
-export function BallHochhalten({ stufe, verein, zeitAbgelaufen, angehalten, onFertig }: SpielProps) {
+export function BallHochhalten({
+  stufe, regler, verein, zeitAbgelaufen, angehalten, onFertig,
+}: SpielProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const weltRef = useRef<Welt | null>(null)
   const fertig = useRef(false)
@@ -27,7 +29,7 @@ export function BallHochhalten({ stufe, verein, zeitAbgelaufen, angehalten, onFe
   // deshalb nur über diese Referenz.
   const beiFertig = useRef(onFertig)
   // Der Verein bringt Kulisse und Jubelrufe mit — ein neuer Verein ist eine Content-Datei.
-  weltRef.current ??= neueWelt(stufe, verein)
+  weltRef.current ??= neueWelt(stufe, verein, regler)
 
   useEffect(() => {
     const cv = canvasRef.current

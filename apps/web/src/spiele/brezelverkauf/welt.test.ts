@@ -5,6 +5,7 @@ import {
   abstand, abstandZumWeg, aktualisiere, aufWeg, beginne, ergebnis, hebeAb, laeuferPunkt, neueWelt,
   tempo, toleranz, verkaeufer, wegLaenge, ziehe, type Welt,
 } from './welt'
+import { VORGABE_REGLER } from '../regler'
 
 const d = (wert = 0.5): Druck => ({ wert, synthetisch: true })
 
@@ -297,5 +298,29 @@ describe('Ergebnis', () => {
     // Ohne diese Markierung mischen sich echte Pencil-Druckkurven mit Tastaturwerten.
     expect(e.synthetischerDruck).toBe(true)
     expect(e.stufe).toBe(4)
+  })
+})
+
+describe('Regler (B1)', () => {
+  it('macht die Wege um die Toleranz breiter oder schmaler', () => {
+    const trifft = (faktor: number) => {
+      const w = neueWelt(3, undefined, { ...VORGABE_REGLER, toleranz: faktor })
+      return aufWeg(w, START.x, START.y - 50) // zum Spielfeld hin, weg von allen anderen Wegen
+    }
+    // Stufe 3 hat 31 Pixel halbe Breite.
+    expect(trifft(1)).toBe(false)
+    expect(trifft(2)).toBe(true)
+  })
+
+  it('lässt die Figur um die Zielgeschwindigkeit schneller laufen', () => {
+    const gelaufen = (faktor: number) => {
+      const w = neueWelt(3, undefined, { ...VORGABE_REGLER, zielgeschwindigkeit: faktor })
+      w.laeufer = []
+      zeichneEntlangRang(w, 18, 24)
+      aktualisiere(w, 1 / 60)
+      return w.gelaufen
+    }
+    expect(gelaufen(1)).toBeCloseTo(tempo(3) / 60)
+    expect(gelaufen(2)).toBeCloseTo((tempo(3) * 2) / 60)
   })
 })

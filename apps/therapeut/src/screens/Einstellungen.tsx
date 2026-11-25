@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
-  PAUSEN_VORLAGEN, api, rolleVon, titel,
-  type Einstellung, type KlientDetail, type Rolle, type Tagesform,
+  PAUSEN_VORLAGEN, api, hatRegler, rolleVon, titel,
+  type Einstellung, type KlientDetail, type ReglerName, type Rolle, type Tagesform,
 } from '../api'
 
 /**
@@ -29,6 +29,12 @@ const ABSCHNITTE: { rolle: Rolle; titel: string; feld: keyof Tagesform; hinweis?
     feld: 'anzahlSonder',
     hinweis: 'Steht immer als letzte Übung am 5. Tag eines Vereins.',
   },
+]
+
+const REGLER: { feld: ReglerName; titel: string; min: number; max: number; schritt: number }[] = [
+  { feld: 'toleranz', titel: 'Toleranz', min: 0.1, max: 3, schritt: 0.1 },
+  { feld: 'zielgeschwindigkeit', titel: 'Zieltempo', min: 0.1, max: 3, schritt: 0.1 },
+  { feld: 'mindesttrefferquote', titel: 'Mind. Treffer', min: 0, max: 1, schritt: 0.05 },
 ]
 
 export function Einstellungen({ klient }: { klient: KlientDetail }) {
@@ -103,8 +109,8 @@ export function Einstellungen({ klient }: { klient: KlientDetail }) {
         const aktiv = zeilen.filter((e) => e.aktiv).length
         const plaetze = form[a.feld] as number
         const zuWenig = aktiv < plaetze
-        // Beim Sonderspiel muss nichts bestanden werden und das Tempo bestimmt Ben: diese drei Regler wirken dort nicht.
-        const mitReglern = a.rolle !== 'sonder'
+        // Nur Spalten, die in diesem Abschnitt überhaupt etwas bewirken.
+        const spalten = REGLER.filter((r) => zeilen.some((e) => hatRegler(e.spielId, r.feld)))
 
         return (
           <section key={a.rolle}>
@@ -136,9 +142,9 @@ export function Einstellungen({ klient }: { klient: KlientDetail }) {
                     <th className="px-2 py-3">Übung</th>
                     <th className="px-2 py-3">Aktiv</th>
                     <th className="px-2 py-3">Stufe</th>
-                    {mitReglern && <th className="px-2 py-3">Toleranz</th>}
-                    {mitReglern && <th className="px-2 py-3">Zieltempo</th>}
-                    {mitReglern && <th className="px-2 py-3">Mind. Treffer</th>}
+                    {spalten.map((r) => (
+                      <th key={r.feld} className="px-2 py-3">{r.titel}</th>
+                    ))}
                     <th className="px-2 py-3">Dauer (s)</th>
                   </tr>
                 </thead>
@@ -158,24 +164,14 @@ export function Einstellungen({ klient }: { klient: KlientDetail }) {
                         <Zahl wert={e.stufe} min={1} max={5} schritt={1}
                           onAendern={(v) => aendernSpiel(e.spielId, 'stufe', v)} />
                       </td>
-                      {mitReglern && (
-                        <td className="px-2 py-3">
-                          <Zahl wert={e.toleranz} min={0.1} max={3} schritt={0.1}
-                            onAendern={(v) => aendernSpiel(e.spielId, 'toleranz', v)} />
+                      {spalten.map((r) => (
+                        <td key={r.feld} className="px-2 py-3">
+                          {hatRegler(e.spielId, r.feld) && (
+                            <Zahl wert={e[r.feld]} min={r.min} max={r.max} schritt={r.schritt}
+                              onAendern={(v) => aendernSpiel(e.spielId, r.feld, v)} />
+                          )}
                         </td>
-                      )}
-                      {mitReglern && (
-                        <td className="px-2 py-3">
-                          <Zahl wert={e.zielgeschwindigkeit} min={0.1} max={3} schritt={0.1}
-                            onAendern={(v) => aendernSpiel(e.spielId, 'zielgeschwindigkeit', v)} />
-                        </td>
-                      )}
-                      {mitReglern && (
-                        <td className="px-2 py-3">
-                          <Zahl wert={e.mindesttrefferquote} min={0} max={1} schritt={0.05}
-                            onAendern={(v) => aendernSpiel(e.spielId, 'mindesttrefferquote', v)} />
-                        </td>
-                      )}
+                      ))}
                       <td className="px-2 py-3">
                         <Zahl wert={e.dauerSek} min={10} max={600} schritt={10}
                           onAendern={(v) => aendernSpiel(e.spielId, 'dauerSek', v)} />
@@ -191,7 +187,11 @@ export function Einstellungen({ klient }: { klient: KlientDetail }) {
       })}
 
       <p className="text-xs text-slate-500">
-        Die Toleranz ist einheitenlos — sie ist bewusst nicht in Millimetern kalibriert.
+        Toleranz und Zieltempo sind Faktoren auf die Stufe: 1 ist unverändert, 2 doppelt so breit
+        oder schnell. Sie sind bewusst nicht in Millimetern kalibriert. Mind. Treffer: bis 0,5
+        zählt jede Runde wie sie ist; darüber kommt eine Runde mit weniger Treffern einmal noch
+        mit Hilfe — Ben sieht davon keine Zahl und verliert nichts. Ein leeres Feld heißt, dass
+        der Regler in diesem Spiel nichts bewirken würde.
       </p>
 
       <section>

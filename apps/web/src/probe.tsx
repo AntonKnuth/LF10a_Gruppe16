@@ -8,6 +8,7 @@ import { PauseScreen } from './screens/PauseScreen'
 import { StartScreen } from './screens/StartScreen'
 import { SpielScreen } from './screens/SpielScreen'
 import { SPIELE } from './spiele'
+import { VORGABE_REGLER, type Regler } from './spiele/regler'
 import { PAUSEN_UEBUNGEN } from './ui/pausenUebungen'
 
 /**
@@ -20,6 +21,7 @@ import { PAUSEN_UEBUNGEN } from './ui/pausenUebungen'
  *
  *   http://localhost:5173/probe.html
  *   http://localhost:5173/probe.html?spiel=rasenmaehen&stufe=3&dauer=45
+ *   http://localhost:5173/probe.html?spiel=linie&toleranz=2&mindesttrefferquote=0.9
  *   http://localhost:5173/probe.html?start=1 — nur der Startbildschirm
  *   http://localhost:5173/probe.html?lob=1   — nur der Lob-Bildschirm (C5)
  *   http://localhost:5173/probe.html?pause=Hampelmänner%20machen   — nur die Zwangspause (A3)
@@ -36,6 +38,11 @@ export function Probe() {
   const [spielId, setSpielId] = useState(p.get('spiel') ?? 'rasenmaehen')
   const [stufe, setStufe] = useState(Number(p.get('stufe') ?? 3))
   const [dauer, setDauer] = useState(Number(p.get('dauer') ?? 45))
+  const [regler, setRegler] = useState<Regler>({
+    toleranz: Number(p.get('toleranz') ?? VORGABE_REGLER.toleranz),
+    zielgeschwindigkeit: Number(p.get('zielgeschwindigkeit') ?? VORGABE_REGLER.zielgeschwindigkeit),
+    mindesttrefferquote: Number(p.get('mindesttrefferquote') ?? VORGABE_REGLER.mindesttrefferquote),
+  })
   const [vereinId, setVereinId] = useState(vereine[0].id)
   // Zählt bei jedem Neustart hoch und erzwingt als `key` eine frische Spielwelt.
   const [lauf, setLauf] = useState(0)
@@ -111,6 +118,24 @@ export function Probe() {
             onChange={(e) => setStufe(Number(e.target.value))}
           />
         </label>
+
+        {(Object.keys(regler) as (keyof Regler)[]).map((r) => (
+          <label key={r} className="flex items-center gap-2">
+            {r}
+            <input
+              type="number"
+              min={0}
+              max={3}
+              step={0.1}
+              className="w-16 rounded bg-slate-700 px-2 py-1"
+              value={regler[r]}
+              onChange={(e) => {
+                setRegler({ ...regler, [r]: Number(e.target.value) })
+                neu()
+              }}
+            />
+          </label>
+        ))}
 
         <label className="flex items-center gap-2">
           Dauer&nbsp;s
@@ -202,6 +227,7 @@ export function Probe() {
             spielId={spielId}
             dauerSek={dauer}
             stufe={stufe}
+            regler={regler}
             verein={verein}
             name="Ben"
             angehalten={angehalten}

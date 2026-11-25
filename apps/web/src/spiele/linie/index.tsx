@@ -15,7 +15,9 @@ import { berechneSicht, zeichne, type Sicht } from './zeichnen'
  *
  * Die Rohdaten für B4 zeichnet der `SpielScreen` auf; hier steht keine Zeile dafür.
  */
-export function LinieMalen({ stufe, verein, zeitAbgelaufen, angehalten, onFertig }: SpielProps) {
+export function LinieMalen({
+  stufe, regler, verein, zeitAbgelaufen, angehalten, onFertig,
+}: SpielProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const weltRef = useRef<Welt | null>(null)
   const fertig = useRef(false)
@@ -24,7 +26,7 @@ export function LinieMalen({ stufe, verein, zeitAbgelaufen, angehalten, onFertig
   const zeitAus = useRef(false)
   const beiFertig = useRef(onFertig)
   // Der Verein bringt die Farben mit — ein neuer Verein ist eine Content-Datei.
-  weltRef.current ??= neueWelt(stufe, verein)
+  weltRef.current ??= neueWelt(stufe, verein, regler)
 
   useEffect(() => {
     const cv = canvasRef.current

@@ -136,7 +136,7 @@ function wege(g: CanvasRenderingContext2D, w: Welt) {
   g.lineCap = 'round'
   g.lineJoin = 'round'
   for (const weg of WEGE) {
-    g.lineWidth = toleranz(w.stufe) * 2
+    g.lineWidth = toleranz(w.stufe, w.regler.toleranz) * 2
     g.strokeStyle = F.weg
     pfad(g, weg)
     g.stroke()

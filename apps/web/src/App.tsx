@@ -276,6 +276,7 @@ export default function App() {
             spielId={segment.spielId}
             dauerSek={segment.dauerSek}
             stufe={segment.stufe}
+            regler={segment.regler}
             verein={verein}
             name={name}
             angehalten={menueOffen}

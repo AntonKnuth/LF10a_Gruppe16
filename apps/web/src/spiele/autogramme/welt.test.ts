@@ -4,6 +4,7 @@ import {
   JUBEL_SEK, aktualisiere, anteil, autogrammFeld, ergebnis, feldBreite, hebeAb, imFeld,
   neueWelt, schreibe, setzeAn, spielerVon, zielTinte, type Welt,
 } from './welt'
+import { VORGABE_REGLER } from '../regler'
 
 const d = (wert = 0.5): Druck => ({ wert, synthetisch: true })
 
@@ -201,5 +202,34 @@ describe('Ergebnis', () => {
     expect(e.synthetischerDruck).toBe(true)
     expect(e.stufe).toBe(4)
     expect(e.extra).toMatchObject({ feldBreite: feldBreite(4) })
+  })
+})
+
+describe('Regler (B1)', () => {
+  const danebenUndSigniert = (w: Welt) => {
+    for (let i = 0; i < 8; i++) strich(w, 10, 20, 890, 20)
+    signiere(w)
+    laufe(w, JUBEL_SEK + 0.2)
+  }
+
+  it('macht das Feld um die Toleranz größer, aber nie größer als das Trikot hergibt', () => {
+    expect(feldBreite(3, 0.5)).toBe(feldBreite(3) / 2)
+    expect(neueWelt(3, undefined, { ...VORGABE_REGLER, toleranz: 1.2 }).feld.b).toBeCloseTo(feldBreite(3) * 1.2)
+    expect(feldBreite(3, 3)).toBe(340)
+  })
+
+  it('lässt unter der Mindesttrefferquote denselben Fan genau einmal wiederkommen', () => {
+    const w = neueWelt(3, undefined, { ...VORGABE_REGLER, mindesttrefferquote: 0.9 })
+    danebenUndSigniert(w)
+    expect([w.trikot, w.wiederholung, w.signiert]).toEqual([0, true, 1])
+    danebenUndSigniert(w)
+    expect([w.trikot, w.wiederholung, w.signiert]).toEqual([1, false, 2])
+    expect(ergebnis(w, 1, false).extra).toMatchObject({ wiederholungen: 1, trikotsBegonnen: 3 })
+  })
+
+  it('wiederholt bei der Vorgabe nichts', () => {
+    const w = neueWelt(3)
+    danebenUndSigniert(w)
+    expect([w.trikot, w.wiederholung]).toEqual([1, false])
   })
 })

@@ -2,6 +2,7 @@ import type { ComponentType } from 'react'
 import type { SpielErgebnis } from '../engine/segmente'
 import type { Verein } from '../content/typen'
 import { KATALOG, type Spieldaten } from './katalog'
+import type { Regler } from './regler'
 import { Aufwaermen } from './aufwaermen'
 import { Autogrammstunde } from './autogramme'
 import { Brezelverkauf } from './brezelverkauf'
@@ -12,6 +13,7 @@ import { Urkunde } from './abschiedsgeschenk'
 import { Platzhalter } from './Platzhalter'
 
 export type { Kategorie, Rolle } from './katalog'
+export type { Regler } from './regler'
 
 /**
  * Schnittstelle jedes Minispiels. Jedes Spiel ist eine eigene Datei in diesem Ordner und
@@ -20,6 +22,8 @@ export type { Kategorie, Rolle } from './katalog'
  */
 export type SpielProps = {
   stufe: number
+  /** B1: Toleranz, Zielgeschwindigkeit und Mindesttrefferquote dieser Übung. */
+  regler: Regler
   verein: Verein
   name: string
   /** Die geplante Spieldauer ist abgelaufen. Zeitbasierte Spiele beenden sich daraufhin;

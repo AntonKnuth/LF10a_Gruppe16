@@ -4,6 +4,7 @@ import {
   JUBEL_SEK, RUNDEN, aktualisiere, aufBahn, bahnPunkte, ballPunkt, ergebnis, huetchenAuf,
   klemme, neueWelt, punktAuf, toleranz, ziehe, type Welt,
 } from './welt'
+import { VORGABE_REGLER } from '../regler'
 
 const d = (wert = 0.5): Druck => ({ wert, synthetisch: true })
 
@@ -258,5 +259,44 @@ describe('Ergebnis', () => {
     for (let i = 0; i < RUNDEN + 2; i++) durchgang(w)
     const e = ergebnis(w, 1000, false)
     expect(e.vollstaendigkeit).toBe(klemme(e.vollstaendigkeit, 0, 1))
+  })
+})
+
+describe('Regler (B1)', () => {
+  const danebenUndDurch = (w: Welt) => {
+    for (let i = 0; i < 90; i++) ziehe(w, 450, 5, d())
+    durchgang(w)
+  }
+
+  it('macht den Korridor um die Toleranz breiter oder schmaler', () => {
+    const trifft = (faktor: number) => {
+      const w = neueWelt(3, undefined, { ...VORGABE_REGLER, toleranz: faktor })
+      const p = punktAuf(w.bahn, 0.25)
+      ziehe(w, p.x, p.y + 60, d()) // über dem Scheitel, also senkrecht zur Bahn
+      return w.imKorridor
+    }
+    // Stufe 3 hat 38 Pixel halbe Breite.
+    expect(trifft(1)).toBe(false)
+    expect(trifft(2)).toBe(true)
+  })
+
+  it('legt unter der Mindesttrefferquote dieselbe Welle genau einmal noch aus', () => {
+    const w = neueWelt(3, undefined, { ...VORGABE_REGLER, mindesttrefferquote: 0.9 })
+    danebenUndDurch(w)
+    expect([w.runde, w.wiederholung, w.geschafft]).toEqual([0, true, 1])
+    danebenUndDurch(w)
+    expect([w.runde, w.wiederholung, w.geschafft]).toEqual([1, false, 2])
+  })
+
+  it('bleibt auch mit strengster Quote bei fünf Durchgängen', () => {
+    const w = neueWelt(3, undefined, { ...VORGABE_REGLER, mindesttrefferquote: 1 })
+    for (let i = 0; i < RUNDEN; i++) danebenUndDurch(w)
+    expect(w.fertig).toBe(true)
+  })
+
+  it('wiederholt bei der Vorgabe nichts', () => {
+    const w = neueWelt(3)
+    danebenUndDurch(w)
+    expect([w.runde, w.wiederholung]).toEqual([1, false])
   })
 })

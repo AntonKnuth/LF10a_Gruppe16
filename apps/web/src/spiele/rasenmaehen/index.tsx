@@ -13,7 +13,9 @@ import { berechneSicht, zeichne, type Sicht } from './zeichnen'
  * Beendet wird ausschließlich von der Uhr des SpielScreens. Ist ein Platz geschafft,
  * kommt der nächste — es gibt weder ein vorzeitiges Ende noch einen Verliererzustand (C2).
  */
-export function Platzwart({ stufe, verein, zeitAbgelaufen, angehalten, onFertig }: SpielProps) {
+export function Platzwart({
+  stufe, regler, verein, zeitAbgelaufen, angehalten, onFertig,
+}: SpielProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const weltRef = useRef<Welt | null>(null)
   const fertig = useRef(false)
@@ -24,7 +26,7 @@ export function Platzwart({ stufe, verein, zeitAbgelaufen, angehalten, onFertig 
   // deshalb nur über diese Referenz.
   const beiFertig = useRef(onFertig)
   // Der Verein bringt die Farben der Bande mit — ein neuer Verein ist eine Content-Datei.
-  weltRef.current ??= neueWelt(stufe, verein)
+  weltRef.current ??= neueWelt(stufe, verein, regler)
 
   useEffect(() => {
     const cv = canvasRef.current

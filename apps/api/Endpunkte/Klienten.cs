@@ -58,6 +58,14 @@ public static class Klienten
         if (e.AnzahlAufwaermen + e.AnzahlUebungen + e.AnzahlSonder == 0)
             return "Eine Einheit braucht mindestens eine Übung.";
 
+        // Ein geleertes Feld kommt als 0 an. Mit Toleranz oder Tempo 0 käme Ben im Spiel nicht
+        // mehr voran, und das wäre der Verliererzustand, den es nicht geben soll (C2).
+        if (e.Spiele.Any(s => s.Toleranz is < 0.1 or > 3 || s.Zielgeschwindigkeit is < 0.1 or > 3))
+            return "Toleranz und Zieltempo müssen zwischen 0,1 und 3 liegen.";
+
+        if (e.Spiele.Any(s => s.Mindesttrefferquote is < 0 or > 1))
+            return "Die Mindesttrefferquote muss zwischen 0 und 1 liegen.";
+
         (Rolle rolle, int plaetze, string name)[] rollen =
         [
             (Rolle.Aufwaermen, e.AnzahlAufwaermen, "Aufwärmen"),

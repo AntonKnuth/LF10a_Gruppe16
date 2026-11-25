@@ -1,5 +1,6 @@
 import type { Segment } from './segmente'
 import { KATALOG, spieleMitRolle, type Kategorie, type Rolle } from '../spiele/katalog'
+import { VORGABE_REGLER, type Regler } from '../spiele/regler'
 
 /**
  * Einstellungen des Therapeuten, die den Ablauf verändern (B1, A3, B3).
@@ -8,12 +9,9 @@ import { KATALOG, spieleMitRolle, type Kategorie, type Rolle } from '../spiele/k
  * ausdrücklich „je Übungstyp". Die Werte kommen vom Server (`GET /api/kind`); die Vorgaben
  * unten gelten nur, solange das Gerät noch keine Antwort hat.
  */
-export type SpielEinstellung = {
+export type SpielEinstellung = Regler & {
   stufe: number
   dauerSek: number
-  toleranz: number
-  zielgeschwindigkeit: number
-  mindesttrefferquote: number
   /** Der Therapeut kann ein Spiel aus dem Topf nehmen. */
   aktiv: boolean
   reihenfolge: number
@@ -30,11 +28,9 @@ export type Einstellungen = {
 }
 
 const VORGABE: SpielEinstellung = {
+  ...VORGABE_REGLER,
   stufe: 3,
   dauerSek: 210, // 3,5 Min — A3 verlangt 3–5 Min je Spiel
-  toleranz: 1,
-  zielgeschwindigkeit: 1,
-  mindesttrefferquote: 0.5,
   aktiv: true,
   reihenfolge: 0,
 }
@@ -193,7 +189,17 @@ export function tagesplan(
 
   spiele.forEach((spielId, i) => {
     const s = fuerSpiel(e, spielId)
-    segmente.push({ art: 'spiel', spielId, dauerSek: s.dauerSek, stufe: s.stufe })
+    segmente.push({
+      art: 'spiel',
+      spielId,
+      dauerSek: s.dauerSek,
+      stufe: s.stufe,
+      regler: {
+        toleranz: s.toleranz,
+        zielgeschwindigkeit: s.zielgeschwindigkeit,
+        mindesttrefferquote: s.mindesttrefferquote,
+      },
+    })
     segmente.push({ art: 'selbsteinschaetzung' })
     segmente.push({ art: 'lob' })
     // Keine Pause nach dem letzten Spiel — die Einheit soll im Erfolg enden,

@@ -13,6 +13,7 @@
 import { tastenDruckWert } from '../../eingabe'
 import {
   H, MAEHER_R, RASEN_B, RASEN_H, RASEN_X, RASEN_Y, SPALTEN, W, ZEILEN, ZELLE,
+  ZONE_MITTE,
   bandOben, bandUnten, klemme, urteil, zoneBei, zoneVon, type Welt, type Zone,
 } from './welt'
 
@@ -169,18 +170,23 @@ function druckBalken(g: CanvasRenderingContext2D, w: Welt, zone: Zone) {
   g.lineWidth = 2
   g.stroke()
 
-  const u = RASEN_X + klemme(bandUnten(w.stufe, zone), 0, 1) * RASEN_B
-  const o = RASEN_X + klemme(bandOben(w.stufe, zone), 0, 1) * RASEN_B
+  const u = RASEN_X + klemme(bandUnten(w.stufe, zone, w.regler.toleranz), 0, 1) * RASEN_B
+  const o = RASEN_X + klemme(bandOben(w.stufe, zone, w.regler.toleranz), 0, 1) * RASEN_B
   g.save()
   rundRect(g, RASEN_X, BALKEN_Y, RASEN_B, BALKEN_H, 12)
   g.clip()
   g.fillStyle = F.gutRing
   g.globalAlpha = 0.45
   g.fillRect(u, BALKEN_Y, o - u, BALKEN_H)
+  // Hilfe bei einer Wiederholung (C2): der Punkt, auf den Ben zielen soll.
+  if (w.wiederholung) {
+    g.globalAlpha = 1
+    g.fillRect(RASEN_X + ZONE_MITTE[zone] * RASEN_B - 8, BALKEN_Y, 16, BALKEN_H)
+  }
   g.restore()
 
   const x = RASEN_X + klemme(w.druck.wert, 0, 1) * RASEN_B
-  const art = urteil(w.druck.wert, w.stufe, zone)
+  const art = urteil(w.druck.wert, w.stufe, zone, w.regler.toleranz)
   g.fillStyle = art === 'gut' ? F.gutRing : art === 'zu-leicht' ? F.leichtRing : F.festRing
   g.beginPath()
   g.moveTo(x, BALKEN_Y - 8)
@@ -221,7 +227,7 @@ function ersatzdruckHinweis(g: CanvasRenderingContext2D, zone: Zone) {
 function maeher(g: CanvasRenderingContext2D, w: Welt, zone: Zone) {
   if (!w.maeher.drin) return
   const { x, y } = w.maeher
-  const art = urteil(w.druck.wert, w.stufe, zone)
+  const art = urteil(w.druck.wert, w.stufe, zone, w.regler.toleranz)
   const farbe = art === 'gut' ? F.gutRing : art === 'zu-leicht' ? F.leichtRing : F.festRing
 
   // Schnittkreis: zeigt genau die Fläche, die der Mäher erwischt.

@@ -19,6 +19,7 @@ import type { Verein } from '../../content/typen'
 import type { Druck, Eingabegeraet } from '../../eingabe'
 import { druckKennzahlen } from '../../eingabe'
 import type { SpielErgebnis } from '../../engine/segmente'
+import { VORGABE_REGLER, musterNochmal, type Regler } from '../regler'
 
 /* ── Bühne ─────────────────────────────────────────────────────────────── */
 export const W = 900
@@ -79,7 +80,7 @@ export const huetchenAuf = (runde: number): number[] =>
    fest. Etwas großzügiger als bei „Linie malen": Aufwärmen soll gelingen, nicht prüfen.
 
    Startwerte, kein Messwert — mit echtem Pencil auf dem Zielgerät nachziehen. */
-export const toleranz = (stufe: number) => Math.max(16, 56 - stufe * 6)
+export const toleranz = (stufe: number, faktor = 1) => Math.max(16, 56 - stufe * 6) * faktor
 
 export const klemme = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v))
 
@@ -93,8 +94,10 @@ export type Ereignis = 'huetchen' | 'geschafft' | null
 
 export type Welt = {
   stufe: number
+  /** B1: von Thomas eingestellt, während des Spiels fest. */
+  regler: Regler
   farben: Verein['farben']
-  /** Wievielter Durchgang, ab 0. Bestimmt zugleich die Wellenform. */
+  /** Wievielte Wellenform, ab 0. Bleibt bei einer Wiederholung stehen. */
   runde: number
   bahn: Punkt[]
   /** Strecke 0–1 der Hütchen dieses Durchgangs, und ob sie schon umkurvt sind. */
@@ -115,6 +118,12 @@ export type Welt = {
   /** Messpunkte gesamt und davon im Korridor — daraus die Genauigkeit. */
   proben: number
   probenDrin: number
+  /** Dieselben Zähler nur für die laufende Runde — daran misst sich die Mindesttrefferquote. */
+  rundeProben: number
+  rundeDrin: number
+  /** Läuft gerade ein Muster zum zweiten Mal? Dann macht ein blasser Ball es vor. */
+  wiederholung: boolean
+  wiederholungen: number
   huetchenGesamt: number
   huetchenUmkurvt: number
   druckWerte: number[]
@@ -126,10 +135,13 @@ export type Welt = {
 }
 
 /** `verein` ist optional, damit der Test die Welt ohne Content-Paket bauen kann. */
-export function neueWelt(stufe: number, verein?: Verein): Welt {
+export function neueWelt(
+  stufe: number, verein?: Verein, regler: Regler = VORGABE_REGLER,
+): Welt {
   const huetchen = huetchenAuf(0)
   return {
     stufe,
+    regler,
     farben: verein?.farben ?? { primaer: '#0a3a82', sekundaer: '#ffffff' },
     runde: 0,
     bahn: bahnPunkte(0),
@@ -144,6 +156,10 @@ export function neueWelt(stufe: number, verein?: Verein): Welt {
     fertig: false,
     proben: 0,
     probenDrin: 0,
+    rundeProben: 0,
+    rundeDrin: 0,
+    wiederholung: false,
+    wiederholungen: 0,
     huetchenGesamt: huetchen.length,
     huetchenUmkurvt: 0,
     druckWerte: [],
@@ -206,10 +222,14 @@ export function ziehe(w: Welt, x: number, y: number, d: Druck): Ereignis {
   if (w.jubelUhr > 0 || w.fertig) return null
 
   const { t, abstand } = aufBahn(w.bahn, x, y)
-  const drin = abstand <= toleranz(w.stufe)
+  const drin = abstand <= toleranz(w.stufe, w.regler.toleranz)
 
   w.proben++
-  if (drin) w.probenDrin++
+  w.rundeProben++
+  if (drin) {
+    w.probenDrin++
+    w.rundeDrin++
+  }
   w.imKorridor = drin
   w.druckWerte.push(d.wert)
   if (d.synthetisch) w.synthetisch = true
@@ -251,7 +271,12 @@ function naechsterDurchgang(w: Welt) {
     return
   }
 
-  w.runde++
+  // Unter der Mindesttrefferquote dieselbe Bahn noch einmal, aber nie ein drittes Mal.
+  w.wiederholung = !w.wiederholung && musterNochmal(w.regler, w.rundeDrin, w.rundeProben)
+  if (w.wiederholung) w.wiederholungen++
+  else w.runde++
+  w.rundeProben = 0
+  w.rundeDrin = 0
   w.bahn = bahnPunkte(w.runde)
   w.huetchen = huetchenAuf(w.runde)
   w.umkurvt = w.huetchen.map(() => false)
@@ -300,7 +325,8 @@ export function ergebnis(w: Welt, dauerMs: number, abgebrochen: boolean): SpielE
       huetchenGesamt: w.huetchenGesamt,
       proben: w.proben,
       probenDrin: w.probenDrin,
-      toleranz: toleranz(w.stufe),
+      toleranz: toleranz(w.stufe, w.regler.toleranz),
+      wiederholungen: w.wiederholungen,
     },
   }
 }

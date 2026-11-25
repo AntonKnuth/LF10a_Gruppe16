@@ -4,6 +4,7 @@ import {
   beginneAbpfiff, beginneLaden, bewerteScheitel, ergebnis, komboMulti, kraftAus, loslassen,
   neueWelt, stelleDruck, type Welt,
 } from './welt'
+import { VORGABE_REGLER } from '../regler'
 
 /** Lässt die Welt eine Weile laufen, ohne dass etwas gedrückt wird. */
 const laufe = (w: Welt, sekunden: number) => {
@@ -213,5 +214,19 @@ describe('Ergebnis', () => {
     expect(e.genauigkeit).toBe(0)
     expect(e.druckMittel).toBe(0)
     expect(e.abgebrochen).toBe(true)
+  })
+})
+
+describe('Regler (B1)', () => {
+  it('macht das Zielband um die Toleranz breiter', () => {
+    const w = neueWelt(3, undefined, { ...VORGABE_REGLER, toleranz: 2 })
+    expect(w.band.h).toBe(bandHoehe(3) * 2)
+    bewerteScheitel(w, 450, w.band.y + bandHoehe(3) * 0.75)
+    expect(w.treffer).toBe(1)
+  })
+
+  it('lässt das Zielband um die Zielgeschwindigkeit schneller wandern', () => {
+    const w = neueWelt(3, undefined, { ...VORGABE_REGLER, zielgeschwindigkeit: 2 })
+    expect(w.band.tempo).toBeCloseTo(neueWelt(3).band.tempo * 2)
   })
 })
