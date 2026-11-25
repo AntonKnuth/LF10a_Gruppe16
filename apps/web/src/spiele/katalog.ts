@@ -106,6 +106,12 @@ export const KATALOG: Record<string, Spieldaten> = {
     rolle: 'normal',
     tags: ['pinzettengriff', 'druckdosierung'],
   },
+  muell: {
+    titel: 'Platz aufräumen',
+    anweisung: 'Male einen Kreis um den Müll, dann holt ihn die Seilkamera.',
+    rolle: 'normal',
+    tags: ['wellen', 'hand-auge'],
+  },
   ballhochhalten: {
     titel: 'Ball hochhalten',
     anweisung: 'Tippe den Ball an und drücke so fest auf, dass er im violetten Band umkehrt.',

@@ -7,6 +7,7 @@ import { Aufwaermen } from './aufwaermen'
 import { Autogrammstunde } from './autogramme'
 import { Brezelverkauf } from './brezelverkauf'
 import { Einlasskontrolle } from './einlass'
+import { PlatzAufraeumen } from './muell'
 import { BallHochhalten } from './ballhochhalten'
 import { Elfmeter } from './elfmeter'
 import { DribbelnMitPfiff } from './dribbeln'
@@ -60,6 +61,7 @@ const KOMPONENTEN: Record<string, ComponentType<SpielProps>> = {
   autogramme: Autogrammstunde,
   brezelverkauf: Brezelverkauf,
   einlass: Einlasskontrolle,
+  muell: PlatzAufraeumen,
   ballhochhalten: BallHochhalten,
   elfmeter: Elfmeter,
   dribbeln: DribbelnMitPfiff,

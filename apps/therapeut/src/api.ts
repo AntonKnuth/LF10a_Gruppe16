@@ -66,6 +66,10 @@ export const SPIEL_REGLER: Record<string, ReglerName[]> = {
   // Kein Zieltempo: eine kürzere Greifzeit wäre leichter statt schneller, und Hetzen verkrampft (B3).
   // Keine Trefferquote: jede Tasche wird ohnehin leer, es gibt keine verfehlte Runde.
   einlass: ['toleranz'],
+  // Toleranz: wie nah das Strichende dem Anfang kommen muss. Zieltempo: wie schnell das Konfetti
+  // wandert — wirkt erst ab Stufe 3, darunter liegt es still. Keine Trefferquote: jeder Abschnitt
+  // wird ohnehin sauber, es gibt keine verfehlte Runde zum Wiederholen.
+  muell: ['toleranz', 'zielgeschwindigkeit'],
   // Nur die Toleranz. Ein Tempo verschlechtert die Form, und einen ganzen Namen zu wiederholen,
   // wäre lang und läse sich wie ein Urteil: fertig wird jeder Strich ohnehin nur auf der Vorlage.
   startelf: ['toleranz'],
@@ -384,6 +388,7 @@ export const SPIEL_TITEL: Record<string, string> = {
   ballhochhalten: 'Ball hochhalten',
   brezelverkauf: 'Brezelverkauf',
   einlass: 'Einlasskontrolle',
+  muell: 'Platz aufräumen',
   abschiedsgeschenk: 'Urkunde',
 }
 

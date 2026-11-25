@@ -47,6 +47,7 @@ public static class Spielkatalog
         ["dribbeln"] = new(Rolle.Normal, ["inhibition", "wellen"]),
         ["brezelverkauf"] = new(Rolle.Normal, ["gerade-striche", "hand-auge"]),
         ["einlass"] = new(Rolle.Normal, ["pinzettengriff", "druckdosierung"]),
+        ["muell"] = new(Rolle.Normal, ["wellen", "hand-auge"]),
         ["ballhochhalten"] = new(Rolle.Normal, ["hand-auge", "druckdosierung"]),
         ["abschiedsgeschenk"] = new(Rolle.Sonder, ["schreiben"]),
     };
