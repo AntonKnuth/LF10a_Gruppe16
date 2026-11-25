@@ -13,6 +13,7 @@ import { DribbelnMitPfiff } from './dribbeln'
 import { LinieMalen } from './linie'
 import { Platzwart } from './rasenmaehen'
 import { Startelf } from './startelf'
+import { Stadionfuehrung } from './stationentour'
 import { Urkunde } from './abschiedsgeschenk'
 import { Platzhalter } from './Platzhalter'
 
@@ -65,6 +66,7 @@ const KOMPONENTEN: Record<string, ComponentType<SpielProps>> = {
   linie: LinieMalen,
   rasenmaehen: Platzwart,
   startelf: Startelf,
+  stationentour: Stadionfuehrung,
   abschiedsgeschenk: Urkunde,
 }
 

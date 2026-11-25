@@ -38,6 +38,15 @@ export type Profi = {
   abschied: Dialog
 }
 
+/** Ein Stadionfakt für die Stadionführung. Wird nach dem Schreiben gezeigt und vorgelesen (A5). */
+export type Fakt = {
+  text: string
+  /** Was Ben nachspurt: 2–6 Zeichen aus A–Z und 0–9, kommt im Text vor. `57.000` wird `57000` —
+   *  ein Punkt wäre nur ein Tupfer. Geprüft in `spiele/stationentour/welt.test.ts`. */
+  wort: string
+  audio?: string
+}
+
 export type Verein = {
   id: string
   name: string
@@ -51,8 +60,8 @@ export type Verein = {
   // dort zu trainieren — nicht dieselbe Übung mit ausgetauschtem Wappen.
   /** Startelf: Namen und Rückennummern zum Schreiben. */
   kader: { nummer: number; name: string }[]
-  /** Echte Fakten zu diesem Stadion, für die Stationentour. */
-  fakten: string[]
+  /** Echte Fakten zu Verein und Stadion, für die Stadionführung — in der Reihenfolge der Stationen. */
+  fakten: Fakt[]
   sprueche: Spruch[]
   /** Wort für „Urkunde" in der Vereinssprache, steht klein unter dem Titel der Urkunde.
    *  Optional: bei einem deutschen Verein fehlt es, dann steht nur „URKUNDE". */

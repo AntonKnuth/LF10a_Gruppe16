@@ -59,7 +59,7 @@ describe('Content', () => {
   })
 
   it('kann jedes Wort und jede Zahl der Stadionfakten schreiben', () => {
-    for (const text of vereine.flatMap((v) => v.fakten)) {
+    for (const text of vereine.flatMap((v) => v.fakten.flatMap((f) => [f.text, f.wort]))) {
       expect([text, hatVorlage(text) && hatVorlage(text.toUpperCase())]).toEqual([text, true])
     }
   })

@@ -18,6 +18,7 @@
  *   `zeilenBreite(text)`    Breite in Bändern — damit rechnet das Spiel sein Band aus
  *   `legeZeile(...)`        Zeichen mit fertigen Strichen in Bühnenkoordinaten
  *   `laenge`, `punktBei`, `anfangVon`, `naechster`   die Geometrie zum Nachspuren
+ *   `fahreNach(...)`        wie weit ist ein Strich nach dieser Stiftbewegung gefüllt?
  *
  * Offen (mit Thomas zu klären): Strichfolge und Formen sind eine einfache Druckschrift. Lernt Ben
  * in der Schule eine andere, werden sie **hier** geändert, kein Spiel muss dafür angefasst werden.
@@ -261,4 +262,37 @@ export function naechster(
     start = ende
   }
   return bester
+}
+
+/* ── Nachspuren ────────────────────────────────────────────────────────── */
+
+/** So viel vom Ende darf fehlen: ein Zehntel des Strichs oder dieses Stück in Bändern, je nachdem,
+ *  was mehr ist. Beim Querstrich des F wäre ein Zehntel sonst ein halber Millimeter. */
+const REST = 0.15
+/** So weit voraus (in Bändern) darf der Stift springen. Verhindert Abkürzen. */
+const VORSPRUNG = 0.6
+/** Zwischen zwei Abtastungen wird in so kleinen Schritten gefahren (Bühnen-Pixel). */
+const SCHRITT = 6
+
+/**
+ * Der Stift fährt von `a` nach `b`: wie weit ist der Strich danach gefüllt? Gefahren wird in
+ * kleinen Schritten: bei einer schnellen Maus liegen zwei Abtastungen weiter auseinander als der
+ * erlaubte Vorsprung, und der Strich bliebe ohne Grund stehen.
+ *
+ * Gesucht wird nur knapp vor der Spitze — so springt ein geschlossenes O nicht beim ersten Punkt
+ * auf fertig, und quer durch die Schleife abzukürzen bringt nichts.
+ */
+export function fahreNach(
+  s: Strich, a: Punkt, b: Punkt, fortschritt: number, korridor: number, band: number,
+): { fortschritt: number; fertig: boolean } {
+  const ganz = laenge(s)
+  const schritte = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) / SCHRITT))
+  for (let i = 1; i <= schritte; i++) {
+    const x = a.x + ((b.x - a.x) * i) / schritte
+    const y = a.y + ((b.y - a.y) * i) / schritte
+    const n = naechster(s, x, y, fortschritt, fortschritt + VORSPRUNG * band)
+    if (n.abstand <= korridor) fortschritt = Math.max(fortschritt, n.bogen)
+    if (ganz - fortschritt <= Math.max(0.1 * ganz, REST * band)) return { fortschritt, fertig: true }
+  }
+  return { fortschritt, fertig: false }
 }

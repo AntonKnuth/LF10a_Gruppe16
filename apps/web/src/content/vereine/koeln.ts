@@ -46,10 +46,10 @@ export const koeln = {
   ],
 
   fakten: [
-    'Das RheinEnergieStadion fasst rund 50.000 Zuschauer.',
-    'Der 1. FC Köln wurde 1948 gegründet.',
-    'An den vier Ecken des Stadions stehen große Flutlichttürme.',
-    'Das Maskottchen ist ein echter Geißbock und heißt Hennes.',
+    { text: 'Das RheinEnergieStadion fasst rund 50.000 Zuschauer.', wort: '50000' },
+    { text: 'Der 1. FC Köln wurde 1948 gegründet.', wort: '1948' },
+    { text: 'An den vier Ecken des Stadions stehen große Flutlichttürme.', wort: 'ECKEN' },
+    { text: 'Das Maskottchen ist ein echter Geißbock und heißt Hennes.', wort: 'HENNES' },
   ],
 
   // Werden im Spiel als Jubelrufe gezeigt — je mehr, desto weniger wiederholt es sich.

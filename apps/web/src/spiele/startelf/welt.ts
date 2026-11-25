@@ -23,7 +23,7 @@ import { druckKennzahlen } from '../../eingabe'
 import type { SpielErgebnis } from '../../engine/segmente'
 import { VORGABE_REGLER, type Regler } from '../regler'
 import {
-  hatVorlage, laenge, legeZeile, naechster, punktBei, zeilenBreite,
+  fahreNach, hatVorlage, laenge, legeZeile, naechster, punktBei, zeilenBreite,
   type Punkt, type Strich, type Zeichenlage,
 } from '../schrift'
 
@@ -43,16 +43,6 @@ export const TAFEL_SEK = 2
 export const SCHLUSS_SEK = 1.5
 /** So lange pulsiert ein fertiges Zeichen. */
 export const PULS_SEK = 0.3
-
-/* ── Nachspuren ────────────────────────────────────────────────────────── */
-
-/** So viel vom Ende darf fehlen: ein Zehntel des Strichs oder dieses Stück in Bändern, je nachdem,
- *  was mehr ist. Beim Querstrich des F wäre ein Zehntel sonst ein halber Millimeter. */
-export const REST = 0.15
-/** So weit voraus (in Bändern) darf der Stift springen. Verhindert Abkürzen. */
-export const VORSPRUNG = 0.6
-/** Zwischen zwei Abtastungen wird in so kleinen Schritten gefahren (Bühnen-Pixel). */
-const SCHRITT = 6
 
 /* ── Hilfe (C2) ────────────────────────────────────────────────────────── */
 export const MITFAHREN_AB = 4
@@ -487,27 +477,11 @@ export function schreibe(w: Welt, x: number, y: number, d: Druck): Ereignis | un
 const imKorridor = (w: Welt, s: Strich, x: number, y: number) =>
   naechster(s, x, y, 0, laenge(s)).abstand <= korridorVon(w)
 
-/**
- * Fährt von `a` nach `b`, in kleinen Schritten: bei einer schnellen Maus liegen zwei Abtastungen
- * weiter auseinander als der erlaubte Vorsprung, und der Strich bliebe ohne Grund stehen.
- *
- * Gesucht wird nur knapp vor der Spitze — so springt ein geschlossenes O nicht beim ersten Punkt
- * auf fertig, und quer durch die Schleife abzukürzen bringt nichts.
- */
 function fahre(w: Welt, a: Punkt, b: Punkt): Ereignis | undefined {
-  const s = aktiverStrich(w)
-  const ganz = laenge(s)
-  const schritte = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) / SCHRITT))
-  for (let i = 1; i <= schritte; i++) {
-    const x = a.x + ((b.x - a.x) * i) / schritte
-    const y = a.y + ((b.y - a.y) * i) / schritte
-    const n = naechster(s, x, y, w.fortschritt, w.fortschritt + VORSPRUNG * band(w))
-    if (n.abstand <= korridorVon(w) && n.bogen > w.fortschritt) {
-      w.fortschritt = n.bogen
-      w.ohneFortschritt = 0
-    }
-    if (ganz - w.fortschritt <= Math.max(0.1 * ganz, REST * band(w))) return strichFertig(w)
-  }
+  const n = fahreNach(aktiverStrich(w), a, b, w.fortschritt, korridorVon(w), band(w))
+  if (n.fortschritt > w.fortschritt) w.ohneFortschritt = 0
+  w.fortschritt = n.fortschritt
+  if (n.fertig) return strichFertig(w)
 }
 
 function strichFertig(w: Welt): Ereignis {

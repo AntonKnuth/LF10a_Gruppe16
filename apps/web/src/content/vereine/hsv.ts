@@ -39,9 +39,9 @@ export const hsv = {
   ],
 
   fakten: [
-    'Das Volksparkstadion fasst 57.000 Zuschauer.',
-    'Der HSV wurde 1887 gegründet.',
-    'Die Stadionuhr zählt seit 2001 die Jahre in der Bundesliga.',
+    { text: 'Das Volksparkstadion fasst 57.000 Zuschauer.', wort: '57000' },
+    { text: 'Der HSV wurde 1887 gegründet.', wort: '1887' },
+    { text: 'Die Stadionuhr zählt seit 2001 die Jahre in der Bundesliga.', wort: 'UHR' },
   ],
 
   // Werden im Spiel als Jubelrufe gezeigt — je mehr, desto weniger wiederholt es sich.

@@ -41,7 +41,7 @@ public static class Spielkatalog
         ["linie"] = new(Rolle.Normal, ["gerade-striche"]),
         ["autogramme"] = new(Rolle.Normal, ["schreiben", "pinzettengriff"]),
         ["rasenmaehen"] = new(Rolle.Normal, ["druckdosierung"]),
-        ["stationentour"] = new(Rolle.Normal, ["schreiben", "druckdosierung"], InArbeit: true),
+        ["stationentour"] = new(Rolle.Normal, ["schreiben", "druckdosierung"]),
         ["startelf"] = new(Rolle.Normal, ["schreiben"]),
         ["elfmeter"] = new(Rolle.Normal, ["hand-auge", "druckdosierung"]),
         ["dribbeln"] = new(Rolle.Normal, ["inhibition", "wellen"]),

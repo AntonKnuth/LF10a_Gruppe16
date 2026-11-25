@@ -72,10 +72,9 @@ export const KATALOG: Record<string, Spieldaten> = {
   },
   stationentour: {
     titel: 'Stadionführung',
-    anweisung: 'Schreibe die Stadionfakten in gleichmäßigem Tempo ab.',
+    anweisung: 'Fahre das Wort auf der Anzeigetafel ruhig und gleichmäßig nach.',
     rolle: 'normal',
     tags: ['schreiben', 'druckdosierung'],
-    inArbeit: true,
   },
   startelf: {
     titel: 'Startelf',

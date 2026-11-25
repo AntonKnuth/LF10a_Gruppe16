@@ -33,8 +33,8 @@ export const ajax = {
   ],
 
   fakten: [
-    'Die Johan Cruyff Arena hat ein Dach, das sich schließen lässt.',
-    'Ajax wurde 1900 gegründet.',
+    { text: 'Die Johan Cruyff Arena hat ein Dach, das sich schließen lässt.', wort: 'DACH' },
+    { text: 'Ajax wurde 1900 gegründet.', wort: '1900' },
   ],
 
   // Werden im Spiel als Jubelrufe gezeigt — je mehr, desto weniger wiederholt es sich.

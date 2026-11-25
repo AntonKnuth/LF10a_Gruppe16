@@ -28,17 +28,6 @@ public class SpielkatalogTests
         Assert.Equal(erwartet, Spielkatalog.RolleFuer(spielId));
     }
 
-    /// <summary>Nicht gebaute Spiele lassen sich nicht einstellen, behalten im Bericht aber ihren
-    /// Bereich.</summary>
-    [Theory]
-    [InlineData("stationentour")]
-    public void Spiele_in_Arbeit_sind_nicht_einstellbar(string spielId)
-    {
-        Assert.False(Spielkatalog.IstSpielbar(spielId));
-        Assert.DoesNotContain(spielId, Spielkatalog.AlleIds);
-        Assert.DoesNotContain(Spielkatalog.OhneZuordnung, Spielkatalog.KategorienFuer(spielId));
-    }
-
     [Fact]
     public void Unbekanntes_Spiel_verschwindet_nicht_sondern_faellt_auf()
     {

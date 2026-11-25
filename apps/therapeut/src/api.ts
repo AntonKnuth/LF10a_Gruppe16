@@ -69,6 +69,9 @@ export const SPIEL_REGLER: Record<string, ReglerName[]> = {
   // Nur die Toleranz. Ein Tempo verschlechtert die Form, und einen ganzen Namen zu wiederholen,
   // wäre lang und läse sich wie ein Urteil: fertig wird jeder Strich ohnehin nur auf der Vorlage.
   startelf: ['toleranz'],
+  // Alle drei: Toleranz ist die Spurbreite, das Zieltempo verschiebt den Takt, und die Quote hebt
+  // den Taktanteil an, ab dem ein neuer Besucher dazukommt. Wiederholt wird dabei nichts.
+  stationentour: ['toleranz', 'zielgeschwindigkeit', 'mindesttrefferquote'],
   // Gar keiner: bei der Urkunde muss nichts bestanden werden, und das Tempo bestimmt Ben.
   abschiedsgeschenk: [],
 }
