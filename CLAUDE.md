@@ -27,14 +27,23 @@ damit nicht dieselben Fragen erneut aufgemacht werden.
 
 **Design-Referenz:** `docs/mockup-startbildschirm.png` (vom User erstellt).
 
-### Stand (10.09.2026)
+### Stand (25.11.2026)
 
 Gebaut und im Zusammenspiel geprüft: Server mit Anmeldung, Gerätekopplung, Datenannahme und
 Auswertung · Therapeuten-App mit Klientenauswahl, Einstellungen, Verlauf, Wochenbericht und
 Gerätesperre · Kind-App mit Kopplung, Rohdatenaufzeichnung, Upload und Pausenmenü.
-**B2 erfüllt — sechs Minispiele:** **Aufwärmen** (Dribbel-Parcours), **Ball hochhalten**,
-**Platzwart**, **Linie malen**, **Autogrammstunde** und **Brezelverkauf**. Bis zum Aufwärmen war
-die Rolle `aufwaermen` unbesetzt, jede Einheit begann mit dem `Platzhalter`.
+**B2 erfüllt — elf Minispiele und die Urkunde:** **Aufwärmen** (Dribbel-Parcours), **Ball
+hochhalten**, **Platzwart**, **Linie malen**, **Autogrammstunde**, **Brezelverkauf**,
+**Einlasskontrolle** (Pinzettengriff), **Dribbeln mit Pfiff** (Impulskontrolle), **Elfmeter**,
+**Startelf** und **Stadionführung**. Kein Spiel zeigt mehr den `Platzhalter`; ein neues, noch nicht
+gebautes Spiel bekommt in beiden Katalogen `inArbeit` und kommt dann in keinem Tagesplan vor.
+
+**B1 wirkt in den Spielen** (`apps/web/src/spiele/regler.ts`): Toleranz und Zieltempo sind Faktoren,
+die Mindesttrefferquote wiederholt eine Runde höchstens einmal mit Hilfe (C2) und wirkt erst über
+0,5. Was ein Spiel nicht nutzt, ist in den Einstellungen ausgeblendet. Die verwendeten Werte stehen
+in `extra.regler` und im Verlauf. Ebenfalls neu: Verlaufskurve, Abschluss-Fragebogen im
+Wochenbericht, Reise zum nächsten Verein (C6) und die Handballen-Regel im `SpielScreen`.
+**Am echten Pencil ist davon noch nichts geprüft**, alle Druck- und Tempowerte sind Startwerte.
 
 Ebenfalls fertig: **C5** (der Profi lobt eine persönliche Bestleistung namentlich — verglichen
 wird je Spiel gegen den bisher besten Wert, `pruefeBestwert` in `profil.ts`), **B3-Tagesobergrenze**
@@ -381,14 +390,13 @@ vereinsspezifischen Aufgabeninhalte** (Kaderliste, Fakten, Sprüche) — siehe L
 Erledigt: Gerüst und Startbildschirm · Erstlauf mit Spielnamen per Stift · Ansage · Segment-Engine ·
 Lob → Selbsteinschätzung → Pause mit Timer · Abschluss-Fragebogen · Therapeuten-App mit
 Einstellungen und Verlauf · Gerätekopplung, Datenannahme, Auswertung in C#, Wochenbericht ·
-Pausenmenü · Onboarding beim ersten Spiel. Sechs Minispiele statt einem: **Aufwärmen**,
-**Ball hochhalten**, **Platzwart**, **Linie malen**, **Autogrammstunde**, **Brezelverkauf**.
+Pausenmenü · Onboarding beim ersten Spiel. Elf Minispiele und die Urkunde statt einem Spiel.
 
 Phase 1 ist damit abgearbeitet. Das Onboarding erklärt der Profi in einer Sprechblase; **Pfeile
 auf einzelne Spielelemente gibt es nicht** — die bräuchten pro Spiel Wissen über dessen Canvas.
 Nachrüsten, falls sich beim Ausprobieren mit Ben zeigt, dass der Satz allein nicht trägt.
 
-**Wenn ein neues Minispiel dazukommt**, muss es an drei Stellen eingetragen werden — die
+**Wenn ein neues Minispiel dazukommt**, muss es an vier Stellen eingetragen werden — die
 Komponente selbst (`apps/web/src/spiele/index.ts`) nicht mitgezählt:
 
 | Datei | Was fehlt sonst |
@@ -396,6 +404,7 @@ Komponente selbst (`apps/web/src/spiele/index.ts`) nicht mitgezählt:
 | `apps/web/src/spiele/katalog.ts` | Titel, Anweisung, Rolle, Bereiche — ohne den Eintrag kommt das Spiel im Tagesplan gar nicht vor |
 | `apps/api/Auswertung/Spielkatalog.cs` | Rolle und Bereiche auf dem Server. Fehlt es, gilt es als normale Übung ohne Bereich und taucht im Wochenbericht unter „Ohne Zuordnung" mit einem Hinweis auf |
 | `apps/therapeut/src/api.ts` (`SPIEL_TITEL`) | der Klartextname. Ohne ihn steht in der Therapeuten-App die rohe Spiel-ID |
+| `apps/therapeut/src/api.ts` (`SPIEL_REGLER`) | welche B1-Regler das Spiel nutzt. Ohne den Eintrag zeigt die Oberfläche keinen |
 
 Die **Einstellungszeilen legt der Seed bei jedem Start nach** (`ErgaenzeEinstellungen`, IDs aus
 `Spielkatalog.cs`). Das war einmal ein vierter Eintrag von Hand, und genau der wurde vergessen:
@@ -429,14 +438,13 @@ Bericht). Bild-Upload der Arbeitsproben — das Schema steht, der Endpunkt kommt
 
 **Danach:**
 
-- Startbildschirm-Gestaltung und Reise-Animation im Detail
-- Die weiteren Minispiele. Kandidaten aus der Ideenliste, mit ihren Mechaniken:
-  - **Dribbeln mit Pfiff** (Inhibition): bei Trainerpfiff Stift anhalten, aber **nicht abheben**;
-    Doppelpfiff = weiter. Beim Abheben rollt der Ball weg
-  - **Tour Guide / Stationentour** (Tempo + Druck): Fakten in gleichmäßigem Tempo und Druck
-    nachschreiben — zu schnell oder zu langsam, und die Besucher gehen
-  - **11 Meter** (Hand-Auge): Schnelligkeit und gleichmäßiger Druck; sonst hält der Torwart
-  - Weitere in `Übungs Ideen.md` (Security, UFO/Müll einsammeln, Startelf-Namen schreiben)
+- **Werte am Pencil nachziehen:** Druckbänder (Einlasskontrolle), Tempofenster (Elfmeter,
+  Dribbeln, Stadionführung) und Korridore (Startelf) sind geschätzt
+- **Content:** Kader auf elf Spieler auffüllen (es fehlen HSV 5, Köln 7, Ajax 7) und Nummern prüfen;
+  mehr Stadionfakten (es fehlen Köln 1, HSV 2, Ajax 3)
+- C#-Auswertung der Pfiffzeiten aus dem Dribbeln (`extra.pfiffe` wird gespeichert, aber nicht gelesen)
+- Im Verlauf stehen die Übungen einer Einheit nicht in Spielreihenfolge
+- Weitere Minispiele aus der Ideenliste, z. B. *Platz aufräumen*
 - Ob echte Vereinsassets durch fiktive ersetzt werden
 
 ## Agent skills
