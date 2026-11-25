@@ -62,7 +62,7 @@ public static class Seed
             KlientId = ben.Id,
             SpielId = spielId,
             Stufe = 3,
-            DauerSek = 210, // A3 verlangt 3–5 Minuten je Spiel
+            DauerSek = 210, // gegebene Anforderungen verlangen 3–5 Minuten je Spiel
             Reihenfolge = i,
         }));
 

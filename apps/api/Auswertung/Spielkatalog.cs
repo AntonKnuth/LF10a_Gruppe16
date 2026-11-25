@@ -1,29 +1,17 @@
 namespace TravelKickers.Api.Auswertung;
 
-/// <summary>Wozu ein Spiel im Tagesablauf dient.</summary>
+//Wozu ein Spiel im Tagesablauf dient.
 public enum Rolle
 {
     Aufwaermen,
     Normal,
-    /// <summary>Das Abschiedsgeschenk am letzten Tag eines Vereins.</summary>
+    //Das Abschiedsgeschenk am letzten Tag eines Vereins.
     Sonder,
 }
 
-/// <summary>
-/// Was der Server über die Minispiele wissen muss: ihre Rolle und ihre Fähigkeitsbereiche.
-///
-/// <b>Rollen</b> braucht die Prüfung beim Speichern — sind weniger Spiele einer Rolle aktiv als
-/// Plätze eingestellt, bliebe der Tagesplan lückenhaft, also lehnt der Server die Einstellung ab.
-///
-/// <b>Fähigkeitsbereiche</b> braucht der Wochenbericht (CLAUDE.md: „Kategorie-Tags … für die
-/// Auswertung nach Fähigkeitsbereich"). Die Zusammenfassung ist Auswertung, und die gehört nach
-/// C# — die Therapeuten-App bleibt dadurch reine Anzeige.
-///
-/// <b>Wenn ein neues Minispiel dazukommt, muss es hier und in
-/// <c>apps/web/src/spiele/katalog.ts</c> eingetragen werden.</b> Vergisst man es hier,
-/// verschwindet es nicht still: es zählt als normales Spiel ohne Bereich, landet im Bericht
-/// unter „Ohne Zuordnung" und ein Hinweis sagt es.
-/// </summary>
+// Was der Server über die Minispiele wissen muss: ihre Rolle und ihre Fähigkeitsbereiche.
+// Fähigkeitsbereiche braucht der Wochenbericht.
+
 public static class Spielkatalog
 {
     public const string OhneZuordnung = "ohne-zuordnung";
@@ -47,8 +35,8 @@ public static class Spielkatalog
     public static IReadOnlyList<string> KategorienFuer(string spielId) =>
         Spiele.TryGetValue(spielId, out var e) ? e.Kategorien : [OhneZuordnung];
 
-    /// <summary>Unbekannte Spiele gelten als normale Übung — die Rolle mit den wenigsten
-    /// Sonderregeln.</summary>
+    //Unbekannte Spiele gelten als normale Übung — die Rolle mit den wenigsten
+    // Sonderregeln.
     public static Rolle RolleFuer(string spielId) =>
         Spiele.TryGetValue(spielId, out var e) ? e.Rolle : Rolle.Normal;
 }

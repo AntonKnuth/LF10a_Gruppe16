@@ -48,19 +48,12 @@ public class TkContext(DbContextOptions<TkContext> optionen) : DbContext(optione
             .HasForeignKey<AnhangDaten>(a => a.AnhangId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Art. 17 DSGVO: das Löschen eines Klienten muss alles mitnehmen. Die Kette ist
-        // Klient -> Session -> Spielergebnis -> Rohdaten, dazu Geräte, Codes, Einstellungen
-        // und Anhänge. Ein xUnit-Test prüft danach jede Tabelle auf null Zeilen.
+        // Art. 17 DSGVO: das Löschen eines Klienten muss alles mitnehmen.
         foreach (var fk in b.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))
             fk.DeleteBehavior = DeleteBehavior.Cascade;
 
         // Ein Gerät zu löschen darf nicht die Sitzungen des Kindes mitnehmen — die gehören dem
         // Kind, nicht dem Tablet. Deshalb SetNull statt Cascade.
-        //
-        // Und ausdrücklich NICHT Restrict: das Löschen eines Klienten kaskadiert gleichzeitig auf
-        // Geraete und auf Sessions. SQLite prüft Restrict sofort statt am Anweisungsende — wird
-        // die Gerätezeile zuerst entfernt, scheitert genau die Löschung nach Art. 17, die
-        // nachgewiesen werden muss. SetNull hat den gewünschten Effekt ohne diese Falle.
         b.Entity<Session>()
             .HasOne(s => s.Geraet)
             .WithMany()

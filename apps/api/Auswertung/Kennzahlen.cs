@@ -1,11 +1,10 @@
 namespace TravelKickers.Api.Auswertung;
 
-/// <summary>Eine Abtastung der Stiftbewegung. <c>T</c> ist Millisekunden seit Segmentstart.</summary>
 public readonly record struct Abtastung(float T, float X, float Y, float Druck);
 
 /// <summary>
-/// Die <b>maßgeblichen</b> Kennzahlen. Anders als die Zahlen in <c>Spielergebnis</c>, die im
-/// Browser für das Sofortfeedback aus A1 entstehen, werden diese hier aus der Rohdaten-Punktfolge
+/// Die maßgeblichen Kennzahlen. Anders als die Zahlen in Spielergebnis, die im
+/// Browser für das Sofortfeedback, werden diese hier aus der Rohdaten-Punktfolge
 /// gerechnet — und nur diese dürfen in einen Bericht.
 /// </summary>
 public record Kennzahl(
@@ -20,18 +19,16 @@ public record Kennzahl(
     int Absetzer);
 
 /// <summary>
-/// Auswertung der Rohdaten. Reine Rechenklasse: kein EF, kein HTTP, keine Datenbank — deshalb
-/// mit xUnit prüfbar, und deshalb steht sie in einer eigenen Datei.
+/// Auswertung der Rohdaten. Reine Rechenklasse
 ///
-/// <b>Blob-Format</b> (verbindlich, das Frontend muss genauso schreiben):
-/// vier <c>Float32</c> je Abtastung in dieser Reihenfolge — <c>t</c> (Millisekunden seit
-/// Segmentstart), <c>x</c>, <c>y</c>, <c>druck</c> (0 bis 1). Little-endian, ohne Kopf.
+/// Blob-Format (verbindlich, das Frontend muss genauso schreiben):
+/// vier Float32 je Abtastung in dieser Reihenfolge — t (Millisekunden seit
+/// Segmentstart), x, y, druck (0 bis 1). Little-endian, ohne Kopf.
 /// Der Nullpunkt ist der Segmentstart und nicht der Sitzungsstart: dadurch bleibt jeder Blob für
 /// sich auswertbar, auch wenn die Einheit unterbrochen wurde.
 /// </summary>
 public static class Kennzahlen
 {
-    /// <summary>t, x, y, druck.</summary>
     public const int WerteJeAbtastung = 4;
 
     private const int BytesJeAbtastung = WerteJeAbtastung * sizeof(float);
@@ -54,9 +51,6 @@ public static class Kennzahlen
         return punkte;
     }
 
-    /// <summary>Gibt <c>null</c> zurück, wenn zu wenige Punkte für eine Aussage da sind. Lieber
-    /// keine Zahl als eine erfundene — ein Bericht mit leeren Feldern ist ehrlich, ein Bericht
-    /// mit ausgedachten Werten nicht.</summary>
     public static Kennzahl? Berechne(byte[] blob)
     {
         var p = Lies(blob);
@@ -117,7 +111,7 @@ public static class Kennzahlen
     }
 
     private static double Mittel(IReadOnlyCollection<double> werte) =>
-        werte.Count == 0 ? 0 : werte.Sum() / werte.Count; //TODO: linq.Average() macht die Berechnung leichter
+        werte.Count == 0 ? 0 : werte.Average();
 
     private static double Streuung(IReadOnlyCollection<double> werte)
     {

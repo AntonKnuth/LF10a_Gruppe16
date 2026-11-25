@@ -20,13 +20,6 @@ public record EinstellungEingang(
 
 public record PauseEingang(int PausenDauerSek, string PausenInhalt);
 
-/// <summary>
-/// Die Tagesform: wie viele Übungen welcher Rolle, und welche Spiele im Topf sind.
-///
-/// Beides zusammen in <b>einem</b> Aufruf, weil es nur zusammen gültig ist — würde man die
-/// Anzahlen getrennt von den Spielen speichern, ließe sich ein Zustand herstellen, in dem für
-/// eine Rolle Plätze eingestellt sind, für die es keine aktiven Spiele gibt.
-/// </summary>
 public record TagesformEingang(
     int AnzahlAufwaermen,
     int AnzahlUebungen,
@@ -39,17 +32,9 @@ public record TagesformAntwort(
     int AnzahlSonder,
     IReadOnlyList<EinstellungEingang> Spiele);
 
-/// <summary>Alles, was der Therapeut an seinem Laptop tut. Jeder Endpunkt hier prüft zuerst
-/// die Betreuung — der Join steht sichtbar im Code, nicht in einem unsichtbaren Filter.</summary>
 public static class Klienten
 {
-    /// <summary>
-    /// Gibt die Meldung zurück, warum nicht gespeichert werden darf — oder <c>null</c>.
-    ///
-    /// Der Tagesplan wird aus dem Topf gewürfelt. Sind für eine Rolle mehr Plätze eingestellt
-    /// als Spiele aktiv, müsste sich dieselbe Übung mehrfach hintereinander wiederholen — dann
-    /// ist die Einstellung nicht das, was der Therapeut meint, und wird abgelehnt.
-    /// </summary>
+    //Gibt die Meldung zurück, warum nicht gespeichert werden darf — oder null.
     private static string? Pruefe(TagesformEingang e)
     {
         if (e.AnzahlAufwaermen < 0 || e.AnzahlUebungen < 0 || e.AnzahlSonder < 0)
@@ -78,8 +63,6 @@ public static class Klienten
 
     public static void MapKlienten(this WebApplication app)
     {
-        // --- Lesen ---------------------------------------------------------------------
-
         app.MapGet("/api/klienten", async (TkContext db, ClaimsPrincipal nutzer) =>
         {
             if (nutzer.TherapeutId() is not int therapeutId) return Results.Unauthorized();
@@ -112,8 +95,6 @@ public static class Klienten
             return klient is null ? Results.Forbid() : Results.Ok(klient);
         });
 
-        // --- Anlegen und löschen -------------------------------------------------------
-
         app.MapPost("/api/klienten", async (
             NeuerKlient eingabe, TkContext db, ClaimsPrincipal nutzer) =>
         {
@@ -141,8 +122,8 @@ public static class Klienten
             return Results.Created($"/api/klienten/{klient.Id}", new { klient.Id });
         });
 
-        // D4 / Art. 17 DSGVO. Die Löschung passiert hier und nicht auf dem Tablet: dort läge
-        // sie hinter einer Kindersicherung, und die Daten liegen ohnehin auf dem Server.
+        //Art. 17 DSGVO. Die Löschung passiert hier und nicht auf dem Tablet: dort läge
+        //sie hinter einer Kindersicherung, und die Daten liegen ohnehin auf dem Server.
         app.MapDelete("/api/klienten/{id:int}", async (
             int id, TkContext db, ClaimsPrincipal nutzer) =>
         {
@@ -162,8 +143,6 @@ public static class Klienten
 
             return Results.NoContent();
         });
-
-        // --- Einstellungen (B1, B3) ----------------------------------------------------
 
         app.MapGet("/api/klienten/{id:int}/einstellungen", async (
             int id, TkContext db, ClaimsPrincipal nutzer) =>
@@ -239,8 +218,6 @@ public static class Klienten
             await db.SaveChangesAsync();
             return Results.NoContent();
         });
-
-        // --- Geräte --------------------------------------------------------------------
 
         app.MapPost("/api/klienten/{id:int}/kopplungscode", async (
             int id, TkContext db, ClaimsPrincipal nutzer) =>

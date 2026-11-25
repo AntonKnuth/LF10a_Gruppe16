@@ -2,45 +2,27 @@ using Microsoft.EntityFrameworkCore;
 
 namespace TravelKickers.Api.Daten;
 
-/// <summary>
-/// Die einzige Stelle, an der Klientendaten abgefragt werden.
-///
-/// <b>Regel:</b> außerhalb dieser Datei kommt <c>db.Klienten</c>, <c>db.Sessions</c>,
-/// <c>db.Spielergebnisse</c>, <c>db.Rohdaten</c> und <c>db.Anhaenge</c> nicht vor. Jede Abfrage
-/// beginnt bei <see cref="KlientenFuer"/> und navigiert von dort weiter — dadurch ist der Join
-/// über <see cref="Betreuung"/> im Code sichtbar.
-///
-/// Bewusst <b>kein</b> Global Query Filter: den sieht man in der Abfrage nicht, und was man
-/// nicht sieht, kann man in einer Prüfung nicht erklären.
-/// </summary>
+///<summary>
+///Die einzige Stelle, an der Klientendaten abgefragt werden.
+///</summary>
 public static class Zugriff
 {
-    /// <summary>Alle Kinder, die dieser Therapeut betreuen darf.</summary>
+    //Alle Kinder, die dieser Therapeut betreuen darf.
     public static IQueryable<Klient> KlientenFuer(TkContext db, int therapeutId) =>
         db.Klienten.Where(k => k.Betreuungen.Any(b => b.TherapeutId == therapeutId));
 
-    /// <summary>
-    /// Sitzungen eines Kindes — nur, wenn der Therapeut es betreuen darf.
-    ///
-    /// Bewusst flach formuliert und nicht als <c>KlientenFuer(…).SelectMany(k => k.Sessions)</c>:
-    /// zwei verschachtelte <c>SelectMany</c> übersetzt EF Core in ein SQL <c>APPLY</c>, und das
-    /// kennt SQLite nicht — die Abfrage wirft dann zur Laufzeit
-    /// „Translating this query requires the SQL APPLY operation".
-    /// </summary>
     public static IQueryable<Session> SessionsFuer(TkContext db, int therapeutId, int klientId) =>
         db.Sessions.Where(s =>
             s.KlientId == klientId &&
             s.Klient!.Betreuungen.Any(b => b.TherapeutId == therapeutId));
 
-    /// <summary>Einzelne Spielergebnisse eines Kindes, für den Verlauf. Gleiche Regel, gleicher
-    /// sichtbarer Join über <see cref="Betreuung"/>.</summary>
     public static IQueryable<Spielergebnis> ErgebnisseFuer(TkContext db, int therapeutId, int klientId) =>
         db.Spielergebnisse.Where(e =>
             e.Session!.KlientId == klientId &&
             e.Session.Klient!.Betreuungen.Any(b => b.TherapeutId == therapeutId));
 
-    /// <summary>Wird für 403 gebraucht. Eine leere Liste zurückzugeben wäre falsch: leer heißt
-    /// in dieser App „nicht geübt", und das würde den Wochenbericht lügen lassen.</summary>
+    //Wird für 403 gebraucht. Eine leere Liste zurückzugeben wäre falsch: leer heißt
+    //in dieser App „nicht geübt", und das würde den Wochenbericht lügen lassen.
     public static Task<bool> DarfSehen(TkContext db, int therapeutId, int klientId) =>
         db.Betreuungen.AnyAsync(b => b.TherapeutId == therapeutId && b.KlientId == klientId);
 }

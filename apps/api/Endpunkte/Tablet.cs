@@ -20,8 +20,6 @@ public static class Tablet
 {
     public static void MapTablet(this WebApplication app)
     {
-        // --- Kopplung ------------------------------------------------------------------
-
         // Anonym, weil das Tablet an dieser Stelle noch nichts hat, womit es sich ausweisen
         // könnte. Der Schutz ist der Code selbst.
         app.MapPost("/api/kopplung", async (KopplungEingang eingabe, TkContext db) =>
@@ -29,11 +27,6 @@ public static class Tablet
             var code = await db.Kopplungscodes
                 .SingleOrDefaultAsync(k => k.Code == eingabe.Code.ToUpperInvariant());
 
-            // Ein falsch geratener Code findet gar keine Zeile — der eigentliche Schutz gegen
-            // Raten sind die rund eine Milliarde Möglichkeiten und die halbe Stunde Gültigkeit,
-            // nicht der Zähler. Der Zähler fängt den anderen Fall ab: jemand probiert einen
-            // abgelaufenen oder bereits benutzten Code immer wieder. Eine Sperre pro IP wäre
-            // hier falsch — in der Vorführung kommt alles von ::1 und würde sich selbst sperren.
             if (code is null) return Results.NotFound();
 
             if (code.EingeloestAm is not null || code.LaeuftAbAm < DateTime.UtcNow
@@ -58,8 +51,6 @@ public static class Tablet
             // Das einzige Mal, dass der Server das Klartext-Token herausgibt.
             return Results.Ok(new { Token = token });
         }).AllowAnonymous();
-
-        // --- Was das Tablet wissen muss ------------------------------------------------
 
         app.MapGet("/api/kind", async (TkContext db, ClaimsPrincipal nutzer) =>
         {
@@ -87,7 +78,7 @@ public static class Tablet
                 .ToListAsync();
 
             // Der bürgerliche Name wird bewusst nicht mitgeschickt: im Kindmodus wird nur der
-            // selbstgewählte Spielname ausgesprochen (C5).
+            // selbstgewählte Spielname ausgesprochen.
             return Results.Ok(new
             {
                 kind.Spielname,
@@ -110,8 +101,6 @@ public static class Tablet
             await db.SaveChangesAsync();
             return Results.NoContent();
         }).RequireAuthorization("Geraet");
-
-        // --- Datenannahme (D2, B4) -----------------------------------------------------
 
         app.MapPut("/api/sessions/{sessionId:guid}", async (
             Guid sessionId, SessionEingang eingabe, TkContext db, ClaimsPrincipal nutzer) =>

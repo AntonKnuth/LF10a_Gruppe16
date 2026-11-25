@@ -25,11 +25,6 @@ public record SpielZeile(
     Kennzahl? Mittelwerte,
     int OhneRohdaten);
 
-/// <summary>
-/// Zusammenfassung nach Fähigkeitsbereich. <b>Ein Spiel kann mehrere Bereiche tragen</b> — die
-/// Summe der Anzahlen ist deshalb größer als die Zahl der Übungen. Der Bericht sagt das dazu,
-/// sonst wirkt er falsch addiert.
-/// </summary>
 public record KategorieZeile(
     string Kategorie,
     int Anzahl,
@@ -50,15 +45,6 @@ public record Wochenbericht(
     double? SelbsteinschaetzungMittel,
     IReadOnlyList<string> Hinweise);
 
-/// <summary>
-/// Verlauf (C4) und Wochenbericht (D3).
-///
-/// <b>Beide rechnen ausschließlich aus den Rohdaten.</b> Die Felder <c>Genauigkeit</c> und
-/// <c>Vollstaendigkeit</c> in <c>Spielergebnis</c> entstehen im Browser für das Sofortfeedback
-/// aus A1 und sind ausdrücklich unmaßgeblich — sie tauchen hier nirgends auf. Wo keine Rohdaten
-/// vorliegen, bleibt das Feld leer und der Bericht sagt es. Eine leere Stelle ist ehrlich, ein
-/// eingesetzter Browser-Wert wäre es nicht.
-/// </summary>
 public static class Bericht
 {
     public static void MapBericht(this WebApplication app)
@@ -153,9 +139,6 @@ public static class Bericht
                         Stufe: g.Last().Stufe,
                         UebungszeitMinuten: Math.Round(g.Sum(e => e.DauerMs) / 60000.0, 1),
                         Mittelwerte: kennzahlen.Count == 0 ? null : Mitteln(kennzahlen),
-                        // Nicht die fehlende Aufzeichnung zählen: auch eine mit zu wenigen
-                        // Punkten liefert keine Kennzahl. Sonst fällt sie still aus dem
-                        // Mittelwert und der Bericht rechnet über weniger Übungen, als er anzeigt.
                         OhneRohdaten: g.Count() - kennzahlen.Count);
                 })
                 .ToList();
@@ -186,8 +169,6 @@ public static class Bericht
             var hinweise = new List<string>();
             var abgebrochen = sessions.Count(s => s.Status == "abgebrochen");
 
-            // Ein Abbruch ist laut CLAUDE.md ein Befund, keine Datenpanne — er gehört sichtbar
-            // in den Bericht und nicht in eine Fußnote.
             if (abgebrochen > 0)
                 hinweise.Add($"{abgebrochen} von {sessions.Count} Einheiten wurden abgebrochen.");
 

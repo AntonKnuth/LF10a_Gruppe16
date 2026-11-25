@@ -9,17 +9,12 @@ namespace TravelKickers.Api.Auth;
 
 public class GeraetOptionen : AuthenticationSchemeOptions;
 
-/// <summary>
-/// Zweites Anmeldeverfahren, nur für Tablets: <c>Authorization: Bearer &lt;Gerätetoken&gt;</c>.
+
+/// Zweites Anmeldeverfahren, nur für Tablets: Authorization: Bearer &lt;Gerätetoken&gt;.
 ///
 /// Der Therapeut meldet sich mit einem Cookie an, das Tablet mit einem Token — bewusst nicht
 /// beides gleich. Ein Cookie wird vom Browser automatisch mitgeschickt; für eine App, die nur
 /// eigene Aufrufe macht, ist ein Token einfacher und lässt sich einzeln sperren.
-///
-/// Entscheidend ist der letzte Schritt: aus dem Token folgt die <c>KlientId</c>. Endpunkte für
-/// das Tablet nehmen deshalb <b>keine</b> KlientId entgegen — ein Gerät kann gar nicht erst
-/// versuchen, Daten für ein fremdes Kind zu schicken.
-/// </summary>
 public class GeraetHandler(
     IOptionsMonitor<GeraetOptionen> optionen,
     ILoggerFactory protokoll,
@@ -39,8 +34,7 @@ public class GeraetHandler(
         var hash = Geheimnis.Hash(kopf["Bearer ".Length..].Trim());
         var geraet = await db.Geraete.SingleOrDefaultAsync(g => g.TokenHash == hash && g.Aktiv);
 
-        // Gesperrtes Gerät und unbekanntes Token sind dieselbe Antwort: ein verlorenes Tablet
-        // soll nicht herausfinden können, ob es gesperrt wurde oder nie gültig war.
+        // Gesperrtes Gerät und unbekanntes Token sind sicherheitsbedingt dieselbe Antwort
         if (geraet is null) return AuthenticateResult.Fail("Unbekanntes oder gesperrtes Gerät");
 
         geraet.ZuletztGesehen = DateTime.UtcNow;
@@ -58,11 +52,7 @@ public class GeraetHandler(
     }
 }
 
-/// <summary>
-/// Wer fragt, steht in der Anmeldung — nie im Request. Überall <c>TryParse</c>: ein gültiges,
-/// aber altes Cookie ohne den Anspruch gäbe sonst 500 statt 401, und ein 500 sieht in einer
-/// Vorführung aus wie ein Absturz.
-/// </summary>
+// Ein gültiges, aber altes Cookie ohne den Anspruch gäbe sonst 500 statt 401
 public static class Ansprueche
 {
     // Hier könnten wir ein bisschen DRYen

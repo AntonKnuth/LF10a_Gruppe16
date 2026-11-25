@@ -35,7 +35,7 @@ public enum Annahme
 {
     Angelegt,
     Aktualisiert,
-    /// <summary>Die Sitzung gibt es schon, aber für ein anderes Kind.</summary>
+    //Existierende Sitzungen zwischen unterschiedlichen Klienten
     Konflikt,
     UngueltigerStatus,
 }
@@ -45,11 +45,6 @@ public enum Annahme
 ///
 /// Bewusst ohne HTTP, damit es sich mit xUnit prüfen lässt — die Frage „was passiert, wenn
 /// derselbe Upload zweimal ankommt" wird sonst nur behauptet und nicht belegt.
-///
-/// Der Ablauf ist ein <b>Upsert</b>: die Schlüssel kommen alle vom Tablet, also legt ein
-/// Wiederholversuch nach einem Verbindungsabbruch nichts doppelt an. Ereignisse und Ergebnisse
-/// werden nur ergänzt, nie geändert — das Protokoll ist append-only (D2), und ein Abbruch ist
-/// laut CLAUDE.md ein Befund und kein Müll.
 /// </summary>
 public static class SessionAnnahme
 {
@@ -75,8 +70,8 @@ public static class SessionAnnahme
             session = new Session { Id = sessionId, KlientId = klientId };
             db.Sessions.Add(session);
         }
-        // Dieselbe SessionId für ein anderes Kind heißt: irgendetwas stimmt nicht. Lieber
-        // ablehnen als eine fremde Akte verunreinigen.
+        // Dieselbe SessionId für ein anderes Kind heißt: irgendetwas stimmt nicht.
+        // Direktes Ablehnen
         else if (session.KlientId != klientId)
         {
             return Annahme.Konflikt;
@@ -89,8 +84,7 @@ public static class SessionAnnahme
         session.BeendetAmMs = eingang.BeendetAmMs;
         session.Status = eingang.Status;
 
-        // Serveruhr. Aus ihr und BegonnenAmMs lässt sich eine verstellte Tablet-Uhr erkennen —
-        // deshalb wird sie bei jedem Upload neu gesetzt und nicht nur beim ersten.
+        // Serveruhr. Aus ihr und BegonnenAmMs lässt sich eine verstellte Tablet-Uhr erkennen
         session.EmpfangenAm = DateTime.UtcNow;
 
         var bekannteNummern = session.Ereignisse.Select(e => e.Folgenummer).ToHashSet();
