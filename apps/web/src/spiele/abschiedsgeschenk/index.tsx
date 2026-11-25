@@ -3,9 +3,13 @@ import type { SpielProps } from '../index'
 import { druckVon, feinEreignisse, geraetVon } from '../../eingabe'
 import { klang, schliesseKlang, weckeKlang } from './klang'
 import {
-  aktualisiere, ergebnis, gibAb, hebeAb, neueWelt, schreibe, setzeAn,
+  aktualisiere, ergebnis, gibAb, hebeAb, kannNochmal, neueWelt, nochmal, schreibe, setzeAn,
   type Rechteck, type Schritt, type Welt,
 } from './welt'
+import { vorlesen } from '../../ui/vorlesen'
+
+/** Der einmalige Hinweis des Profis bei leerem Band. Er bewertet nichts. */
+const HINWEIS = 'Ein Zeichen reicht auch.'
 import { berechneSicht, zeichne, type Sicht } from './zeichnen'
 
 /**
@@ -33,6 +37,9 @@ export function Urkunde({ stufe, verein, name, angehalten, onFertig }: SpielProp
   const beiFertig = useRef(onFertig)
   // Nur für den Knopf: React muss wissen, wann „Fertig" erscheint.
   const [schritt, setSchritt] = useState<Schritt>(w.schritt)
+  // „Nochmal“ erscheint nur, solange es noch wirkt; der Hinweis des Profis steht einmal da.
+  const [nochmalDa, setNochmalDa] = useState(false)
+  const [hinweis, setHinweis] = useState(false)
 
   useEffect(() => {
     const cv = canvasRef.current
@@ -127,6 +134,7 @@ export function Urkunde({ stufe, verein, name, angehalten, onFertig }: SpielProp
     addEventListener('blur', weg)
 
     let gezeigt = w.schritt
+    let hinweisGesagt = false
     let letzteZeit = performance.now()
     let raf = requestAnimationFrame(function bild(jetzt: number) {
       const dt = Math.min(0.05, (jetzt - letzteZeit) / 1000)
@@ -137,7 +145,15 @@ export function Urkunde({ stufe, verein, name, angehalten, onFertig }: SpielProp
       if (w.schritt !== gezeigt) {
         gezeigt = w.schritt
         setSchritt(gezeigt)
+        setNochmalDa(kannNochmal(w))
       }
+      if (w.hinweisGegeben && !hinweisGesagt) {
+        hinweisGesagt = true
+        setHinweis(true)
+        vorlesen(HINWEIS)
+      }
+      // Sobald Ben schreibt, verschwindet die Blase wieder.
+      if (hinweisGesagt && w.schrift.length > 0) setHinweis(false)
       if (!fertig.current && w.fertig) {
         fertig.current = true
         beiFertig.current(ergebnis(w, Math.round(w.zeitGesamt * 1000)))
@@ -171,6 +187,23 @@ export function Urkunde({ stufe, verein, name, angehalten, onFertig }: SpielProp
   return (
     <div className="relative h-full w-full">
       <canvas ref={canvasRef} className="block h-full w-full touch-none" />
+      {hinweis && schritt === 'unterschreiben' && (
+        <p className="absolute left-1/2 top-3 -translate-x-1/2 rounded-2xl bg-white px-6 py-3 text-2xl font-bold text-slate-800 shadow-lg">
+          {HINWEIS}
+        </p>
+      )}
+      {schritt === 'pruefen' && nochmalDa && (
+        <button
+          onClick={(e) => {
+            if (pause.current || !nochmal(w, e.timeStamp - beginn.current)) return
+            setSchritt('unterschreiben')
+            setNochmalDa(false)
+          }}
+          className="absolute bottom-6 right-6 rounded-xl bg-white/80 px-5 py-2 text-lg font-semibold text-slate-700 shadow active:scale-95"
+        >
+          Nochmal
+        </button>
+      )}
       {schritt === 'pruefen' && (
         <button
           onClick={(e) => {

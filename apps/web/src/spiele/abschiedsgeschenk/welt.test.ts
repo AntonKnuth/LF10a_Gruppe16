@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import type { Druck } from '../../eingabe'
 import {
-  AUFROLLEN_SEK, EINROLLEN_SEK, aktualisiere, bandFuer, ergebnis, gibAb, hebeAb, neueWelt,
-  schreibe, setzeAn, type Rechteck, type Welt,
+  AUFROLLEN_SEK, EINROLLEN_SEK, LEER_FERTIG_SEK, LEER_HINWEIS_SEK, MAX_NEUSTARTS, aktualisiere,
+  bandFuer, ergebnis, gibAb, hebeAb, kannNochmal, neueWelt, nochmal, schreibe, setzeAn,
+  type Rechteck, type Welt,
 } from './welt'
 
 const d = (wert = 0.5): Druck => ({ wert, synthetisch: true })
@@ -201,5 +202,113 @@ describe('Ergebnis', () => {
     expect(e.genauigkeit).toBe(0)
     expect(e.druckMittel).toBe(0)
     expect(e.extra.band).toBeNull()
+  })
+})
+
+describe('„Nochmal“', () => {
+  /** Unterschreiben und warten, bis „Fertig“ und „Nochmal“ da sind. */
+  const bisPruefen = (w: Welt) => {
+    quer(w)
+    laufe(w, 1.2)
+    expect(w.schritt).toBe('pruefen')
+  }
+
+  it('leert die Tinte, legt den Zeitpunkt ab und führt zurück zum Unterschreiben', () => {
+    const w = bereit()
+    bisPruefen(w)
+    expect(w.schrift.length).toBeGreaterThan(0)
+    expect(nochmal(w, 4200)).toBe(true)
+    expect(w.schrift).toHaveLength(0)
+    expect(w.tinteImBand).toBe(0)
+    expect(w.schritt).toBe('unterschreiben')
+    expect(ergebnis(w, 0).extra.neustartsMs).toEqual([4200])
+  })
+
+  it('wirkt beim dritten Mal nicht mehr und ist dann nicht mehr da', () => {
+    const w = bereit()
+    for (let i = 1; i <= MAX_NEUSTARTS; i++) {
+      bisPruefen(w)
+      expect(kannNochmal(w)).toBe(true)
+      expect(nochmal(w, 1000 * i)).toBe(true)
+    }
+    bisPruefen(w)
+    expect(kannNochmal(w)).toBe(false)
+    expect(nochmal(w, 9000)).toBe(false)
+    expect(w.schritt).toBe('pruefen')
+    expect(w.schrift.length).toBeGreaterThan(0)
+    expect(ergebnis(w, 0).extra.neustartsMs).toEqual([1000, 2000])
+    // „Fertig“ bleibt.
+    expect(gibAb(w, 9500)).toBe(true)
+  })
+
+  it('zählt als Ergebnis nur den letzten Versuch', () => {
+    const w = bereit()
+    bisPruefen(w)
+    nochmal(w, 1000)
+    // Neuer Versuch: nur ein kurzer Strich, deutlich unter 1,5 Bandhöhen.
+    strich(w, w.band.x + 10, w.band.y + 40, w.band.x + 30, w.band.y + 40)
+    expect(ergebnis(w, 0).vollstaendigkeit).toBeLessThan(0.2)
+  })
+
+  it('ist nur im Schritt pruefen möglich', () => {
+    const w = bereit()
+    expect(nochmal(w, 100)).toBe(false)
+    expect(w.neustartsMs).toEqual([])
+  })
+})
+
+describe('Leeres Band (C2)', () => {
+  it('führt nach 90 s zu pruefen; Vollständigkeit 0, nicht abgebrochen', () => {
+    const w = bereit()
+    laufe(w, LEER_HINWEIS_SEK + LEER_FERTIG_SEK - 1)
+    expect(w.schritt).toBe('unterschreiben')
+    laufe(w, 1)
+    expect(w.schritt).toBe('pruefen')
+    expect(gibAb(w, 91000)).toBe(true)
+    const e = ergebnis(w, 91000)
+    expect(e.vollstaendigkeit).toBe(0)
+    expect(e.abgebrochen).toBe(false)
+  })
+
+  it('lässt den Profi nach 60 s einmal den Hinweis geben, nicht früher', () => {
+    const w = bereit()
+    laufe(w, LEER_HINWEIS_SEK - 1)
+    expect(w.hinweisGegeben).toBe(false)
+    laufe(w, 1)
+    expect(w.hinweisGegeben).toBe(true)
+  })
+
+  it('merkt sich den Hinweis dauerhaft, damit er höchstens einmal kommt', () => {
+    const w = bereit()
+    laufe(w, LEER_HINWEIS_SEK + 1)
+    expect(w.hinweisGegeben).toBe(true)
+    // Ben schreibt doch noch und fängt noch einmal an: das Merkzeichen bleibt gesetzt, die
+    // Komponente sagt den Satz nur beim Wechsel von false auf true.
+    quer(w)
+    laufe(w, 1.2)
+    nochmal(w, 70000)
+    expect(w.hinweisGegeben).toBe(true)
+  })
+
+  it('hält die 60 s und die 30 s an, solange angehalten ist', () => {
+    const w = bereit()
+    laufe(w, 59)
+    laufe(w, 100, true)
+    expect(w.hinweisGegeben).toBe(false)
+    laufe(w, 1)
+    expect(w.hinweisGegeben).toBe(true)
+    laufe(w, 100, true)
+    expect(w.schritt).toBe('unterschreiben')
+    laufe(w, LEER_FERTIG_SEK)
+    expect(w.schritt).toBe('pruefen')
+  })
+
+  it('bricht die Wartezeit ab, sobald Ben etwas schreibt', () => {
+    const w = bereit()
+    laufe(w, 80)
+    quer(w)
+    laufe(w, 1.2)
+    expect(w.schritt).toBe('pruefen')
+    expect(w.leerSek).toBe(0)
   })
 })

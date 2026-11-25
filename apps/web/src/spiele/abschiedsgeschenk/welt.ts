@@ -10,7 +10,8 @@
  * Ablauf in `schritt`:
  *   uebergabe      die Urkunde rollt auf
  *   unterschreiben Ben schreibt
- *   pruefen        ein Strich ist da und 1,2 s kam nichts mehr: groß „Fertig"
+ *   pruefen        ein Strich ist da und 1,2 s kam nichts mehr: groß „Fertig“, klein „Nochmal“
+ *                  (höchstens zweimal). Bleibt das Band leer, kommt „Fertig“ nach 90 s von selbst.
  *   abgabe         die Urkunde rollt ein, danach `fertig`
  *
  * Bewertet wird nichts, was Ben sieht: kein Stern, kein Lob, keine Korrektur. Profi-Unterschrift
@@ -32,6 +33,13 @@ export const EINROLLEN_SEK = 0.6
 
 /** So lange Ruhe nach dem letzten Strich, bis „Fertig" erscheint. */
 export const RUHE_SEK = 1.2
+
+/** Bleibt das Band so lange leer, sagt der Profi einmal „Ein Zeichen reicht auch“. */
+export const LEER_HINWEIS_SEK = 60
+/** Nach dem Hinweis noch so lange, dann erscheint „Fertig“ trotzdem. */
+export const LEER_FERTIG_SEK = 30
+/** So oft darf Ben neu anfangen. Danach ist „Nochmal“ weg. */
+export const MAX_NEUSTARTS = 2
 
 /** Linkes Ende und Breite des Unterschriftsbands, auf jeder Stufe gleich. */
 export const BAND_X = 200
@@ -106,6 +114,12 @@ export type Welt = {
   letzter: { x: number; y: number } | null
   /** Sekunden ohne Eingabe seit dem letzten Absetzen. */
   ruhe: number
+  /** Sekunden, die das Band leer ist (noch kein Strich im laufenden Versuch). */
+  leerSek: number
+  /** Der Profi hat „Ein Zeichen reicht auch“ schon gesagt. Nur einmal im ganzen Spiel. */
+  hinweisGegeben: boolean
+  /** Zeitpunkte der Neustarts auf der Rohdaten-Uhr. Die frühere Tinte bleibt in den Rohdaten. */
+  neustartsMs: number[]
   /** Geschriebene Strecke, die ganz im Band liegt. */
   tinteImBand: number
   /** Abtastungen mit Druck, und davon die zwischen Ober- und Unterlinie. */
@@ -147,6 +161,9 @@ export function neueWelt(stufe: number, verein?: Verein, name = ''): Welt {
     schreibt: false,
     letzter: null,
     ruhe: 0,
+    leerSek: 0,
+    hinweisGegeben: false,
+    neustartsMs: [],
     tinteImBand: 0,
     abtastungen: 0,
     abtastungenZwischen: 0,
@@ -181,6 +198,7 @@ export function setzeAn(w: Welt, bandRoh: Rechteck): boolean {
   w.schreibt = true
   w.letzter = null
   w.ruhe = 0
+  w.leerSek = 0
   return true
 }
 
@@ -217,6 +235,31 @@ export function gibAb(w: Welt, fertigMs: number): boolean {
   return true
 }
 
+/** „Nochmal“ ist da: im Schritt `pruefen` und noch nicht zweimal benutzt. */
+export const kannNochmal = (w: Welt) => w.schritt === 'pruefen' && w.neustartsMs.length < MAX_NEUSTARTS
+
+/**
+ * „Nochmal“ getippt. Die Tinte des Versuchs wird geleert, der Zeitpunkt (Rohdaten-Uhr)
+ * gemerkt und es geht zurück zu `unterschreiben`. Gibt zurück, ob es wirkte; beim dritten
+ * Mal tut es nichts. Die Rohdaten des früheren Versuchs bleiben, maßgeblich ist der letzte.
+ */
+export function nochmal(w: Welt, ms: number): boolean {
+  if (!kannNochmal(w)) return false
+  w.neustartsMs.push(Math.round(ms))
+  w.schrift = []
+  w.tinteImBand = 0
+  w.abtastungen = 0
+  w.abtastungenZwischen = 0
+  w.druckWerte = []
+  w.synthetisch = false
+  w.schreibt = false
+  w.letzter = null
+  w.ruhe = 0
+  w.leerSek = 0
+  wechsle(w, 'unterschreiben')
+  return true
+}
+
 /**
  * Eine Bildschleifen-Runde. Angehalten steht alles, auch die Wartezeit bis „Fertig" — sonst
  * erschiene der Knopf, während Ben im Pausenmenü ist.
@@ -232,6 +275,11 @@ export function aktualisiere(w: Welt, dt: number, angehalten = false) {
     w.ruhe += dt
     // Die kleine Zugabe gleicht Rundungsfehler aus: 72 × 1/60 ergibt 1,1999…
     if (w.ruhe >= RUHE_SEK - 1e-6) wechsle(w, 'pruefen')
+  } else if (w.schritt === 'unterschreiben' && !w.schreibt && w.schrift.length === 0) {
+    // Leeres Band: erst der Hinweis, dann „Fertig“ trotzdem. Kein Abbruch, kein Urteil (C2).
+    w.leerSek += dt
+    if (w.leerSek >= LEER_HINWEIS_SEK - 1e-6) w.hinweisGegeben = true
+    if (w.leerSek >= LEER_HINWEIS_SEK + LEER_FERTIG_SEK - 1e-6) wechsle(w, 'pruefen')
   } else if (w.schritt === 'abgabe' && w.schrittUhr >= EINROLLEN_SEK) {
     w.fertig = true
   }
@@ -272,8 +320,7 @@ export function ergebnis(w: Welt, dauerMs: number): SpielErgebnis {
       band: b && { x: runde(b.x), y: runde(b.y), breite: runde(b.breite), hoehe: runde(b.hoehe) },
       lineatur: w.lineatur,
       vorlage: w.vorlage,
-      // „Nochmal" kommt im Folgeticket (#7); bis dahin gibt es keinen Neustart.
-      neustartsMs: [],
+      neustartsMs: [...w.neustartsMs],
       fertigMs: w.fertigMs === null ? null : Math.round(w.fertigMs),
     },
   }
