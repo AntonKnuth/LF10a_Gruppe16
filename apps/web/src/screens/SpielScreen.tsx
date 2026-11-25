@@ -142,7 +142,9 @@ export function SpielScreen({
         ref={flaeche}
         className="min-h-0 flex-1"
         onPointerDownCapture={(e) => {
-          if (angehalten) return
+          // Ein Tipp auf einen Knopf ist keine Schreibbewegung: er käme sonst als eigener
+          // Strich in die Kennzahlen und verfälschte Höhe, Tempo und Absetzer.
+          if (angehalten || (e.target as Element).closest('button')) return
           unten.current = true
           nimmAuf(e)
         }}
@@ -150,7 +152,7 @@ export function SpielScreen({
         onPointerUpCapture={(e) => {
           // Druck 0 markiert das Absetzen. Ohne diesen Punkt ließe sich die
           // Absetzhäufigkeit nicht aus der Punktfolge ablesen.
-          nimmAuf(e, 0)
+          if (unten.current) nimmAuf(e, 0)
           unten.current = false
         }}
         onPointerCancelCapture={() => {

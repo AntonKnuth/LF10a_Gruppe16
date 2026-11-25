@@ -43,4 +43,6 @@ export const ajax = {
     { text: 'Prachtig!', sprache: 'Niederländisch', uebersetzung: 'Wunderbar!' },
     { text: 'Doorgaan!', sprache: 'Niederländisch', uebersetzung: 'Weitermachen!' },
   ],
+
+  urkunde: { text: 'Oorkonde', sprache: 'Niederländisch', uebersetzung: 'Urkunde' },
 } satisfies Verein

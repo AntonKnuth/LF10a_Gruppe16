@@ -102,8 +102,8 @@ export const KATALOG: Record<string, Spieldaten> = {
     tags: ['hand-auge', 'druckdosierung'],
   },
   abschiedsgeschenk: {
-    titel: 'Abschiedsgeschenk',
-    anweisung: 'Schreibe den Satz auf Papier und fotografiere ihn ab.',
+    titel: 'Urkunde',
+    anweisung: 'Unterschreibe deine Urkunde mit deinem Spielnamen.',
     rolle: 'sonder',
     tags: ['schreiben'],
   },

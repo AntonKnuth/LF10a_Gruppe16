@@ -49,4 +49,7 @@ export type Verein = {
   /** Echte Fakten zu diesem Stadion, für die Stationentour. */
   fakten: string[]
   sprueche: Spruch[]
+  /** Wort für „Urkunde" in der Vereinssprache, steht klein unter dem Titel der Urkunde.
+   *  Optional: bei einem deutschen Verein fehlt es, dann steht nur „URKUNDE". */
+  urkunde?: Spruch
 }

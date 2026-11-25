@@ -226,7 +226,7 @@ export const SPIEL_TITEL: Record<string, string> = {
   dribbeln: 'Dribbeln mit Pfiff',
   ballhochhalten: 'Ball hochhalten',
   brezelverkauf: 'Brezelverkauf',
-  abschiedsgeschenk: 'Abschiedsgeschenk',
+  abschiedsgeschenk: 'Urkunde',
 }
 
 export const titel = (spielId: string) => SPIEL_TITEL[spielId] ?? spielId

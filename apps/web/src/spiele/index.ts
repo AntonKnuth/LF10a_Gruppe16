@@ -8,6 +8,7 @@ import { Brezelverkauf } from './brezelverkauf'
 import { BallHochhalten } from './ballhochhalten'
 import { LinieMalen } from './linie'
 import { Platzwart } from './rasenmaehen'
+import { Urkunde } from './abschiedsgeschenk'
 import { Platzhalter } from './Platzhalter'
 
 export type { Kategorie, Rolle } from './katalog'
@@ -52,6 +53,7 @@ const KOMPONENTEN: Record<string, ComponentType<SpielProps>> = {
   ballhochhalten: BallHochhalten,
   linie: LinieMalen,
   rasenmaehen: Platzwart,
+  abschiedsgeschenk: Urkunde,
 }
 
 export const SPIELE: Record<string, Minispiel> = Object.fromEntries(
