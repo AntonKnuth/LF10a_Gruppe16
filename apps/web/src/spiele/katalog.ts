@@ -102,6 +102,12 @@ export const KATALOG: Record<string, Spieldaten> = {
     rolle: 'normal',
     tags: ['gerade-striche', 'hand-auge'],
   },
+  einlass: {
+    titel: 'Einlasskontrolle',
+    anweisung: 'Leg die leuchtenden Sachen aus der Tasche in die Kiste.',
+    rolle: 'normal',
+    tags: ['pinzettengriff', 'druckdosierung'],
+  },
   ballhochhalten: {
     titel: 'Ball hochhalten',
     anweisung: 'Tippe den Ball an und drücke so fest auf, dass er im violetten Band umkehrt.',

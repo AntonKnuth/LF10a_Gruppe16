@@ -63,6 +63,9 @@ export const SPIEL_REGLER: Record<string, ReglerName[]> = {
   elfmeter: ['toleranz', 'zielgeschwindigkeit', 'mindesttrefferquote'],
   // Zieltempo: ab welchem Dribbeltempo gepfiffen wird. Trefferquote: Anteil sauberer Stopps.
   dribbeln: ['toleranz', 'zielgeschwindigkeit', 'mindesttrefferquote'],
+  // Kein Zieltempo: eine kürzere Greifzeit wäre leichter statt schneller, und Hetzen verkrampft (B3).
+  // Keine Trefferquote: jede Tasche wird ohnehin leer, es gibt keine verfehlte Runde.
+  einlass: ['toleranz'],
   // Gar keiner: bei der Urkunde muss nichts bestanden werden, und das Tempo bestimmt Ben.
   abschiedsgeschenk: [],
 }
@@ -331,6 +334,7 @@ export const SPIEL_TITEL: Record<string, string> = {
   dribbeln: 'Dribbeln mit Pfiff',
   ballhochhalten: 'Ball hochhalten',
   brezelverkauf: 'Brezelverkauf',
+  einlass: 'Einlasskontrolle',
   abschiedsgeschenk: 'Urkunde',
 }
 
