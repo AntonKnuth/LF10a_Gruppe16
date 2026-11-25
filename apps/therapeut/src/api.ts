@@ -66,6 +66,9 @@ export const SPIEL_REGLER: Record<string, ReglerName[]> = {
   // Kein Zieltempo: eine kürzere Greifzeit wäre leichter statt schneller, und Hetzen verkrampft (B3).
   // Keine Trefferquote: jede Tasche wird ohnehin leer, es gibt keine verfehlte Runde.
   einlass: ['toleranz'],
+  // Nur die Toleranz. Ein Tempo verschlechtert die Form, und einen ganzen Namen zu wiederholen,
+  // wäre lang und läse sich wie ein Urteil: fertig wird jeder Strich ohnehin nur auf der Vorlage.
+  startelf: ['toleranz'],
   // Gar keiner: bei der Urkunde muss nichts bestanden werden, und das Tempo bestimmt Ben.
   abschiedsgeschenk: [],
 }

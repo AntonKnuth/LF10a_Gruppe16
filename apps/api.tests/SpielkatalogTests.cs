@@ -32,7 +32,6 @@ public class SpielkatalogTests
     /// Bereich.</summary>
     [Theory]
     [InlineData("stationentour")]
-    [InlineData("startelf")]
     public void Spiele_in_Arbeit_sind_nicht_einstellbar(string spielId)
     {
         Assert.False(Spielkatalog.IstSpielbar(spielId));

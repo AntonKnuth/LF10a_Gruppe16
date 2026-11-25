@@ -79,10 +79,9 @@ export const KATALOG: Record<string, Spieldaten> = {
   },
   startelf: {
     titel: 'Startelf',
-    anweisung: 'Schreibe Namen und Rückennummer der Spieler auf.',
+    anweisung: 'Schreibe die Aufstellung an die Tafel und fang immer am grünen Punkt an.',
     rolle: 'normal',
     tags: ['schreiben'],
-    inArbeit: true,
   },
   elfmeter: {
     titel: 'Elfmeter',
