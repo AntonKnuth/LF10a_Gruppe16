@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 
-/* D3: der Wochenbericht muss auf eine Seite passen und druckbar sein.
+/* Der Wochenbericht muss auf eine Seite passen und druckbar sein.
    Beim Drucken verschwindet alles, was nicht zum Bericht gehört. */
 @media print {
   .kein-druck {

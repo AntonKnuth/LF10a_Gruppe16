@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react'
 import { api, titel, type KlientDetail, type VerlaufPunkt } from '../api'
 
 /**
- * C4 (Fortschritt) und C3 (Abgleich Selbsteinschätzung gegen Messwert).
+ * Fortschritt und Abgleich Selbsteinschätzung gegen Messwert.
  *
- * Alle Zahlen kommen aus der C#-Auswertung der Rohdaten. Die im Browser gerechneten Werte aus
+ * Alle Zahlen kommen aus der Backend-Auswertung der Rohdaten. Die im Browser gerechneten Werte aus
  * `SpielErgebnis` sind unmaßgeblich und tauchen hier bewusst nicht auf.
  *
  * Eingabegerät und Stufe stehen an jedem Punkt: eine vom Therapeuten erhöhte Anforderung sieht

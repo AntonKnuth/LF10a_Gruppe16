@@ -195,8 +195,6 @@ export const api = {
     hole<void>(`/api/geraete/${geraetId}/sperren`, { method: 'POST' }),
 }
 
-/** Titel der Minispiele. Bewusst hier und nicht in der Datenbank: der Content gehört zur
- *  Kind-App, der Server kennt nur die IDs. */
 export const SPIEL_TITEL: Record<string, string> = {
   aufwaermen: 'Aufwärmen',
   linie: 'Linie malen',
@@ -212,10 +210,6 @@ export const SPIEL_TITEL: Record<string, string> = {
 
 export const titel = (spielId: string) => SPIEL_TITEL[spielId] ?? spielId
 
-/**
- * Anzeigenamen der Fähigkeitsbereiche. Die Zuordnung Spiel → Bereich macht der Server
- * (`Auswertung/Kategorien.cs`) — hier stehen nur die Beschriftungen.
- */
 export const KATEGORIE_TITEL: Record<string, string> = {
   'gerade-striche': 'Gerade Striche',
   wellen: 'Wellen und Bögen',

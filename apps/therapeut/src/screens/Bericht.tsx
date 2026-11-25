@@ -2,18 +2,14 @@ import { useEffect, useState } from 'react'
 import { api, kategorieTitel, titel, type Kennzahl, type KlientDetail, type Wochenbericht } from '../api'
 
 /**
- * D3: Wochenbericht auf einer Seite, druckbar.
- *
- * Ausdrücklich Gesprächsgrundlage für den Therapeuten — **nicht** für die Eltern. Es gibt in
- * dieser Software keinen Elternbereich (D1); was die Eltern erfahren, entscheidet der Therapeut
- * im Gespräch.
+ * Wochenbericht auf einer Seite, druckbar.
  *
  * Gedruckt wird mit `@media print` (siehe index.css), nicht mit einer PDF-Bibliothek: der
  * Browser kann das, und eine Abhängigkeit weniger ist eine Erklärung weniger.
  */
 export function Bericht({ klient }: { klient: KlientDetail }) {
   const [bericht, setBericht] = useState<Wochenbericht | null>(null)
-  // Der Bericht soll auf eine Seite passen (D3). Die Einzelübungen sind die Ausnahme für den
+  // Der Bericht soll auf eine Seite passen. Die Einzelübungen sind die Ausnahme für den
   // Fall, dass eine Auffälligkeit im Bereich geklärt werden muss — deshalb zugeklappt.
   const [einzeln, setEinzeln] = useState(false)
   const [von, setVon] = useState(() => {
@@ -90,7 +86,7 @@ export function Bericht({ klient }: { klient: KlientDetail }) {
           mehr als {bericht.proSpiel.reduce((n, z) => n + z.anzahl, 0)} Übungen.
         </p>
 
-        {/* Absichtlich unauffällig und zugeklappt: der Bericht soll auf eine Seite passen (D3),
+        {/* Absichtlich unauffällig und zugeklappt: der Bericht soll auf eine Seite passen,
             und die Bereiche sind die Aussage. Die einzelnen Übungen sind der Blick dahinter. */}
         <button
           onClick={() => setEinzeln((e) => !e)}
@@ -146,7 +142,7 @@ type Messzeile = {
   mittelwerte: Kennzahl | null
 }
 
-/** Dieselbe Tabelle für Bereiche und für Einzelübungen — nur die erste Spalte unterscheidet sie. */
+/** Dieselbe Tabelle für Bereiche und für Einzelübungen */
 function Messtabelle({
   erste,
   zeilen,
