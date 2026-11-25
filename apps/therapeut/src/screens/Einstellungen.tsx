@@ -103,6 +103,8 @@ export function Einstellungen({ klient }: { klient: KlientDetail }) {
         const aktiv = zeilen.filter((e) => e.aktiv).length
         const plaetze = form[a.feld] as number
         const zuWenig = aktiv < plaetze
+        // Beim Sonderspiel muss nichts bestanden werden und das Tempo bestimmt Ben: diese drei Regler wirken dort nicht.
+        const mitReglern = a.rolle !== 'sonder'
 
         return (
           <section key={a.rolle}>
@@ -134,9 +136,9 @@ export function Einstellungen({ klient }: { klient: KlientDetail }) {
                     <th className="p-3">Übung</th>
                     <th className="p-3">Aktiv</th>
                     <th className="p-3">Stufe</th>
-                    <th className="p-3">Toleranz</th>
-                    <th className="p-3">Zieltempo</th>
-                    <th className="p-3">Mind. Treffer</th>
+                    {mitReglern && <th className="p-3">Toleranz</th>}
+                    {mitReglern && <th className="p-3">Zieltempo</th>}
+                    {mitReglern && <th className="p-3">Mind. Treffer</th>}
                     <th className="p-3">Dauer (s)</th>
                   </tr>
                 </thead>
@@ -156,18 +158,24 @@ export function Einstellungen({ klient }: { klient: KlientDetail }) {
                         <Zahl wert={e.stufe} min={1} max={5} schritt={1}
                           onAendern={(v) => aendernSpiel(e.spielId, 'stufe', v)} />
                       </td>
-                      <td className="p-3">
-                        <Zahl wert={e.toleranz} min={0.1} max={3} schritt={0.1}
-                          onAendern={(v) => aendernSpiel(e.spielId, 'toleranz', v)} />
-                      </td>
-                      <td className="p-3">
-                        <Zahl wert={e.zielgeschwindigkeit} min={0.1} max={3} schritt={0.1}
-                          onAendern={(v) => aendernSpiel(e.spielId, 'zielgeschwindigkeit', v)} />
-                      </td>
-                      <td className="p-3">
-                        <Zahl wert={e.mindesttrefferquote} min={0} max={1} schritt={0.05}
-                          onAendern={(v) => aendernSpiel(e.spielId, 'mindesttrefferquote', v)} />
-                      </td>
+                      {mitReglern && (
+                        <td className="p-3">
+                          <Zahl wert={e.toleranz} min={0.1} max={3} schritt={0.1}
+                            onAendern={(v) => aendernSpiel(e.spielId, 'toleranz', v)} />
+                        </td>
+                      )}
+                      {mitReglern && (
+                        <td className="p-3">
+                          <Zahl wert={e.zielgeschwindigkeit} min={0.1} max={3} schritt={0.1}
+                            onAendern={(v) => aendernSpiel(e.spielId, 'zielgeschwindigkeit', v)} />
+                        </td>
+                      )}
+                      {mitReglern && (
+                        <td className="p-3">
+                          <Zahl wert={e.mindesttrefferquote} min={0} max={1} schritt={0.05}
+                            onAendern={(v) => aendernSpiel(e.spielId, 'mindesttrefferquote', v)} />
+                        </td>
+                      )}
                       <td className="p-3">
                         <Zahl wert={e.dauerSek} min={10} max={600} schritt={10}
                           onAendern={(v) => aendernSpiel(e.spielId, 'dauerSek', v)} />
