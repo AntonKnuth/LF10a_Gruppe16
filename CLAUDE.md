@@ -193,8 +193,9 @@ Jedes Minispiel hat im Katalog (`apps/web/src/spiele/katalog.ts`) eine **Rolle**
 `normal` oder `sonder`. Die vergibt der Content, **nicht** der Therapeut — ob „Aufwärmen" ein
 Aufwärmspiel ist, ist eine Eigenschaft des Spiels. Der Therapeut stellt zweierlei ein: **wie
 viele** Übungen welcher Rolle eine Einheit hat (Vorgabe 1 + 3 + 1) und **welche Spiele** im Topf
-sind. Das Sonderspiel steht immer als **letzte** Übung an Tag 5 (Abschiedsgeschenk: Foto einer
-auf Papier geschriebenen Aufgabe — **nur speichern und Thomas anzeigen, nicht auswerten**).
+sind. Das Sonderspiel steht immer als **letzte** Übung an Tag 5 (Abschiedsgeschenk: eine **Urkunde**, die Ben mit seinem Spielnamen unterschreibt; Thomas
+druckt sie in der Therapeuten-App aus den Rohdaten. Kein Foto, kein Bild-Upload — Begründung und
+LN1-Abweichung in docs/entscheidungen.md).
 
 **Geordneter Zufall.** Der Startwert kommt aus Verein und Tag, bewusst *ohne* Kind-Kennung — die
 kennt das Tablet gar nicht, sie steckt nur im Gerätetoken. Folgen daraus: derselbe Tag ergibt
@@ -410,7 +411,7 @@ add` immer erst mergen**.
 ## Explizit nicht bauen
 
 Gems, Shop, Trikots, eigene Mannschaft, Streak/Serien (bewusst gestrichen — ein Streak bestraft
-Krankheit und Ferien). Elternbereich. Automatische Bildauswertung des Papierfotos.
+Krankheit und Ferien). Elternbereich. Foto-/Kamerafunktion fürs Sonderspiel.
 Datenexport als Feature. Millimeter-genaue Kalibrierung (Toleranz bleibt einheitenlos).
 Offline-Betrieb, Outbox, Sync-Protokoll. Einladungsflow für weitere Therapeuten (nur Ausblick im
 Bericht). Bild-Upload der Arbeitsproben — das Schema steht, der Endpunkt kommt später.

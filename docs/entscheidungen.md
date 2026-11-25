@@ -478,6 +478,28 @@ das Lob **von der Spielfigur** kommt, und die Leitidee verlangt, dass es sich na
 anfühlt. Beides war auf dem allgemeinen Dialogbildschirm nicht zu erkennen — es sah aus wie ein
 Systemhinweis mit Sternen.
 
+### Sonderspiel: Urkunde aus Rohdaten statt Papierfoto
+
+Das Abschiedsgeschenk am fünften Tag eines Vereins war in LN1 das Foto einer auf Papier
+geschriebenen Aufgabe. Umgesetzt wird stattdessen eine **Urkunde „Probetraining bestanden"**: Ben
+unterschreibt sie auf dem Tablet mit seinem Spielnamen, Thomas ruft sie in der Therapeuten-App auf
+und druckt sie. Die Unterschrift wird aus den Rohdaten gezeichnet, nicht als Bild hochgeladen.
+Drei Gründe:
+
+1. **Keine neue Datenart.** Die Unterschrift ist eine Punktfolge wie jede andere Übung, im selben
+   Float32-Blob. Kamera, Anhang-Tabelle und Migration entfallen.
+2. **Art. 17 ohne neuen Code.** Die Rohdaten verschwinden mit dem Profil; ein Bild müsste eigens
+   mitgelöscht werden.
+3. **Kein Konflikt mit „nicht bauen".** Der Bild-Upload der Arbeitsproben steht unter „Explizit
+   nicht bauen". Die Urkunde braucht ihn nicht.
+
+Das Abschiedsgeschenk-Foto in Abschnitt 8 ist damit überholt; die Handschriftprobe bleibt davon
+unberührt.
+
+> **Im Bericht als nachträgliche Änderung gegenüber LN1 kennzeichnen.** Der Planungsteil
+> (abgegeben am 29.08.2026) beschrieb das Sonderspiel noch als Foto einer Papieraufgabe. Die
+> Änderung entstand während der Implementierung (Spezifikation: Issue #3) und gehört wie D1 und D4
+> als begründete Abweichung in den Bericht.
 ## 11. Verworfen — und warum
 
 | Verworfen | Grund |
