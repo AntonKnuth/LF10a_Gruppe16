@@ -31,7 +31,9 @@ public static class Spielkatalog
     /// <summary>Die Urkunde (Sonderspiel am letzten Tag). Nur sie hat Unterschrift-Kennzahlen.</summary>
     public const string UrkundeId = "abschiedsgeschenk";
 
-    private record Eintrag(Rolle Rolle, string[] Kategorien);
+    /// <summary><c>InArbeit</c>: noch nicht gebaut, deshalb nirgends einstellbar. Der Eintrag
+    /// bleibt, damit ältere Ergebnisse im Bericht ihren Bereich behalten.</summary>
+    private record Eintrag(Rolle Rolle, string[] Kategorien, bool InArbeit = false);
 
     private static readonly Dictionary<string, Eintrag> Spiele = new()
     {
@@ -39,19 +41,24 @@ public static class Spielkatalog
         ["linie"] = new(Rolle.Normal, ["gerade-striche"]),
         ["autogramme"] = new(Rolle.Normal, ["schreiben", "pinzettengriff"]),
         ["rasenmaehen"] = new(Rolle.Normal, ["druckdosierung"]),
-        ["stationentour"] = new(Rolle.Normal, ["schreiben", "druckdosierung"]),
-        ["startelf"] = new(Rolle.Normal, ["schreiben"]),
-        ["elfmeter"] = new(Rolle.Normal, ["hand-auge", "druckdosierung"]),
-        ["dribbeln"] = new(Rolle.Normal, ["inhibition", "wellen"]),
+        ["stationentour"] = new(Rolle.Normal, ["schreiben", "druckdosierung"], InArbeit: true),
+        ["startelf"] = new(Rolle.Normal, ["schreiben"], InArbeit: true),
+        ["elfmeter"] = new(Rolle.Normal, ["hand-auge", "druckdosierung"], InArbeit: true),
+        ["dribbeln"] = new(Rolle.Normal, ["inhibition", "wellen"], InArbeit: true),
         ["brezelverkauf"] = new(Rolle.Normal, ["gerade-striche", "hand-auge"]),
         ["ballhochhalten"] = new(Rolle.Normal, ["hand-auge", "druckdosierung"]),
         ["abschiedsgeschenk"] = new(Rolle.Sonder, ["schreiben"]),
     };
 
-    /// <summary>Alle bekannten Spiel-IDs in Katalogreihenfolge. Daraus legt der Seed die
+    /// <summary>Alle spielbaren Spiel-IDs in Katalogreihenfolge. Daraus legt der Seed die
     /// Einstellungszeilen an — eine zweite Liste im Seed würde beim nächsten neuen Spiel
     /// auseinanderlaufen.</summary>
-    public static IReadOnlyList<string> AlleIds => [.. Spiele.Keys];
+    public static IReadOnlyList<string> AlleIds => [.. Spiele.Keys.Where(IstSpielbar)];
+
+    /// <summary>Falsch nur für Spiele, die noch in Arbeit sind. Unbekannte gelten als spielbar —
+    /// sie sollen auffallen, statt still zu verschwinden.</summary>
+    public static bool IstSpielbar(string spielId) =>
+        !Spiele.TryGetValue(spielId, out var e) || !e.InArbeit;
 
     public static IReadOnlyList<string> KategorienFuer(string spielId) =>
         Spiele.TryGetValue(spielId, out var e) ? e.Kategorien : [OhneZuordnung];

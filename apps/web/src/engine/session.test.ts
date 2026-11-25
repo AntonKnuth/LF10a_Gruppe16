@@ -107,14 +107,14 @@ describe('geordneter Zufall', () => {
 
   it('wählt andere Spiele, sobald der Therapeut den Topf ändert', () => {
     const vorher = spieleDesTages('hsv', 1, E)
-    const nachher = spieleDesTages('hsv', 1, nur(['aufwaermen', 'linie', 'startelf', 'elfmeter']))
+    const nachher = spieleDesTages('hsv', 1, nur(['aufwaermen', 'linie', 'autogramme', 'brezelverkauf']))
     expect(nachher).not.toEqual(vorher)
   })
 
   it('vermeidet gleiche Fähigkeitsbereiche hintereinander, wo es geht', () => {
     // Topf mit klar getrennten Bereichen: hier darf sich nichts überschneiden.
     const e: Einstellungen = {
-      ...nur(['aufwaermen', 'linie', 'startelf', 'rasenmaehen']),
+      ...nur(['aufwaermen', 'linie', 'autogramme', 'rasenmaehen']),
       anzahlAufwaermen: 0,
       anzahlUebungen: 3,
       anzahlSonder: 0,
@@ -129,7 +129,7 @@ describe('geordneter Zufall', () => {
   it('wiederholt dasselbe Spiel nie dreimal hintereinander', () => {
     // Zwei Spiele im Topf, fünf Plätze — wiederholen muss es sich, aber abwechselnd.
     const e: Einstellungen = {
-      ...nur(['linie', 'startelf']),
+      ...nur(['linie', 'autogramme']),
       anzahlAufwaermen: 0,
       anzahlUebungen: 5,
       anzahlSonder: 0,

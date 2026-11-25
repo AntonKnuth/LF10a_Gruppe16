@@ -67,7 +67,8 @@ public static class Klienten
 
         foreach (var (rolle, plaetze, name) in rollen)
         {
-            var aktiv = e.Spiele.Count(s => s.Aktiv && Spielkatalog.RolleFuer(s.SpielId) == rolle);
+            var aktiv = e.Spiele.Count(s => s.Aktiv && Spielkatalog.IstSpielbar(s.SpielId)
+                && Spielkatalog.RolleFuer(s.SpielId) == rolle);
             if (aktiv < plaetze)
                 return $"{name}: {plaetze} pro Einheit eingestellt, aber nur {aktiv} " +
                        $"{(aktiv == 1 ? "Spiel ist" : "Spiele sind")} aktiv.";
@@ -180,6 +181,9 @@ public static class Klienten
                     e.SpielId, e.Stufe, e.Toleranz, e.Zielgeschwindigkeit,
                     e.Mindesttrefferquote, e.DauerSek, e.Aktiv, e.Reihenfolge))
                 .ToListAsync();
+
+            // Zeilen von Spielen in Arbeit bleiben in der Datenbank, werden aber nicht angezeigt.
+            spiele = spiele.Where(s => Spielkatalog.IstSpielbar(s.SpielId)).ToList();
 
             return Results.Ok(new TagesformAntwort(
                 klient.AnzahlAufwaermen, klient.AnzahlUebungen, klient.AnzahlSonder, spiele));

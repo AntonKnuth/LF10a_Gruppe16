@@ -38,6 +38,11 @@ export type Spieldaten = {
   anweisung: string
   rolle: Rolle
   tags: Kategorie[]
+  /**
+   * Noch nicht gebaut: kommt in keinem Tagesplan vor, sonst bekäme Ben den `Platzhalter`. Ist das
+   * Spiel fertig, die Markierung hier **und** in `apps/api/Auswertung/Spielkatalog.cs` entfernen.
+   */
+  inArbeit?: true
 }
 
 export const KATALOG: Record<string, Spieldaten> = {
@@ -70,24 +75,28 @@ export const KATALOG: Record<string, Spieldaten> = {
     anweisung: 'Schreibe die Stadionfakten in gleichmäßigem Tempo ab.',
     rolle: 'normal',
     tags: ['schreiben', 'druckdosierung'],
+    inArbeit: true,
   },
   startelf: {
     titel: 'Startelf',
     anweisung: 'Schreibe Namen und Rückennummer der Spieler auf.',
     rolle: 'normal',
     tags: ['schreiben'],
+    inArbeit: true,
   },
   elfmeter: {
     titel: 'Elfmeter',
     anweisung: 'Schieße mit einem schnellen, gleichmäßigen Strich aufs Tor.',
     rolle: 'normal',
     tags: ['hand-auge', 'druckdosierung'],
+    inArbeit: true,
   },
   dribbeln: {
     titel: 'Dribbeln mit Pfiff',
     anweisung: 'Halte beim Pfiff an, aber hebe den Stift nicht ab.',
     rolle: 'normal',
     tags: ['inhibition', 'wellen'],
+    inArbeit: true,
   },
   brezelverkauf: {
     titel: 'Brezelverkauf',
@@ -111,5 +120,6 @@ export const KATALOG: Record<string, Spieldaten> = {
 
 export const spielIds = Object.keys(KATALOG)
 
+/** Die spielbaren Spiele einer Rolle — was noch in Arbeit ist, fehlt hier. */
 export const spieleMitRolle = (rolle: Rolle) =>
-  spielIds.filter((id) => KATALOG[id].rolle === rolle)
+  spielIds.filter((id) => KATALOG[id].rolle === rolle && !KATALOG[id].inArbeit)
