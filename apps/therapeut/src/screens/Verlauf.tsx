@@ -1,6 +1,9 @@
 import { Fragment, useEffect, useState } from 'react'
-import { api, titel, zeitpunkt, URKUNDE_ID, type KlientDetail, type VerlaufPunkt } from '../api'
+import {
+  api, reglerAbweichung, titel, zeitpunkt, URKUNDE_ID, type KlientDetail, type VerlaufPunkt,
+} from '../api'
 import { Urkunde } from './Urkunde'
+import { Verlaufskurve } from './Verlaufskurve'
 
 /**
  * C4 (Fortschritt) und C3 (Abgleich Selbsteinschätzung gegen Messwert).
@@ -50,30 +53,50 @@ export function Verlauf({ klient }: { klient: KlientDetail }) {
         </select>
       </div>
 
+      {spielId === 'alle' ? (
+        <p className="text-sm text-slate-500">
+          Für die Verlaufskurve eine einzelne Übung wählen — verschiedene Übungen sind nicht
+          miteinander vergleichbar.
+        </p>
+      ) : (
+        <Verlaufskurve punkte={gefiltert} />
+      )}
+
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+        {/* Streuungen stehen hinter ihrem Mittelwert statt in eigenen Spalten: so passt die Tabelle
+            auf das iPad, ohne zu scrollen. */}
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-left text-slate-600">
             <tr>
-              <th className="p-3">Datum</th>
-              <th className="p-3">Übung</th>
-              <th className="p-3">Stufe</th>
-              <th className="p-3">Tempo</th>
-              <th className="p-3">Tempo-Streuung</th>
-              <th className="p-3">Zittern</th>
-              <th className="p-3">Druck ⌀</th>
-              <th className="p-3">Druck-Streuung</th>
-              <th className="p-3">Absetzer</th>
-              <th className="p-3">Selbsteinschätzung</th>
-              <th className="p-3">Gerät</th>
+              <th className="px-2 py-3">Datum</th>
+              <th className="px-2 py-3">Übung</th>
+              <th className="px-2 py-3">Stufe</th>
+              <th className="px-2 py-3">Tempo</th>
+              <th className="px-2 py-3">Zittern</th>
+              <th className="px-2 py-3">Druck</th>
+              <th className="px-2 py-3">Absetzer</th>
+              <th className="px-2 py-3" title="Selbsteinschätzung des Kindes">Selbst</th>
+              <th className="px-2 py-3">Gerät</th>
             </tr>
           </thead>
           <tbody>
             {gefiltert.map((p, i) => (
               <Fragment key={`${p.sessionId}-${i}`}>
               <tr className="border-t border-slate-100">
-                <td className="p-3">{zeitpunkt(p.datum).toLocaleDateString('de-DE')}</td>
-                <td className="p-3 font-semibold text-slate-700">
+                <td className="px-2 py-2 whitespace-nowrap">
+                  {zeitpunkt(p.datum).toLocaleDateString('de-DE', {
+                    day: '2-digit', month: '2-digit', year: '2-digit',
+                  })}
+                </td>
+                <td className="px-2 py-2 font-semibold text-slate-700">
                   {titel(p.spielId)}
+                  {/* Nur Regler, die von der Vorgabe abweichen — sonst bleibt die Zeile leer. */}
+                  <span className="block text-xs font-normal text-slate-500">{reglerAbweichung(p)}</span>
+                  {p.abgebrochen && (
+                    <span className="block w-fit rounded bg-red-100 px-1 font-normal text-red-800">
+                      abgebrochen
+                    </span>
+                  )}
                   {p.spielId === URKUNDE_ID && (
                     <button
                       onClick={() => setUrkundeId(p.ergebnisId)}
@@ -83,42 +106,41 @@ export function Verlauf({ klient }: { klient: KlientDetail }) {
                     </button>
                   )}
                 </td>
-                <td className="p-3">
+                <td className="px-2 py-2">
                   <span className="rounded bg-slate-200 px-2 py-0.5 font-semibold">{p.stufe}</span>
                 </td>
                 {p.kennzahlen ? (
                   <>
-                    <td className="p-3">{p.kennzahlen.tempoMittel.toFixed(1)}</td>
-                    <td className="p-3">{p.kennzahlen.tempoStreuung.toFixed(1)}</td>
-                    <td className="p-3">{p.kennzahlen.zittern.toFixed(1)}°</td>
-                    <td className="p-3">{p.kennzahlen.druckMittel.toFixed(2)}</td>
-                    <td className="p-3">{p.kennzahlen.druckStreuung.toFixed(2)}</td>
-                    <td className="p-3">{p.kennzahlen.absetzer}</td>
+                    <td className="px-2 py-2 whitespace-nowrap">
+                      {p.kennzahlen.tempoMittel.toFixed(0)} ± {p.kennzahlen.tempoStreuung.toFixed(0)}
+                    </td>
+                    <td className="px-2 py-2">{p.kennzahlen.zittern.toFixed(1)}°</td>
+                    <td className="px-2 py-2 whitespace-nowrap">
+                      {p.kennzahlen.druckMittel.toFixed(2)} ± {p.kennzahlen.druckStreuung.toFixed(2)}
+                    </td>
+                    <td className="px-2 py-2">{p.kennzahlen.absetzer}</td>
                   </>
                 ) : (
-                  <td colSpan={6} className="p-3 text-slate-400">keine Rohdaten</td>
+                  <td colSpan={4} className="px-2 py-2 text-slate-400">keine Rohdaten</td>
                 )}
-                <td className="p-3">
+                <td className="px-2 py-2 whitespace-nowrap">
                   {p.selbsteinschaetzung ? '🙂'.repeat(p.selbsteinschaetzung) : '–'}
                 </td>
-                <td className="p-3 text-slate-500">
+                <td className="px-2 py-2 text-slate-500">
                   {p.eingabegeraet}
                   {p.synthetischerDruck && (
                     <span
                       title="Druck per Tastatur ersetzt — nicht mit Pencil-Werten vergleichbar"
-                      className="ml-1 rounded bg-amber-100 px-1 text-amber-800"
+                      className="block w-fit rounded bg-amber-100 px-1 text-amber-800"
                     >
                       synth.
                     </span>
-                  )}
-                  {p.abgebrochen && (
-                    <span className="ml-1 rounded bg-red-100 px-1 text-red-800">abgebrochen</span>
                   )}
                 </td>
               </tr>
               {p.unterschrift && (
                 <tr className="bg-slate-50 text-slate-700">
-                  <td colSpan={11} className="px-3 py-2">
+                  <td colSpan={9} className="px-3 py-2">
                     <span className="font-semibold">Unterschrift:</span>{' '}
                     Höhe {p.unterschrift.hoehe.toFixed(2)} · Breite {p.unterschrift.breite.toFixed(2)}{' '}
                     (jeweils in Bandhöhen) · Abstand zur Grundlinie{' '}
@@ -135,8 +157,8 @@ export function Verlauf({ klient }: { klient: KlientDetail }) {
 
       <p className="text-xs text-slate-500">
         Zittern ist die mittlere Richtungsänderung zwischen zwei Abtastungen — je kleiner, desto
-        ruhiger die Linie. Alle Werte stammen aus der Auswertung der Rohdaten, nicht aus der
-        Sofortbewertung im Spiel.
+        ruhiger die Linie. Hinter ± steht die Streuung. Alle Werte stammen aus der Auswertung der
+        Rohdaten, nicht aus der Sofortbewertung im Spiel.
       </p>
     </div>
   )

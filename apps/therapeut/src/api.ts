@@ -104,6 +104,16 @@ export type UnterschriftKennzahl = {
   neustarts: number
 }
 
+/** Die Regler aus B1, so wie sie bei dieser Übung galten. */
+export type ReglerWerte = Record<ReglerName, number>
+
+/** Wie `VORGABE_REGLER` in der Kind-App: damit spielt sich jede Übung so, wie die Stufe es vorgibt. */
+export const VORGABE_REGLER: ReglerWerte = {
+  toleranz: 1,
+  zielgeschwindigkeit: 1,
+  mindesttrefferquote: 0.5,
+}
+
 export type VerlaufPunkt = {
   ergebnisId: string
   sessionId: string
@@ -117,6 +127,26 @@ export type VerlaufPunkt = {
   kennzahlen: Kennzahl | null
   /** Nur bei Urkunden gefüllt, sonst null. */
   unterschrift: UnterschriftKennzahl | null
+  /** Fehlt bei Ergebnissen aus der Zeit vor B1. */
+  regler: ReglerWerte | null
+}
+
+/**
+ * Die Regler einer Übung als kurzer Text, aber nur die abweichenden — und nur die, die in diesem
+ * Spiel etwas bewirken. Leer heißt: gespielt wie von der Stufe vorgegeben.
+ *
+ * Fehlen die Regler, ist das Ergebnis älter als B1. Damals bewirkten sie noch nichts, jede Übung
+ * lief also wie mit der Vorgabe.
+ */
+export function reglerAbweichung(p: VerlaufPunkt): string {
+  const r = p.regler ?? VORGABE_REGLER
+  const weichtAb = (name: ReglerName) => r[name] !== VORGABE_REGLER[name] && hatRegler(p.spielId, name)
+
+  const teile: string[] = []
+  if (weichtAb('toleranz')) teile.push(`Tol. ${r.toleranz}`)
+  if (weichtAb('zielgeschwindigkeit')) teile.push(`Tempo ${r.zielgeschwindigkeit}`)
+  if (weichtAb('mindesttrefferquote')) teile.push(`Quote ${Math.round(r.mindesttrefferquote * 100)} %`)
+  return teile.join(' · ')
 }
 
 export type UrkundeAntwort = {
@@ -174,6 +204,8 @@ export type Wochenbericht = {
   proKategorie: KategorieZeile[]
   proSpiel: SpielZeile[]
   selbsteinschaetzungMittel: number | null
+  /** Antworten auf „Wie war das Training heute?", getrennt von der Einschätzung je Übung. */
+  fragebogen: { gut: number; mittel: number; schwer: number }
   hinweise: string[]
 }
 

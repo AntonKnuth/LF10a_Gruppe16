@@ -15,8 +15,8 @@ public record UnterschriftKennzahl(
     int Neustarts);
 
 /// <summary>
-/// Auswertung der Urkunden-Unterschrift. <b>Die erste Stelle, an der der Server das <c>extra</c>
-/// eines Spielergebnisses ausliest</b> — das Lesen steht deshalb nur hier und nirgends sonst.
+/// Auswertung der Urkunden-Unterschrift. Liest das spielspezifische <c>extra</c> der Urkunde; den
+/// Teil, den jedes Spiel mitschickt, liest <see cref="Regler"/>.
 ///
 /// Das <c>extra</c> kommt als JSON-Text; das Format steht in Ticket #3. Gebraucht werden
 /// <c>band</c> (Koordinaten wie die Rohdaten) und <c>neustartsMs</c>.

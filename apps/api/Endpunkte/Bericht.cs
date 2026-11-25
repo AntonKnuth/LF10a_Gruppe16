@@ -17,7 +17,8 @@ public record VerlaufPunkt(
     bool Abgebrochen,
     int? Selbsteinschaetzung,
     Kennzahl? Kennzahlen,
-    UnterschriftKennzahl? Unterschrift);
+    UnterschriftKennzahl? Unterschrift,
+    ReglerWerte? Regler);
 
 /// <summary>Alles, was die Therapeuten-App zum Zeichnen der Urkunde braucht. <c>Extra</c> geht
 /// ungelesen als JSON-Text durch; <c>Werte</c> ist der Rohdaten-Blob (im JSON als Base64) und
@@ -61,6 +62,7 @@ public record Wochenbericht(
     IReadOnlyList<KategorieZeile> ProKategorie,
     IReadOnlyList<SpielZeile> ProSpiel,
     double? SelbsteinschaetzungMittel,
+    FragebogenZeile Fragebogen,
     IReadOnlyList<string> Hinweise);
 
 /// <summary>
@@ -108,7 +110,8 @@ public static class Bericht
                 z.Roh is null ? null : Kennzahlen.Berechne(z.Roh),
                 z.Roh is null || z.SpielId != Spielkatalog.UrkundeId
                     ? null
-                    : Unterschrift.Berechne(z.Roh, z.Extra))));
+                    : Unterschrift.Berechne(z.Roh, z.Extra),
+                Regler.Lies(z.Extra))));
         });
 
         // Die Urkunde zum Ansehen und Drucken. Gezeichnet wird im Browser aus den Rohdaten —
@@ -161,6 +164,23 @@ public static class Bericht
                     }).ToList(),
                 })
                 .ToListAsync();
+
+            // C3: Die Antworten auf „Wie war das Training heute?". Eine eigene, flache Abfrage statt
+            // einer zweiten Liste im Select oben: zwei Listen auf einmal werden in SQL miteinander
+            // multipliziert, und jede Zeile schleppt dann die Rohdaten-Blobs mit.
+            var einschaetzungEreignisse = await Zugriff.EinschaetzungenFuer(db, therapeutId, id)
+                .Where(e => e.Session!.EmpfangenAm >= start && e.Session.EmpfangenAm < ende)
+                .OrderBy(e => e.Folgenummer)
+                .Select(e => new { e.SessionId, e.Nutzlast })
+                .ToListAsync();
+
+            var fragebogenAntworten = sessions
+                .Select(s => Fragebogen.Antwort(
+                    s.Status,
+                    s.Ergebnisse.Count,
+                    einschaetzungEreignisse
+                        .Where(e => e.SessionId == s.Id).Select(e => e.Nutzlast).ToList()))
+                .ToList();
 
             // Jede Punktfolge wird genau einmal ausgewertet und dann zweimal gruppiert —
             // nach Übung und nach Fähigkeitsbereich. Sonst rechnet man dieselben Blobs doppelt.
@@ -261,6 +281,7 @@ public static class Bericht
                 SelbsteinschaetzungMittel: einschaetzungen.Count == 0
                     ? null
                     : Math.Round(einschaetzungen.Average(), 2),
+                Fragebogen: Fragebogen.Zaehle(fragebogenAntworten),
                 Hinweise: hinweise));
         });
     }

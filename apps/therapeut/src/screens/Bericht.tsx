@@ -30,6 +30,9 @@ export function Bericht({ klient }: { klient: KlientDetail }) {
 
   if (!bericht) return <p className="text-slate-500">Wird geladen…</p>
 
+  const { fragebogen } = bericht
+  const antworten = fragebogen.gut + fragebogen.mittel + fragebogen.schwer
+
   return (
     <div className="space-y-4">
       <div className="kein-druck flex flex-wrap items-end gap-4">
@@ -65,15 +68,28 @@ export function Bericht({ klient }: { klient: KlientDetail }) {
           </p>
         </header>
 
-        <div className="mb-6 grid grid-cols-4 gap-4">
+        <div className="mb-3 grid grid-cols-4 gap-4">
           <Kachel titel="Einheiten" wert={String(bericht.einheiten)} />
           <Kachel titel="davon abgebrochen" wert={String(bericht.abgebrochen)} />
           <Kachel titel="Übungszeit" wert={`${bericht.uebungszeitMinuten} min`} />
           <Kachel
-            titel="Selbsteinschätzung ⌀"
+            titel="Smiley je Übung ⌀"
             wert={bericht.selbsteinschaetzungMittel?.toFixed(1) ?? '–'}
           />
         </div>
+
+        {/* C3: eigene Frage am Ende der Einheit, deshalb getrennt vom Mittelwert je Übung. Gezählt
+            statt gemittelt: bei wenigen Einheiten pro Woche sagt ein Mittelwert nichts. */}
+        <p className="mb-6 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700">
+          <span className="text-slate-500">Nach dem Training („Wie war das Training heute?"):</span>{' '}
+          {antworten === 0 ? (
+            'keine Antwort'
+          ) : (
+            <span className="font-semibold">
+              {fragebogen.gut}× ging gut · {fragebogen.mittel}× ging so · {fragebogen.schwer}× ging schwer
+            </span>
+          )}
+        </p>
 
         <h3 className="mb-2 font-bold text-slate-800">Nach Fähigkeitsbereich</h3>
         <Messtabelle
