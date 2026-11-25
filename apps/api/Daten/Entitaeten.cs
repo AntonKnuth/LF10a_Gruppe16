@@ -66,6 +66,16 @@ public class Klient
     /// </summary>
     public DateTime? LimitFreigabeAm { get; set; }
 
+    /// <summary>
+    /// Für Präsentationen: jede Einheit zeigt alle spielbaren Spiele genau einmal, kurz (30 s,
+    /// Pause 5 s), ohne Tagesobergrenze, und danach geht es zum nächsten Verein.
+    ///
+    /// Ein Haken am Klienten und kein eigener Vorführ-Klient: vorgeführt wird mit dem Tablet,
+    /// das ohnehin an ein Kind gekoppelt ist. Die Einheiten werden als Vorführung markiert
+    /// (<see cref="Session.Vorfuehrung"/>) und zählen in keiner Auswertung.
+    /// </summary>
+    public bool Vorfuehrmodus { get; set; }
+
     public DateTime ErstelltAm { get; set; }
 
     public List<Betreuung> Betreuungen { get; set; } = [];
@@ -171,6 +181,11 @@ public class Session
     /// <summary>„laeuft", „fertig" oder „abgebrochen". Ein Abbruch nach 90 Sekunden ist für
     /// Thomas ein Befund und wird nicht weggeworfen (C2, D2).</summary>
     public string Status { get; set; } = "laeuft";
+
+    /// <summary>Im Vorführmodus gespielt. Die Übungen bleiben im Verlauf sichtbar (die Urkunde
+    /// soll sich zeigen lassen), zählen aber weder im Wochenbericht noch in der Verlaufskurve —
+    /// 30-Sekunden-Durchläufe würden sonst Bens echte Werte verfälschen.</summary>
+    public bool Vorfuehrung { get; set; }
 
     /// <summary>Serveruhr. Die einzige Zeit, der man trauen kann — aus ihr und
     /// <see cref="BegonnenAmMs"/> lässt sich eine verstellte Tablet-Uhr erkennen.</summary>

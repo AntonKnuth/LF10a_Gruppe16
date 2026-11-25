@@ -205,6 +205,9 @@ namespace TravelKickers.Api.Migrations
                     b.Property<string>("Spielname")
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("Vorfuehrmodus")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Vorname")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -297,6 +300,9 @@ namespace TravelKickers.Api.Migrations
                     b.Property<string>("VereinId")
                         .IsRequired()
                         .HasColumnType("TEXT");
+
+                    b.Property<bool>("Vorfuehrung")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 

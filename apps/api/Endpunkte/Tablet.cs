@@ -76,6 +76,7 @@ public static class Tablet
                     k.AnzahlUebungen,
                     k.AnzahlSonder,
                     k.LimitFreigabeAm,
+                    k.Vorfuehrmodus,
                 })
                 .SingleAsync();
 
@@ -100,6 +101,9 @@ public static class Tablet
                 // B3: Der Zeitpunkt der letzten Freigabe des Tageslimits. Das Tablet vergleicht
                 // ihn mit dem zuletzt beachteten und setzt nur bei einem neueren zurück.
                 kind.LimitFreigabeAm,
+                // Vorführmodus: die Kind-App spielt dann alle Spiele kurz hintereinander, ohne
+                // Tagesobergrenze, und markiert die Einheit beim Hochladen als Vorführung.
+                kind.Vorfuehrmodus,
                 Einstellungen = einstellungen,
             });
         }).RequireAuthorization("Geraet");

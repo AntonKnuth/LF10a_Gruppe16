@@ -20,6 +20,8 @@ public record EinstellungEingang(
 
 public record PauseEingang(int PausenDauerSek, string PausenInhalt);
 
+public record VorfuehrmodusEingang(bool Vorfuehrmodus);
+
 /// <summary>
 /// Die Tagesform: wie viele Übungen welcher Rolle, und welche Spiele im Topf sind.
 ///
@@ -85,6 +87,20 @@ public static class Klienten
         return null;
     }
 
+    /// <summary>
+    /// Setzt den Haken „Vorführmodus" — nur, wenn der Therapeut das Kind betreut. Ohne HTTP, damit
+    /// sich Speichern und Zugriffsprüfung mit xUnit belegen lassen. <c>false</c> heißt: kein Zugriff.
+    /// </summary>
+    public static async Task<bool> VorfuehrmodusSetzen(TkContext db, int therapeutId, int klientId, bool wert)
+    {
+        var klient = await Zugriff.KlientenFuer(db, therapeutId).SingleOrDefaultAsync(k => k.Id == klientId);
+        if (klient is null) return false;
+
+        klient.Vorfuehrmodus = wert;
+        await db.SaveChangesAsync();
+        return true;
+    }
+
     public static void MapKlienten(this WebApplication app)
     {
         // --- Lesen ---------------------------------------------------------------------
@@ -113,6 +129,7 @@ public static class Klienten
                     k.Spielname,
                     k.PausenDauerSek,
                     k.PausenInhalt,
+                    k.Vorfuehrmodus,
                 })
                 .SingleOrDefaultAsync();
 
@@ -253,6 +270,19 @@ public static class Klienten
             klient.LimitFreigabeAm = DateTime.UtcNow;
             await db.SaveChangesAsync();
             return Results.Ok(new { klient.LimitFreigabeAm });
+        });
+
+        // Vorführmodus für Präsentationen. Ein eigener Aufruf und nicht Teil der Tagesform: der
+        // Haken hat mit Anzahlen und Topf nichts zu tun und soll sich auch setzen lassen, wenn
+        // die Tagesform gerade nicht speicherbar ist.
+        app.MapPut("/api/klienten/{id:int}/vorfuehrmodus", async (
+            int id, VorfuehrmodusEingang eingabe, TkContext db, ClaimsPrincipal nutzer) =>
+        {
+            if (nutzer.TherapeutId() is not int therapeutId) return Results.Unauthorized();
+
+            return await VorfuehrmodusSetzen(db, therapeutId, id, eingabe.Vorfuehrmodus)
+                ? Results.NoContent()
+                : Results.Forbid();
         });
 
         app.MapPut("/api/klienten/{id:int}/pause", async (

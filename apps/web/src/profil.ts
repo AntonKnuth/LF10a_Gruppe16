@@ -44,6 +44,16 @@ export const ladeFortschritt = (): Fortschritt =>
 /** Nach einer abgeschlossenen Einheit: nächster Tag, nach 5 Tagen der nächste Verein. */
 export function naechsteEinheit(f: Fortschritt): Fortschritt {
   if (f.tag < 5) return { ...f, tag: f.tag + 1 }
+  return naechsterVerein(f)
+}
+
+/**
+ * C6: Reise zum nächsten Verein, dort Tag 1. Der aktuelle Verein gilt als besucht.
+ *
+ * Direkt aufgerufen nach einer Vorführung, egal an welchem Tag Ben gerade ist — eine
+ * Präsentation soll die Reise zeigen, ohne fünf Einheiten abzuwarten.
+ */
+export function naechsterVerein(f: Fortschritt): Fortschritt {
   const besucht = vereine.filter((_, i) => i === f.vereinIndex || istBesucht(f, i)).map((v) => v.id)
   return { vereinIndex: (f.vereinIndex + 1) % vereine.length, tag: 1, besucht }
 }

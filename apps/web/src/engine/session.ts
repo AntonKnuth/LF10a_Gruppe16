@@ -25,6 +25,12 @@ export type SessionState = {
   /** Selbsteinschätzung je Spiel, gleiche Reihenfolge wie `ergebnisse`. */
   einschaetzungen: Smiley[]
   events: SessionEvent[]
+  /**
+   * Im Vorführmodus gespielt: zählt nicht gegen die Tagesobergrenze, prüft keine Bestwerte und
+   * geht als Vorführung an den Server. Optional, weil Schnappschüsse `tk.lauf` von vor dem
+   * Vorführmodus das Feld nicht haben — fehlt es, war es ein echtes Training.
+   */
+  vorfuehrung?: boolean
   status: 'laeuft' | 'fertig' | 'abgebrochen'
 }
 
@@ -34,7 +40,12 @@ export type SessionAction =
   | { art: 'selbsteinschaetzung'; wert: Smiley }
   | { art: 'abbrechen' }
 
-export function starteSession(vereinId: string, tag: number, segmente: Segment[]): SessionState {
+export function starteSession(
+  vereinId: string,
+  tag: number,
+  segmente: Segment[],
+  vorfuehrung = false,
+): SessionState {
   const t = Date.now()
   const events: SessionEvent[] = [{ t, art: 'session_start', vereinId, tag }]
   if (segmente.length > 0) {
@@ -50,6 +61,7 @@ export function starteSession(vereinId: string, tag: number, segmente: Segment[]
     einschaetzungen: [],
     events,
     status: segmente.length > 0 ? 'laeuft' : 'fertig',
+    vorfuehrung,
   }
 }
 

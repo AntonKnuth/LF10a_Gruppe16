@@ -179,13 +179,56 @@ export function tagesplan(
   e: Einstellungen,
   ersterStartUeberhaupt: boolean,
 ): Segment[] {
+  return ablauf(spieleDesTages(vereinId, tag, e), tag, e, ersterStartUeberhaupt)
+}
+
+/** Vorführmodus: so lange läuft jedes Spiel und jede Zwangspause. */
+export const VORFUEHR_SPIEL_SEK = 30
+export const VORFUEHR_PAUSE_SEK = 5
+
+/**
+ * Der Plan im Vorführmodus: alle spielbaren Spiele genau einmal, damit sich in einer
+ * Präsentation alles in einem Durchlauf zeigen lässt.
+ *
+ * Erst das Aufwärmen, dann alle normalen Übungen in Katalogreihenfolge, zum Schluss das
+ * Sonderspiel mit dem Abschied — an jedem Tag, nicht nur am fünften. Aktiv-Haken und Anzahlen
+ * des Therapeuten gelten hier bewusst nicht, sonst fehlten in der Vorführung gerade die Spiele,
+ * die er für Ben abgewählt hat. Stufe und Regler kommen dagegen aus den Einstellungen; nur die
+ * Dauer ist verkürzt. Selbsteinschätzung, Lob und Fragebogen bleiben (C3), denn der Ablauf
+ * soll derselbe sein wie im echten Training.
+ */
+export function vorfuehrPlan(tag: number, e: Einstellungen, ersterStartUeberhaupt: boolean): Segment[] {
+  const spiele = [
+    ...spieleMitRolle('aufwaermen'),
+    ...spieleMitRolle('normal'),
+    ...spieleMitRolle('sonder'),
+  ]
+  const kurz: Einstellungen = {
+    ...e,
+    pauseDauerSek: VORFUEHR_PAUSE_SEK,
+    spiele: Object.fromEntries(
+      spiele.map((id) => [id, { ...fuerSpiel(e, id), dauerSek: VORFUEHR_SPIEL_SEK }]),
+    ),
+  }
+  return ablauf(spiele, tag, kurz, ersterStartUeberhaupt)
+}
+
+/**
+ * Aus einer fertigen Spieleliste die Segmente: Kopf, je Spiel Selbsteinschätzung, Lob und
+ * Pause, am Ende der Fragebogen. Gemeinsam für Tagesplan und Vorführung, damit beide genau
+ * denselben Ablauf haben.
+ */
+function ablauf(
+  spiele: string[],
+  tag: number,
+  e: Einstellungen,
+  ersterStartUeberhaupt: boolean,
+): Segment[] {
   const segmente: Segment[] = []
 
   if (ersterStartUeberhaupt) segmente.push({ art: 'namenseingabe' })
   if (tag === 1) segmente.push({ art: 'ankommen' })
   segmente.push({ art: 'ansage' })
-
-  const spiele = spieleDesTages(vereinId, tag, e)
 
   spiele.forEach((spielId, i) => {
     const s = fuerSpiel(e, spielId)

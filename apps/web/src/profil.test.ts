@@ -2,7 +2,8 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { vereine } from './content'
 import {
   EINHEITEN_PRO_TAG, beachteFreigabe, einheitenHeute, istBesucht, ladeFortschritt, loescheProfil,
-  merkeGesehen, naechsteEinheit, pruefeBestwert, schonGesehen, speichereFortschritt, zaehleEinheit,
+  merkeGesehen, naechsteEinheit, naechsterVerein, pruefeBestwert, schonGesehen, speichereFortschritt,
+  zaehleEinheit,
   type Fortschritt,
 } from './profil'
 
@@ -125,6 +126,16 @@ describe('Reise (C4, C6)', () => {
     const alt = ladeFortschritt()
     expect(besuchte(alt)).toEqual(vereine.map((_, i) => i < letzter))
     expect(besuchte(naechsteEinheit(alt))).toEqual(vereine.map(() => true))
+  })
+
+  it('reist nach einer Vorführung an jedem Tag weiter und beginnt dort an Tag 1', () => {
+    for (const tag of [1, 3, 5]) {
+      const f = naechsterVerein({ vereinIndex: 0, tag })
+      expect(f).toMatchObject({ vereinIndex: 1, tag: 1 })
+      expect(besuchte(f)).toEqual(vereine.map((_, i) => i === 0))
+    }
+    // Nach dem letzten Verein geht die Reise von vorn los.
+    expect(naechsterVerein({ vereinIndex: letzter, tag: 2 })).toMatchObject({ vereinIndex: 0, tag: 1 })
   })
 })
 

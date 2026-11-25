@@ -43,6 +43,7 @@ export function Einstellungen({ klient }: { klient: KlientDetail }) {
   const [pauseInhalt, setPauseInhalt] = useState(klient.pausenInhalt)
   const [gespeichert, setGespeichert] = useState(false)
   const [freigegeben, setFreigegeben] = useState(false)
+  const [vorfuehrmodus, setVorfuehrmodus] = useState(klient.vorfuehrmodus)
   const [fehler, setFehler] = useState('')
 
   useEffect(() => {
@@ -51,6 +52,10 @@ export function Einstellungen({ klient }: { klient: KlientDetail }) {
     setFehler('')
     setPauseDauer(klient.pausenDauerSek)
     setPauseInhalt(klient.pausenInhalt)
+    // Frisch vom Server und nicht aus `klient`: das Objekt wird beim Reiterwechsel nicht neu
+    // geladen, ein eben gesetzter Haken stünde sonst wieder auf dem alten Wert.
+    setVorfuehrmodus(klient.vorfuehrmodus)
+    void api.klient(klient.id).then((k) => setVorfuehrmodus(k.vorfuehrmodus))
     void api.einstellungen(klient.id).then(setForm)
   }, [klient])
 
@@ -89,6 +94,18 @@ export function Einstellungen({ klient }: { klient: KlientDetail }) {
       setFreigegeben(true)
     } catch (e) {
       setFehler(e instanceof Error ? e.message : 'Freigabe fehlgeschlagen.')
+    }
+  }
+
+  // Sofort gespeichert und nicht erst mit „Speichern": vor einer Präsentation soll ein Klick
+  // genügen, und der Haken hängt nicht an der Tagesform, die gerade ungültig sein könnte.
+  async function vorfuehrmodusSetzen(wert: boolean) {
+    setFehler('')
+    try {
+      await api.vorfuehrmodusSpeichern(klient.id, wert)
+      setVorfuehrmodus(wert)
+    } catch (e) {
+      setFehler(e instanceof Error ? e.message : 'Vorführmodus nicht gespeichert.')
     }
   }
 
@@ -277,6 +294,24 @@ export function Einstellungen({ klient }: { klient: KlientDetail }) {
             nächsten Start — und genau einmal.
           </p>
         </div>
+      </section>
+
+      <section>
+        <h3 className="mb-3 text-lg font-bold text-slate-800">Vorführmodus</h3>
+        <label className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-4">
+          <input
+            type="checkbox"
+            checked={vorfuehrmodus}
+            onChange={(e) => void vorfuehrmodusSetzen(e.target.checked)}
+            className="mt-0.5 size-5"
+          />
+          <span className="text-sm text-slate-600">
+            <strong>Vorführmodus</strong> — für Präsentationen: jede Einheit zeigt alle Spiele
+            einmal für 30 Sekunden mit 5 Sekunden Pause, ohne Tageslimit, und danach reist Ben
+            zum nächsten Verein. Solche Einheiten sind im Verlauf markiert und zählen im
+            Wochenbericht und in der Verlaufskurve nicht mit. Der Haken wird sofort gespeichert.
+          </span>
+        </label>
       </section>
 
       <div className="flex flex-wrap items-center gap-4">

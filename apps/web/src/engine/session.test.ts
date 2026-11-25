@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { aktuellesSegment, session, starteSession } from './session'
 import {
-  ansageText, hatUebung, spieleDesTages, standardEinstellungen, tagesplan, type Einstellungen,
+  ansageText, hatUebung, spieleDesTages, standardEinstellungen, tagesplan, vorfuehrPlan,
+  VORFUEHR_PAUSE_SEK, VORFUEHR_SPIEL_SEK, type Einstellungen,
 } from './tagesplan'
 import { KATALOG, spieleMitRolle } from '../spiele/katalog'
 import type { SpielErgebnis } from './segmente'
@@ -247,5 +248,48 @@ describe('ansageText', () => {
 
   it('sagt „1 Übung" bei einer einzigen Übung', () => {
     expect(ansage(1)).toContain('1 Übung mit 0 Pausen ')
+  })
+})
+
+describe('vorfuehrPlan', () => {
+  // Bewusst nur ein Spiel aktiv und die Vorgabe-Anzahlen: beides darf keine Rolle spielen.
+  const e = nur(['linie'])
+  e.spiele.linie = { ...e.spiele.linie, stufe: 2, toleranz: 1.7 }
+
+  const spielbar = Object.keys(KATALOG).filter((id) => !KATALOG[id].inArbeit)
+
+  it('zeigt jedes spielbare Spiel genau einmal: Aufwärmen, Übungen, Urkunde zuletzt', () => {
+    const plan = vorfuehrPlan(2, e, false)
+    expect(spieleVon(plan)).toEqual([
+      ...spielbar.filter((id) => KATALOG[id].rolle === 'aufwaermen'),
+      ...spielbar.filter((id) => KATALOG[id].rolle === 'normal'),
+      'abschiedsgeschenk',
+    ])
+    expect(new Set(spieleVon(plan)).size).toBe(spielbar.length)
+  })
+
+  it('läuft je Spiel 30 s und je Pause 5 s, mit Stufe und Reglern aus den Einstellungen', () => {
+    const plan = vorfuehrPlan(1, e, false)
+    for (const s of plan) {
+      if (s.art === 'spiel') expect(s.dauerSek).toBe(VORFUEHR_SPIEL_SEK)
+      if (s.art === 'pause') expect(s.dauerSek).toBe(VORFUEHR_PAUSE_SEK)
+    }
+    expect([VORFUEHR_SPIEL_SEK, VORFUEHR_PAUSE_SEK]).toEqual([30, 5])
+    const linie = plan.find((s) => s.art === 'spiel' && s.spielId === 'linie')
+    expect(linie).toMatchObject({ stufe: 2, regler: { toleranz: 1.7 } })
+  })
+
+  it('behält den Ablauf: Selbsteinschätzung vor Lob (C3), Fragebogen am Ende', () => {
+    const a = vorfuehrPlan(1, e, true).map((s) => s.art)
+    expect(a.slice(0, 3)).toEqual(['namenseingabe', 'ankommen', 'ansage'])
+    expect(a.at(-1)).toBe('fragebogen')
+    a.forEach((art, i) => {
+      if (art === 'spiel') expect([a[i + 1], a[i + 2]]).toEqual(['selbsteinschaetzung', 'lob'])
+    })
+  })
+
+  it('markiert die Einheit als Vorführung, ein normaler Start nicht', () => {
+    expect(starteSession('koeln', 1, vorfuehrPlan(1, e, false), true).vorfuehrung).toBe(true)
+    expect(starteSession('koeln', 1, tagesplan('koeln', 1, E, false)).vorfuehrung).toBe(false)
   })
 })

@@ -363,6 +363,15 @@ Einstellungen vor jedem Start neu, sieht einen neueren Zeitpunkt als den zuletzt
 setzt daraufhin seinen Zähler zurück. Ein Schalter statt eines Zeitpunkts müsste zurückgestellt
 werden, und wer das vergisst, hebt die Obergrenze dauerhaft auf.
 
+**Vorführmodus (für Präsentationen).** Ein Haken je Kind (`Klient.Vorfuehrmodus`, sofort
+gespeichert, `GET /api/kind` liefert ihn mit). Gesetzt, spielt die Kind-App bei jedem Start
+`vorfuehrPlan` aus `engine/tagesplan.ts`: alle spielbaren Spiele genau einmal (Aufwärmen, die
+normalen in Katalogreihenfolge, zuletzt die Urkunde mit Abschied), je 30 s, Pausen 5 s, Stufe und
+Regler aus den Einstellungen, C3-Ablauf unverändert. Keine Tagesobergrenze, die Einheit zählt nicht
+mit, Bestwerte (C5) werden weder geprüft noch gespeichert, und danach geht es mit der Reise zum
+nächsten Verein (Tag 1), egal an welchem Tag. Die Session kommt mit `Vorfuehrung = true` an: im
+Verlauf sichtbar und markiert (Urkunde ansehbar), in Wochenbericht und Verlaufskurve nicht gezählt.
+
 Gelöscht wird hier und nicht auf dem Tablet: dort läge die Funktion hinter einer Kindersicherung,
 und die Daten liegen ohnehin auf dem Server. Ein verlorenes Tablet wird durch **Sperren des
 Gerätetokens** unschädlich gemacht — ein Knopf auf dem Gerät täte das nicht.

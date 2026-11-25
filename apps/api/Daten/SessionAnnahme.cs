@@ -29,7 +29,10 @@ public record SessionEingang(
     long? BeendetAmMs,
     string Status,
     List<EreignisEingang> Ereignisse,
-    List<ErgebnisEingang> Ergebnisse);
+    List<ErgebnisEingang> Ergebnisse,
+    // Optional mit Vorgabe: Schnappschüsse von vor dem Vorführmodus haben das Feld nicht, und
+    // ihr Nachsenden beim nächsten Start darf daran nicht scheitern.
+    bool Vorfuehrung = false);
 
 public enum Annahme
 {
@@ -88,6 +91,7 @@ public static class SessionAnnahme
         session.BegonnenAmMs = eingang.BegonnenAmMs;
         session.BeendetAmMs = eingang.BeendetAmMs;
         session.Status = eingang.Status;
+        session.Vorfuehrung = eingang.Vorfuehrung;
 
         // Serveruhr. Aus ihr und BegonnenAmMs lässt sich eine verstellte Tablet-Uhr erkennen —
         // deshalb wird sie bei jedem Upload neu gesetzt und nicht nur beim ersten.

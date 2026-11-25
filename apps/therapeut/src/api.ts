@@ -18,6 +18,8 @@ export type Klient = {
 export type KlientDetail = Klient & {
   pausenDauerSek: number
   pausenInhalt: string
+  /** Vorführmodus für Präsentationen, siehe Einstellungen. */
+  vorfuehrmodus: boolean
 }
 
 export type Rolle = 'aufwaermen' | 'normal' | 'sonder'
@@ -140,6 +142,8 @@ export type VerlaufPunkt = {
   eingabegeraet: string
   synthetischerDruck: boolean
   abgebrochen: boolean
+  /** Aus einer Vorführung: in der Tabelle markiert, in der Verlaufskurve ausgelassen. */
+  vorfuehrung: boolean
   selbsteinschaetzung: number | null
   kennzahlen: Kennzahl | null
   /** Nur bei Urkunden gefüllt, sonst null. */
@@ -337,6 +341,12 @@ export const api = {
     hole<void>(`/api/klienten/${id}/pause`, {
       method: 'PUT',
       body: JSON.stringify({ pausenDauerSek, pausenInhalt }),
+    }),
+
+  vorfuehrmodusSpeichern: (id: number, vorfuehrmodus: boolean) =>
+    hole<void>(`/api/klienten/${id}/vorfuehrmodus`, {
+      method: 'PUT',
+      body: JSON.stringify({ vorfuehrmodus }),
     }),
 
   verlauf: (id: number) => hole<VerlaufPunkt[]>(`/api/klienten/${id}/verlauf`),

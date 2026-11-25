@@ -60,6 +60,8 @@ export type KindVomServer = {
   anzahlSonder: number
   /** B3: Wann der Therapeut zuletzt eine weitere Einheit für den Tag freigegeben hat. */
   limitFreigabeAm: string | null
+  /** Vorführmodus: alle Spiele kurz hintereinander, ohne Tagesobergrenze, danach zum nächsten Verein. */
+  vorfuehrmodus: boolean
   einstellungen: SpielEinstellungVomServer[]
 }
 
@@ -101,6 +103,8 @@ function nutzlast(s: SessionState) {
     begonnenAmMs: s.events[0]?.t ?? Date.now(),
     beendetAmMs: s.status === 'laeuft' ? null : (s.events.at(-1)?.t ?? Date.now()),
     status: s.status,
+    // Fehlt in alten Schnappschüssen — die waren echte Trainings.
+    vorfuehrung: s.vorfuehrung ?? false,
 
     // Die Folgenummer ist der Index im append-only Protokoll. Zusammen mit der SessionId ist
     // sie der Schlüssel auf dem Server — ein zweites Mal hochgeladen, überschreibt sich

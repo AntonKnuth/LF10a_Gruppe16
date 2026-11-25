@@ -6,7 +6,13 @@ import { ladeToken } from './geraet'
 import { aktuellesSegment, session, starteSession } from './engine/session'
 import type { SessionAction, SessionState } from './engine/session'
 import type { Einstellungen } from './engine/tagesplan'
-import { ansageText, hatUebung, standardEinstellungen, tagesplan } from './engine/tagesplan'
+import {
+  ansageText,
+  hatUebung,
+  standardEinstellungen,
+  tagesplan,
+  vorfuehrPlan,
+} from './engine/tagesplan'
 import { gleicherTag, hole, merke, vergiss } from './persistenz'
 import {
   EINHEITEN_PRO_TAG,
@@ -14,6 +20,7 @@ import {
   einheitenHeute,
   ladeFortschritt,
   naechsteEinheit,
+  naechsterVerein,
   pruefeBestwert,
   speichereFortschritt,
   zaehleEinheit,
@@ -112,10 +119,14 @@ export default function App() {
 
     // B3: nur eine zu Ende gespielte Einheit zählt gegen die Tagesobergrenze. Wer nach 90
     // Sekunden abbricht, hat nicht trainiert und soll es heute noch einmal versuchen dürfen.
+    // Eine Vorführung zählt nicht mit und führt direkt zum nächsten Verein (C6), damit die
+    // Präsentation die Reise zeigt — egal, an welchem Tag Ben gerade steht.
     const fertig = fertigeEinheit.status === 'fertig'
-    if (fertig) zaehleEinheit()
+    const vorfuehrung = fertigeEinheit.vorfuehrung === true
+    if (fertig && !vorfuehrung) zaehleEinheit()
 
-    const naechste = fertig ? naechsteEinheit(fortschritt) : fortschritt
+    const weiter = vorfuehrung ? naechsterVerein : naechsteEinheit
+    const naechste = fertig ? weiter(fortschritt) : fortschritt
     speichereFortschritt(naechste)
     setFortschritt(naechste)
     // C6: erst nach dem Speichern — ein Neuladen mitten in der Reise landet beim neuen Verein.
@@ -148,16 +159,19 @@ export default function App() {
     // sichere Richtung: lieber eine Einheit zu wenig als eine Verkrampfungsprävention, die
     // sich mit einem gezogenen Netzstecker aushebeln lässt.
     beachteFreigabe(aktuell?.limitFreigabeAm)
-    if (einheitenHeute() >= EINHEITEN_PRO_TAG) return setTagesgrenze(true)
 
-    const plan = tagesplan(
-      verein.id,
-      fortschritt.tag,
-      zuEinstellungen(aktuell),
-      aktuell?.spielname == null,
-    )
+    // Vorführmodus (vom Therapeuten gesetzt): alle Spiele kurz hintereinander. Die
+    // Tagesobergrenze gilt dafür nicht — vorgeführt wird, wann es die Präsentation verlangt.
+    const vorfuehrung = aktuell?.vorfuehrmodus === true
+    if (!vorfuehrung && einheitenHeute() >= EINHEITEN_PRO_TAG) return setTagesgrenze(true)
+
+    const einstellungen = zuEinstellungen(aktuell)
+    const ersterStart = aktuell?.spielname == null
+    const plan = vorfuehrung
+      ? vorfuehrPlan(fortschritt.tag, einstellungen, ersterStart)
+      : tagesplan(verein.id, fortschritt.tag, einstellungen, ersterStart)
     if (!hatUebung(plan)) return setKeinTraining(true)
-    setLauf(starteSession(verein.id, fortschritt.tag, plan))
+    setLauf(starteSession(verein.id, fortschritt.tag, plan, vorfuehrung))
   }
 
   /** Der jeweilige Bildschirm des Ablaufs — ohne alles, was über ihm liegt. */
@@ -303,7 +317,14 @@ export default function App() {
             onFertig={(ergebnis) => {
               // C5: hier und nicht im Lob-Segment — der Bestwert muss genau einmal je Übung
               // geprüft werden, und ein Bildschirm kann mehrfach neu zeichnen.
-              setBestleistung(!ergebnis.abgebrochen && pruefeBestwert(ergebnis.spielId, ergebnis.genauigkeit))
+              // In einer Vorführung gar nicht: `pruefeBestwert` speichert auch, und eine
+              // 30-Sekunden-Runde vor Publikum soll Bens echte Bestwerte nicht verschieben.
+              // Die Reihenfolge im && sorgt dafür, dass es dann nicht einmal aufgerufen wird.
+              setBestleistung(
+                !lauf.vorfuehrung &&
+                  !ergebnis.abgebrochen &&
+                  pruefeBestwert(ergebnis.spielId, ergebnis.genauigkeit),
+              )
               dispatch({ art: 'spiel_fertig', ergebnis })
             }}
           />

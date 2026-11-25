@@ -62,7 +62,9 @@ export function Verlauf({ klient }: { klient: KlientDetail }) {
       ) : (
         // `key`: beim Wechsel der Übung beginnt die Auswahl der Kennzahl von vorn. Sonst bliebe
         // eine Kennzahl gewählt, die es bei der neuen Übung gar nicht gibt.
-        <Verlaufskurve key={spielId} spielId={spielId} punkte={gefiltert} />
+        // Ohne Vorführungen: 30-Sekunden-Runden aus einer Präsentation sind kein Training und
+        // verzerrten die Kurve. In der Tabelle darunter bleiben sie sichtbar und markiert.
+        <Verlaufskurve key={spielId} spielId={spielId} punkte={gefiltert.filter((p) => !p.vorfuehrung)} />
       )}
 
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
@@ -98,6 +100,14 @@ export function Verlauf({ klient }: { klient: KlientDetail }) {
                   {p.abgebrochen && (
                     <span className="block w-fit rounded bg-red-100 px-1 font-normal text-red-800">
                       abgebrochen
+                    </span>
+                  )}
+                  {p.vorfuehrung && (
+                    <span
+                      title="Im Vorführmodus gespielt — zählt in Verlaufskurve und Wochenbericht nicht mit"
+                      className="block w-fit rounded bg-sky-100 px-1 font-normal text-sky-800"
+                    >
+                      Vorführung
                     </span>
                   )}
                   {p.spielId === URKUNDE_ID && (
