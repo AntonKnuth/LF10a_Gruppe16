@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { kindLaden, NichtGekoppelt, sessionHochladen, spielnameSetzen } from './api'
 import type { KindVomServer } from './api'
 import { vereine } from './content'
@@ -95,7 +95,14 @@ export default function App() {
     if (lauf) merke(lauf)
   }, [lauf])
 
+  /** Läuft das Beenden schon? Ein Ref, weil ein zweiter Tipp noch vor dem Neuzeichnen kommt. */
+  const beendetGerade = useRef(false)
+
   async function beendeEinheit(fertigeEinheit: SessionState) {
+    // Bei langsamem Netz tippt Ben zweimal auf „Fertig" — die Einheit zählte sonst doppelt.
+    if (beendetGerade.current) return
+    beendetGerade.current = true
+
     try {
       await sessionHochladen(fertigeEinheit)
       vergiss()
@@ -114,6 +121,7 @@ export default function App() {
     // C6: erst nach dem Speichern — ein Neuladen mitten in der Reise landet beim neuen Verein.
     if (naechste.vereinIndex !== fortschritt.vereinIndex) setReiseVon(fortschritt.vereinIndex)
     setLauf(null)
+    beendetGerade.current = false
   }
 
   /**

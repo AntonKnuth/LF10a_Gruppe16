@@ -97,7 +97,8 @@ public static class Unterschrift
             if (!wurzel.TryGetProperty("band", out var band)) return false;
             if (!band.TryGetProperty("y", out var y) || !y.TryGetDouble(out bandY)) return false;
             if (!band.TryGetProperty("hoehe", out var h) || !h.TryGetDouble(out bandHoehe)) return false;
-            if (bandHoehe <= 0) return false;
+            // Wie in Regler.cs: 1e999 wird zu „unendlich" und ließe sich nicht als JSON schreiben.
+            if (!double.IsFinite(bandY) || !double.IsFinite(bandHoehe) || bandHoehe <= 0) return false;
 
             if (wurzel.TryGetProperty("neustartsMs", out var liste))
                 foreach (var n in liste.EnumerateArray())

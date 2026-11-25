@@ -39,6 +39,14 @@ public class UnterschriftTests
         Assert.True(u.Schraeglage > 0);
     }
 
+    [Theory]
+    [InlineData("""{"band":{"x":0,"y":1e999,"breite":400,"hoehe":100}}""")]
+    [InlineData("""{"band":{"x":0,"y":100,"breite":400,"hoehe":1e999}}""")]
+    public void Unendliches_Band_gilt_als_nicht_lesbar(string extra)
+    {
+        Assert.Null(Unterschrift.Berechne(Blob((0, 10, 200, 0.5f), (100, 60, 200, 0.5f)), extra));
+    }
+
     [Fact]
     public void Strich_doppelt_so_hoch_wie_das_Band_hat_Hoehe_2()
     {
