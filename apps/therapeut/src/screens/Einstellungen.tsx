@@ -133,20 +133,20 @@ export function Einstellungen({ klient }: { klient: KlientDetail }) {
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 text-left text-slate-600">
                   <tr>
-                    <th className="p-3">Übung</th>
-                    <th className="p-3">Aktiv</th>
-                    <th className="p-3">Stufe</th>
-                    {mitReglern && <th className="p-3">Toleranz</th>}
-                    {mitReglern && <th className="p-3">Zieltempo</th>}
-                    {mitReglern && <th className="p-3">Mind. Treffer</th>}
-                    <th className="p-3">Dauer (s)</th>
+                    <th className="px-2 py-3">Übung</th>
+                    <th className="px-2 py-3">Aktiv</th>
+                    <th className="px-2 py-3">Stufe</th>
+                    {mitReglern && <th className="px-2 py-3">Toleranz</th>}
+                    {mitReglern && <th className="px-2 py-3">Zieltempo</th>}
+                    {mitReglern && <th className="px-2 py-3">Mind. Treffer</th>}
+                    <th className="px-2 py-3">Dauer (s)</th>
                   </tr>
                 </thead>
                 <tbody>
                   {zeilen.map((e) => (
                     <tr key={e.spielId} className="border-t border-slate-100">
-                      <td className="p-3 font-semibold text-slate-700">{titel(e.spielId)}</td>
-                      <td className="p-3">
+                      <td className="px-2 py-3 font-semibold text-slate-700">{titel(e.spielId)}</td>
+                      <td className="px-2 py-3">
                         <input
                           type="checkbox"
                           checked={e.aktiv}
@@ -154,29 +154,29 @@ export function Einstellungen({ klient }: { klient: KlientDetail }) {
                           className="size-5"
                         />
                       </td>
-                      <td className="p-3">
+                      <td className="px-2 py-3">
                         <Zahl wert={e.stufe} min={1} max={5} schritt={1}
                           onAendern={(v) => aendernSpiel(e.spielId, 'stufe', v)} />
                       </td>
                       {mitReglern && (
-                        <td className="p-3">
+                        <td className="px-2 py-3">
                           <Zahl wert={e.toleranz} min={0.1} max={3} schritt={0.1}
                             onAendern={(v) => aendernSpiel(e.spielId, 'toleranz', v)} />
                         </td>
                       )}
                       {mitReglern && (
-                        <td className="p-3">
+                        <td className="px-2 py-3">
                           <Zahl wert={e.zielgeschwindigkeit} min={0.1} max={3} schritt={0.1}
                             onAendern={(v) => aendernSpiel(e.spielId, 'zielgeschwindigkeit', v)} />
                         </td>
                       )}
                       {mitReglern && (
-                        <td className="p-3">
+                        <td className="px-2 py-3">
                           <Zahl wert={e.mindesttrefferquote} min={0} max={1} schritt={0.05}
                             onAendern={(v) => aendernSpiel(e.spielId, 'mindesttrefferquote', v)} />
                         </td>
                       )}
-                      <td className="p-3">
+                      <td className="px-2 py-3">
                         <Zahl wert={e.dauerSek} min={10} max={600} schritt={10}
                           onAendern={(v) => aendernSpiel(e.spielId, 'dauerSek', v)} />
                       </td>
@@ -314,7 +314,7 @@ function Zahl({
       max={max}
       step={schritt}
       onChange={(e) => onAendern(Number(e.target.value))}
-      className="w-24 rounded-lg border border-slate-300 px-2 py-1"
+      className="w-20 rounded-lg border border-slate-300 px-2 py-1"
     />
   )
 }

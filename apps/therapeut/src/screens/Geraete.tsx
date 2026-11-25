@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { api, type Geraet, type KlientDetail } from '../api'
+import { api, zeitpunkt, type Geraet, type KlientDetail } from '../api'
 
 /**
  * Gerätekopplung und Sperren.
@@ -39,7 +39,7 @@ export function Geraete({ klient }: { klient: KlientDetail }) {
           <div>
             <p className="mb-2 text-sm text-slate-600">
               Diesen Code auf dem Tablet eingeben. Gültig bis{' '}
-              {new Date(code.laeuftAbAm).toLocaleTimeString('de-DE')}.
+              {zeitpunkt(code.laeuftAbAm).toLocaleTimeString('de-DE')}.
             </p>
             <p className="font-mono text-5xl font-bold tracking-[0.3em] text-slate-900">
               {code.code}
@@ -77,9 +77,9 @@ export function Geraete({ klient }: { klient: KlientDetail }) {
                   )}
                 </p>
                 <p className="text-sm text-slate-500">
-                  gekoppelt am {new Date(g.erstelltAm).toLocaleDateString('de-DE')}
+                  gekoppelt am {zeitpunkt(g.erstelltAm).toLocaleDateString('de-DE')}
                   {g.zuletztGesehen
-                    ? ` · zuletzt aktiv ${new Date(g.zuletztGesehen).toLocaleString('de-DE')}`
+                    ? ` · zuletzt aktiv ${zeitpunkt(g.zuletztGesehen).toLocaleString('de-DE')}`
                     : ' · noch nie verbunden'}
                 </p>
               </div>

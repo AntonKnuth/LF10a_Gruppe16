@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useState } from 'react'
-import { api, titel, URKUNDE_ID, type KlientDetail, type VerlaufPunkt } from '../api'
+import { api, titel, zeitpunkt, URKUNDE_ID, type KlientDetail, type VerlaufPunkt } from '../api'
 import { Urkunde } from './Urkunde'
 
 /**
@@ -71,7 +71,7 @@ export function Verlauf({ klient }: { klient: KlientDetail }) {
             {gefiltert.map((p, i) => (
               <Fragment key={`${p.sessionId}-${i}`}>
               <tr className="border-t border-slate-100">
-                <td className="p-3">{new Date(p.datum).toLocaleDateString('de-DE')}</td>
+                <td className="p-3">{zeitpunkt(p.datum).toLocaleDateString('de-DE')}</td>
                 <td className="p-3 font-semibold text-slate-700">
                   {titel(p.spielId)}
                   {p.spielId === URKUNDE_ID && (

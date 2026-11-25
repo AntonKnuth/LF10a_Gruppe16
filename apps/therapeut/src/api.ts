@@ -249,6 +249,12 @@ export const api = {
 
 /** Titel der Minispiele. Bewusst hier und nicht in der Datenbank: der Content gehört zur
  *  Kind-App, der Server kennt nur die IDs. */
+/**
+ * Der Server speichert UTC. SQLite merkt sich die Zeitzone nicht, deshalb fehlt im JSON das „Z"
+ * — der Browser hielte den Zeitpunkt sonst für Ortszeit und läge eine oder zwei Stunden daneben.
+ */
+export const zeitpunkt = (utc: string) => new Date(utc.endsWith('Z') ? utc : `${utc}Z`)
+
 export const SPIEL_TITEL: Record<string, string> = {
   aufwaermen: 'Aufwärmen',
   linie: 'Linie malen',

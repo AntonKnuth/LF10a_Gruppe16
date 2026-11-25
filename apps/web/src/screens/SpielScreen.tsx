@@ -128,7 +128,8 @@ export function SpielScreen({
 
   return (
     <div className="flex h-full flex-col bg-himmel-hell">
-      <header className="flex items-center gap-6 bg-white/70 px-8 py-4">
+      {/* Rechts bleibt Platz für den Anhalte-Knopf aus `App.tsx`, sonst verdeckt er die Uhr (A3). */}
+      <header className="flex items-center gap-6 bg-white/70 py-4 pr-24 pl-8">
         <p className="flex-1 text-2xl font-bold text-slate-800">{spiel.anweisung}</p>
         <div className="flex items-center gap-3">
           <div className="h-3 w-40 overflow-hidden rounded-full bg-slate-200">

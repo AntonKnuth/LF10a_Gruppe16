@@ -144,7 +144,8 @@ export function zeichneUrkunde(g: CanvasRenderingContext2D, bild: UrkundenBild, 
   }
   g.fillStyle = F.schrift
   g.font = schrift(30, 700)
-  g.fillText(`Probetraining beim ${k.vereinName}`, W / 2, u.y + 192)
+  // Ohne „bei/beim": das passt nicht zu jedem Vereinsnamen.
+  g.fillText(`Probetraining: ${k.vereinName}`, W / 2, u.y + 192)
   g.fillStyle = F.leise
   g.font = schrift(24, 600)
   g.fillText('5 Trainingstage geschafft', W / 2, u.y + 228)

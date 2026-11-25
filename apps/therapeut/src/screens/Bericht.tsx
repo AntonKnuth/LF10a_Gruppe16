@@ -18,7 +18,8 @@ export function Bericht({ klient }: { klient: KlientDetail }) {
   const [einzeln, setEinzeln] = useState(false)
   const [von, setVon] = useState(() => {
     const d = new Date()
-    d.setDate(d.getDate() - 7)
+    // Sieben Tage **mit** heute: der Server zählt ab diesem Tag sieben Tage weiter.
+    d.setDate(d.getDate() - 6)
     return d.toISOString().slice(0, 10)
   })
 

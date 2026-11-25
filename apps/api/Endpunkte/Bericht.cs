@@ -135,7 +135,8 @@ public static class Bericht
             if (nutzer.TherapeutId() is not int therapeutId) return Results.Unauthorized();
             if (!await Zugriff.DarfSehen(db, therapeutId, id)) return Results.Forbid();
 
-            var start = (von ?? DateTime.UtcNow.AddDays(-7)).Date;
+            // Sieben Tage mit heute: start bis start + 6.
+            var start = (von ?? DateTime.UtcNow.AddDays(-6)).Date;
             var ende = start.AddDays(7);
 
             var klient = await db.Klienten

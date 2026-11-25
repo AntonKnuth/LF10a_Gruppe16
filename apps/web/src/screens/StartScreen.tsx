@@ -63,11 +63,21 @@ export function StartScreen({ aktiverVereinIndex, onStart }: Props) {
       <circle cx="500" cy="1780" r="1470" fill="#f2f6f9" />
       <Europa />
 
-      {/* Nicht besuchte Vereine zuerst, damit der aktive Verein oben liegt. */}
+      {/* Die anderen Vereine zuerst, damit der aktive Verein oben liegt. */}
       {vereine.map((v, i) => {
         if (i === aktiverVereinIndex) return null
         const p = auf(v.karte)
-        return <Pin key={v.id} x={p.x} y={p.y} />
+        // Die Reise geht immer in derselben Reihenfolge: alles vor dem aktiven ist besucht (C4).
+        const besucht = i < aktiverVereinIndex
+        return (
+          <Pin
+            key={v.id}
+            x={p.x}
+            y={p.y}
+            farbe={besucht ? v.farben.primaer : undefined}
+            kuerzel={besucht ? v.id.toUpperCase().slice(0, 3) : undefined}
+          />
+        )
       })}
 
       <circle

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { api, type KlientDetail, type UrkundeAntwort, type UrkundeExtra } from '../api'
+import { api, zeitpunkt, type KlientDetail, type UrkundeAntwort, type UrkundeExtra } from '../api'
 
 /**
  * Die Urkunde zum Ansehen und Drucken (Ticket #10). Ben nimmt den Ausdruck mit nach Hause.
@@ -72,7 +72,7 @@ export function Urkunde({
           </button>
         )}
         <p className="text-sm text-slate-500">
-          {new Date(antwort.datum).toLocaleDateString('de-DE')} · Stufe {antwort.stufe}
+          {zeitpunkt(antwort.datum).toLocaleDateString('de-DE')} · Stufe {antwort.stufe}
         </p>
       </div>
 
@@ -175,7 +175,7 @@ function Blatt({ antwort, extra }: { antwort: UrkundeAntwort; extra: UrkundeExtr
           U R K U N D E
         </text>
         <text x={MITTE} y={r.y + 192} fontSize={30} fontWeight={700} fill={F.schrift}>
-          Probetraining beim {urkunde.vereinName}
+          Probetraining: {urkunde.vereinName}
         </text>
         <text x={MITTE} y={r.y + 228} fontSize={24} fontWeight={600} fill={F.leise}>
           5 Trainingstage geschafft

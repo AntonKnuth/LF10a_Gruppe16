@@ -216,6 +216,10 @@ export function tagesplan(
  */
 export const hatUebung = (segmente: Segment[]) => segmente.some((s) => s.art === 'spiel')
 
+/** „1 Pause", aber „2 Pausen" — der Satz wird vorgelesen (A5). */
+const anzahl = (n: number, einzahl: string, mehrzahl: string) =>
+  `${n} ${n === 1 ? einzahl : mehrzahl}`
+
 /** Für die Ansage (A5: ein Satz, keine Spieldetails). */
 export function ansageText(segmente: Segment[]): string {
   const spiele = segmente.filter((s) => s.art === 'spiel').length
@@ -223,5 +227,5 @@ export function ansageText(segmente: Segment[]): string {
   const minuten = Math.round(
     segmente.reduce((m, s) => m + (s.art === 'spiel' || s.art === 'pause' ? s.dauerSek : 0), 0) / 60,
   )
-  return `Wir machen ${spiele} Übungen mit ${pausen} Pausen — das dauert etwa ${minuten} Minuten.`
+  return `Wir machen ${anzahl(spiele, 'Übung', 'Übungen')} mit ${anzahl(pausen, 'Pause', 'Pausen')} — das dauert etwa ${anzahl(minuten, 'Minute', 'Minuten')}.`
 }

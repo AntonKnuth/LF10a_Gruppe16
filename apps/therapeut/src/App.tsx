@@ -80,7 +80,7 @@ export default function App() {
 
   return (
     <div className="flex min-h-screen bg-slate-100">
-      <aside className="kein-druck w-72 shrink-0 border-r border-slate-200 bg-white p-5">
+      <aside className="kein-druck w-56 shrink-0 border-r border-slate-200 bg-white p-5">
         <h1 className="text-lg font-bold text-slate-800">TravelKickers</h1>
         <p className="mb-6 text-sm text-slate-500">{name}</p>
 
@@ -131,7 +131,8 @@ export default function App() {
         </button>
       </aside>
 
-      <main className="flex-1 p-8">
+      {/* `min-w-0`: sonst macht eine breite Tabelle die ganze Seite breiter, statt selbst zu scrollen. */}
+      <main className="min-w-0 flex-1 p-8">
         {!gewaehlt ? (
           <p className="text-slate-500">Links ein Kind auswählen.</p>
         ) : (

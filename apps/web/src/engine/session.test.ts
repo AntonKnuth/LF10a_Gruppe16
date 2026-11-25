@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { aktuellesSegment, session, starteSession } from './session'
 import {
-  hatUebung, spieleDesTages, standardEinstellungen, tagesplan, type Einstellungen,
+  ansageText, hatUebung, spieleDesTages, standardEinstellungen, tagesplan, type Einstellungen,
 } from './tagesplan'
 import { KATALOG, spieleMitRolle } from '../spiele/katalog'
 import type { SpielErgebnis } from './segmente'
@@ -223,5 +223,19 @@ describe('leerer Tagesplan', () => {
 
   it('erkennt einen Tag mit mindestens einer Übung', () => {
     expect(hatUebung(tagesplan('hsv', 1, nur(['linie']), false))).toBe(true)
+  })
+})
+
+describe('ansageText', () => {
+  const ansage = (uebungen: number) =>
+    ansageText(tagesplan('hsv', 1, { ...E, anzahlAufwaermen: 0, anzahlUebungen: uebungen }, false))
+
+  it('sagt „1 Pause" und nicht „1 Pausen" (A5: der Satz wird vorgelesen)', () => {
+    expect(ansage(2)).toContain('2 Übungen mit 1 Pause ')
+    expect(ansage(3)).toContain('3 Übungen mit 2 Pausen ')
+  })
+
+  it('sagt „1 Übung" bei einer einzigen Übung', () => {
+    expect(ansage(1)).toContain('1 Übung mit 0 Pausen ')
   })
 })
