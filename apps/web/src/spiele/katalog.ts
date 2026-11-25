@@ -92,10 +92,9 @@ export const KATALOG: Record<string, Spieldaten> = {
   },
   dribbeln: {
     titel: 'Dribbeln mit Pfiff',
-    anweisung: 'Halte beim Pfiff an, aber hebe den Stift nicht ab.',
+    anweisung: 'Dribble los – beim Pfiff bleibt der Stift stehen, aber auf dem Rasen.',
     rolle: 'normal',
     tags: ['inhibition', 'wellen'],
-    inArbeit: true,
   },
   brezelverkauf: {
     titel: 'Brezelverkauf',

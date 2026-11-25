@@ -44,7 +44,7 @@ public static class Spielkatalog
         ["stationentour"] = new(Rolle.Normal, ["schreiben", "druckdosierung"], InArbeit: true),
         ["startelf"] = new(Rolle.Normal, ["schreiben"], InArbeit: true),
         ["elfmeter"] = new(Rolle.Normal, ["hand-auge", "druckdosierung"]),
-        ["dribbeln"] = new(Rolle.Normal, ["inhibition", "wellen"], InArbeit: true),
+        ["dribbeln"] = new(Rolle.Normal, ["inhibition", "wellen"]),
         ["brezelverkauf"] = new(Rolle.Normal, ["gerade-striche", "hand-auge"]),
         ["ballhochhalten"] = new(Rolle.Normal, ["hand-auge", "druckdosierung"]),
         ["abschiedsgeschenk"] = new(Rolle.Sonder, ["schreiben"]),

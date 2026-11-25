@@ -61,6 +61,8 @@ export const SPIEL_REGLER: Record<string, ReglerName[]> = {
   brezelverkauf: ['toleranz', 'zielgeschwindigkeit'],
   // Alle drei: das Zieltempo verschiebt das Tempofenster, die Quote wiederholt eine Runde.
   elfmeter: ['toleranz', 'zielgeschwindigkeit', 'mindesttrefferquote'],
+  // Zieltempo: ab welchem Dribbeltempo gepfiffen wird. Trefferquote: Anteil sauberer Stopps.
+  dribbeln: ['toleranz', 'zielgeschwindigkeit', 'mindesttrefferquote'],
   // Gar keiner: bei der Urkunde muss nichts bestanden werden, und das Tempo bestimmt Ben.
   abschiedsgeschenk: [],
 }

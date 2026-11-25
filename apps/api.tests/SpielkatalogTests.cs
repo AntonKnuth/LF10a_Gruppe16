@@ -33,7 +33,6 @@ public class SpielkatalogTests
     [Theory]
     [InlineData("stationentour")]
     [InlineData("startelf")]
-    [InlineData("dribbeln")]
     public void Spiele_in_Arbeit_sind_nicht_einstellbar(string spielId)
     {
         Assert.False(Spielkatalog.IstSpielbar(spielId));
