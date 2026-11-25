@@ -43,7 +43,7 @@ public static class Spielkatalog
         ["rasenmaehen"] = new(Rolle.Normal, ["druckdosierung"]),
         ["stationentour"] = new(Rolle.Normal, ["schreiben", "druckdosierung"], InArbeit: true),
         ["startelf"] = new(Rolle.Normal, ["schreiben"], InArbeit: true),
-        ["elfmeter"] = new(Rolle.Normal, ["hand-auge", "druckdosierung"], InArbeit: true),
+        ["elfmeter"] = new(Rolle.Normal, ["hand-auge", "druckdosierung"]),
         ["dribbeln"] = new(Rolle.Normal, ["inhibition", "wellen"], InArbeit: true),
         ["brezelverkauf"] = new(Rolle.Normal, ["gerade-striche", "hand-auge"]),
         ["ballhochhalten"] = new(Rolle.Normal, ["hand-auge", "druckdosierung"]),

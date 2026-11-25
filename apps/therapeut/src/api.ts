@@ -59,6 +59,8 @@ export const SPIEL_REGLER: Record<string, ReglerName[]> = {
   // Keine Trefferquote: nach der Abgabe steht die Figur am Ziel, der Weg lässt sich nicht noch
   // einmal gehen — und daneben zu zeichnen bremst sie schon unterwegs.
   brezelverkauf: ['toleranz', 'zielgeschwindigkeit'],
+  // Alle drei: das Zieltempo verschiebt das Tempofenster, die Quote wiederholt eine Runde.
+  elfmeter: ['toleranz', 'zielgeschwindigkeit', 'mindesttrefferquote'],
   // Gar keiner: bei der Urkunde muss nichts bestanden werden, und das Tempo bestimmt Ben.
   abschiedsgeschenk: [],
 }

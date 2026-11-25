@@ -7,6 +7,7 @@ import { Aufwaermen } from './aufwaermen'
 import { Autogrammstunde } from './autogramme'
 import { Brezelverkauf } from './brezelverkauf'
 import { BallHochhalten } from './ballhochhalten'
+import { Elfmeter } from './elfmeter'
 import { LinieMalen } from './linie'
 import { Platzwart } from './rasenmaehen'
 import { Urkunde } from './abschiedsgeschenk'
@@ -55,6 +56,7 @@ const KOMPONENTEN: Record<string, ComponentType<SpielProps>> = {
   autogramme: Autogrammstunde,
   brezelverkauf: Brezelverkauf,
   ballhochhalten: BallHochhalten,
+  elfmeter: Elfmeter,
   linie: LinieMalen,
   rasenmaehen: Platzwart,
   abschiedsgeschenk: Urkunde,

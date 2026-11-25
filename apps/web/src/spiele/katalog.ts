@@ -86,10 +86,9 @@ export const KATALOG: Record<string, Spieldaten> = {
   },
   elfmeter: {
     titel: 'Elfmeter',
-    anweisung: 'Schieße mit einem schnellen, gleichmäßigen Strich aufs Tor.',
+    anweisung: 'Schieße mit einem schnellen, gleichmäßigen Strich auf den leuchtenden Kreis.',
     rolle: 'normal',
     tags: ['hand-auge', 'druckdosierung'],
-    inArbeit: true,
   },
   dribbeln: {
     titel: 'Dribbeln mit Pfiff',
