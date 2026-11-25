@@ -78,6 +78,13 @@ export function SpielScreen({
     }
   }, [])
 
+  // Druck 0 markiert das Absetzen. Ohne diesen Punkt ließe sich die
+  // Absetzhäufigkeit nicht aus der Punktfolge ablesen.
+  const absetzen = (e: React.PointerEvent) => {
+    if (unten.current) nimmAuf(e, 0)
+    unten.current = false
+  }
+
   const fertig = useCallback(
     (ergebnis: SpielErgebnis) => {
       onFertig({
@@ -149,15 +156,10 @@ export function SpielScreen({
           nimmAuf(e)
         }}
         onPointerMoveCapture={(e) => !angehalten && unten.current && nimmAuf(e)}
-        onPointerUpCapture={(e) => {
-          // Druck 0 markiert das Absetzen. Ohne diesen Punkt ließe sich die
-          // Absetzhäufigkeit nicht aus der Punktfolge ablesen.
-          if (unten.current) nimmAuf(e, 0)
-          unten.current = false
-        }}
-        onPointerCancelCapture={() => {
-          unten.current = false
-        }}
+        onPointerUpCapture={absetzen}
+        // Bricht das Betriebssystem die Berührung ab (Systemgeste, Handballen), ist das für die
+        // Rohdaten ein Absetzen. Sonst hinge der nächste Strich am vorherigen.
+        onPointerCancelCapture={absetzen}
       >
         <spiel.Komponente {...props} />
       </main>
