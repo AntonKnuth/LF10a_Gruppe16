@@ -23,6 +23,9 @@ export const hsv = {
       { text: 'Weiter so, {name} — du bleibst dran.' },
     ],
     bestleistung: { text: '{name}, das war deine beste Runde bisher!' },
+    abschied: {
+      text: 'Tschüss, {name}! Das Probetraining beim HSV hast du geschafft. Mach es gut!',
+    },
   },
 
 

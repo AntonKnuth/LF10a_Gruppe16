@@ -19,6 +19,9 @@ export const ajax = {
       { text: 'Du wirst immer sicherer, {name}.' },
     ],
     bestleistung: { text: 'Bestleistung, {name}! Besser als jedes Mal davor.' },
+    abschied: {
+      text: 'Tot ziens, {name}! Das heißt: bis bald. Das Probetraining bei Ajax hast du geschafft.',
+    },
   },
 
 

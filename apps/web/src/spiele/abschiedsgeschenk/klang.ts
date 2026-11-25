@@ -54,9 +54,29 @@ function rauschen(dauer: number, laut: number, hp: number, anstieg = 0) {
   src.start()
 }
 
+/** Tiefer Sinus, der schnell abfällt und ausklingt — das Geräusch von Stempel auf Papier. */
+function dumpf() {
+  const pegel = 0.3 * tonLautstaerke()
+  if (pegel <= 0) return
+  const a = weckeKlang()
+  if (!a) return
+  const o = a.createOscillator()
+  const g = a.createGain()
+  o.frequency.setValueAtTime(140, a.currentTime)
+  o.frequency.exponentialRampToValueAtTime(55, a.currentTime + 0.15)
+  g.gain.setValueAtTime(pegel, a.currentTime)
+  g.gain.exponentialRampToValueAtTime(0.001, a.currentTime + 0.2)
+  o.connect(g)
+  g.connect(a.destination)
+  o.start()
+  o.stop(a.currentTime + 0.22)
+}
+
 export const klang = {
   /** Die Feder setzt auf: kurzes, hohes Kratzen je Strichanfang. */
   kratzen: () => rauschen(0.06, 0.05, 3000),
+  /** Der Stempel schlägt auf: ein dumpfer, kurzer Ton. */
+  stempel: () => dumpf(),
   /** Die Urkunde rollt sich ein. */
   rascheln: () => rauschen(0.5, 0.06, 1200, 0.12),
 }

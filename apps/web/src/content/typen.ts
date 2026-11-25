@@ -31,6 +31,11 @@ export type Profi = {
    * Bewusst ohne Zahl im Text: Prozentwerte gehören in den Therapeutenmodus (C4).
    */
   bestleistung: Dialog
+  /**
+   * Pflicht bei jedem Verein: der Abschied nach der Urkunde am letzten Tag (Sonderspiel).
+   * `{name}` wird durch Bens Spielnamen ersetzt. Fehlt das Feld, bricht der Build ab.
+   */
+  abschied: Dialog
 }
 
 export type Verein = {

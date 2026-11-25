@@ -178,6 +178,42 @@ function wappen(g: CanvasRenderingContext2D, cx: number, oben: number, primaer: 
   g.restore()
 }
 
+/**
+ * Das Lob nach der Smiley-Frage (#8): der Profi unterschreibt auf `PROFI_LINIE` und stempelt.
+ * `anteil` (0–1) ist, wie weit seine Unterschrift von links nach rechts schon da ist.
+ * Wird **nach** `zeichneUrkunde` aufgerufen und malt nur dazu.
+ */
+export function zeichneProfiUnterschrift(
+  g: CanvasRenderingContext2D, bild: UrkundenBild, anteil: number, stempel: boolean,
+) {
+  const p = PROFI_LINIE
+  const k = bild.urkunde
+
+  if (anteil > 0) {
+    // Eine Schreibschrift, die jedes Gerät mitbringt; die Reihenfolge ist die Ersatzkette.
+    g.save()
+    g.beginPath()
+    g.rect(p.x - 4, p.y - 70, (p.breite + 8) * anteil, 90)
+    g.clip()
+    g.fillStyle = F.tinte
+    g.font = '32px "Segoe Script", "Snell Roundhand", "Brush Script MT", cursive'
+    g.textAlign = 'left'
+    g.textBaseline = 'alphabetic'
+    g.fillText(k.profi, p.x, p.y - 8, p.breite)
+    g.restore()
+  }
+
+  if (stempel) {
+    // Leicht schräg und etwas durchscheinend, wie echte Stempelfarbe.
+    g.save()
+    g.translate(p.x + p.breite / 2, p.y - 110)
+    g.rotate(-0.15)
+    g.globalAlpha = 0.9
+    wappen(g, 0, -46, k.primaer, k.sekundaer)
+    g.restore()
+  }
+}
+
 /** Bens Band mit Lineatur und Vorlage, darunter „Spieler"; rechts die leere Profi-Linie. */
 function band(g: CanvasRenderingContext2D, bild: UrkundenBild, leuchten: number) {
   const b = bild.band

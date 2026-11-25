@@ -33,6 +33,9 @@ export const koeln = {
       { text: 'Du wirst immer sicherer, {name}.' },
     ],
     bestleistung: { text: '{name}, das war deine beste Runde bisher!' },
+    abschied: {
+      text: 'Alaaf, {name}! Das Probetraining beim 1. FC Köln hast du geschafft. Bis bald!',
+    },
   },
 
   kader: [

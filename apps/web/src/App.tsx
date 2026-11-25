@@ -18,6 +18,8 @@ import {
   speichereFortschritt,
   zaehleEinheit,
 } from './profil'
+import { KATALOG } from './spiele/katalog'
+import { AbschiedScreen } from './screens/AbschiedScreen'
 import { DialogScreen } from './screens/DialogScreen'
 import { LobScreen } from './screens/LobScreen'
 import { KopplungScreen } from './screens/KopplungScreen'
@@ -296,6 +298,20 @@ export default function App() {
         )
 
       case 'lob': {
+        const letztes = lauf.ergebnisse[lauf.ergebnisse.length - 1]
+        // Sonderspiel (Urkunde): statt des Lobs der Abschied mit Bens Unterschrift.
+        if (letztes && KATALOG[letztes.spielId]?.rolle === 'sonder') {
+          return (
+            <AbschiedScreen
+              verein={verein}
+              name={name}
+              ergebnis={letztes}
+              text={mitName(verein.profi.abschied.text)}
+              angehalten={menueOffen}
+              onWeiter={() => dispatch({ art: 'weiter' })}
+            />
+          )
+        }
         const lob = verein.profi.lob[(lauf.ergebnisse.length - 1) % verein.profi.lob.length]
         // C5: War es die beste Runde bisher, sagt der Profi genau das — statt des Standardlobs,
         // nicht zusätzlich. Zwei Sprechblasen hintereinander wären eine Menüebene zu viel (A2).
