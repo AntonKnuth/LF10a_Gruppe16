@@ -12,7 +12,7 @@
 
 import { tastenDruckWert } from '../../eingabe'
 import {
-  H, MAEHER_R, RASEN_B, RASEN_H, RASEN_X, RASEN_Y, SPALTEN, W, ZEILEN, ZELLE,
+  FUNKEN_SEK, H, MAEHER_R, RASEN_B, RASEN_H, RASEN_X, RASEN_Y, SPALTEN, W, ZEILEN, ZELLE,
   ZONE_MITTE,
   bandOben, bandUnten, klemme, urteil, zoneBei, zoneVon, type Welt, type Zone,
 } from './welt'
@@ -84,7 +84,20 @@ export function zeichne(g: CanvasRenderingContext2D, w: Welt, sicht: Sicht, brei
   druckBalken(g, w, zone)
   ersatzdruckHinweis(g, zone)
   maeher(g, w, zone)
+  funken(g, w)
   if (w.platzFertig) fertigBanner(g)
+}
+
+/** Funkenstoß beim fertigen Platz: kleine Punkte, die mit ihrer Lebensdauer verblassen. */
+function funken(g: CanvasRenderingContext2D, w: Welt) {
+  g.save()
+  for (const f of w.funken) {
+    g.globalAlpha = Math.max(0, f.leben / FUNKEN_SEK)
+    g.fillStyle = f.farbe
+    kreis(g, f.x, f.y, 5)
+    g.fill()
+  }
+  g.restore()
 }
 
 /** Bande rund um den Platz in Vereinsfarben — C1: das ist ein Stadion, kein Vorgarten. */

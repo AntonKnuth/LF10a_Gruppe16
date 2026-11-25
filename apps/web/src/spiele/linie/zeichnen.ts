@@ -9,7 +9,7 @@
  * Kind Willkür: der Ball bliebe stehen, ohne dass zu sehen ist, warum.
  */
 
-import { BALL_R, H, W, ballPunkt, punktAuf, toleranz, type Punkt, type Welt } from './welt'
+import { BALL_R, FUNKEN_SEK, H, W, ballPunkt, punktAuf, toleranz, type Punkt, type Welt } from './welt'
 
 const F = {
   himmel: '#7ecdfb',
@@ -71,7 +71,20 @@ export function zeichne(g: CanvasRenderingContext2D, w: Welt, sicht: Sicht, brei
   spur(g, w)
   vormachen(g, w)
   ball(g, w)
+  funken(g, w)
   if (w.jubelUhr > 0) jubel(g)
+}
+
+/** Funkenstoß am Tor: kleine Punkte, die mit ihrer Lebensdauer verblassen. */
+function funken(g: CanvasRenderingContext2D, w: Welt) {
+  g.save()
+  for (const f of w.funken) {
+    g.globalAlpha = Math.max(0, f.leben / FUNKEN_SEK)
+    g.fillStyle = f.farbe
+    kreis(g, f.x, f.y, 5)
+    g.fill()
+  }
+  g.restore()
 }
 
 /** Rasen mit Mähstreifen — dieselbe Bildsprache wie „Platzwart". */

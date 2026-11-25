@@ -3,6 +3,7 @@ import type { SpielProps } from '../index'
 import { druckVon, feinEreignisse, geraetVon } from '../../eingabe'
 import { aktualisiere, ergebnis, neueWelt, ziehe, type Welt } from './welt'
 import { berechneSicht, zeichne, type Sicht } from './zeichnen'
+import { klang, schliesseKlang, weckeKlang } from './klang'
 
 /**
  * „Linie malen" (B2, Grafomotorik — gerade Striche).
@@ -34,6 +35,10 @@ export function LinieMalen({
     const w = weltRef.current
     if (!cv || !g || !w) return
 
+    // Wer weniger Bewegung wünscht, bekommt keine Funken.
+    w.wenigerBewegung =
+      typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
+
     let sicht: Sicht = { s: 1, dx: 0, dy: 0 }
 
     const passeAn = () => {
@@ -56,14 +61,21 @@ export function LinieMalen({
       }
     }
 
+    /** Was `ziehe` meldet, klingt sofort — das ist die Rückmeldung unter 100 ms aus A1. */
+    const melde = (ereignis: ReturnType<typeof ziehe>) => {
+      if (ereignis) klang[ereignis]()
+    }
+
     /* Stift auf den Rasen — bei der Maus tut das die gedrückte Maustaste. */
     const runter = (e: PointerEvent) => {
       if (pause.current) return
+      // Der Klang braucht eine Nutzergeste, sonst bleibt der Kontext angehalten.
+      weckeKlang()
       const p = zuLogisch(e)
       w.zeiger = { x: p.x, y: p.y, drin: true }
       w.geraet = geraetVon(e)
       w.zieht = true
-      ziehe(w, p.x, p.y, druckVon(e))
+      melde(ziehe(w, p.x, p.y, druckVon(e)))
       cv.setPointerCapture(e.pointerId)
       e.preventDefault()
     }
@@ -75,7 +87,7 @@ export function LinieMalen({
       // Volle Abtastrate des Pencils: jeder Zwischenwert zählt für die Genauigkeit.
       for (const fein of feinEreignisse(e)) {
         const q = zuLogisch(fein)
-        ziehe(w, q.x, q.y, druckVon(fein))
+        melde(ziehe(w, q.x, q.y, druckVon(fein)))
       }
     }
 
@@ -111,6 +123,7 @@ export function LinieMalen({
     return () => {
       cancelAnimationFrame(raf)
       beobachter.disconnect()
+      schliesseKlang()
       cv.removeEventListener('pointerdown', runter)
       cv.removeEventListener('pointermove', bewegen)
       cv.removeEventListener('pointerleave', raus)

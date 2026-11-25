@@ -7,7 +7,7 @@
  */
 
 import {
-  H, TRIKOT_B, TRIKOT_H, TRIKOT_Y, W, anteil, spielerVon, type Welt,
+  FUNKEN_SEK, H, TRIKOT_B, TRIKOT_H, TRIKOT_Y, W, anteil, spielerVon, type Welt,
 } from './welt'
 
 const F = {
@@ -64,7 +64,21 @@ export function zeichne(g: CanvasRenderingContext2D, w: Welt, sicht: Sicht, brei
   feld(g, w)
   schrift_(g, w)
   fortschritt(g, w)
+  funken(g, w)
   if (w.jubelUhr > 0) jubel(g, w)
+}
+
+/** Funkenstoß beim fertigen Autogramm: kleine Punkte, die mit ihrer Lebensdauer verblassen. */
+function funken(g: CanvasRenderingContext2D, w: Welt) {
+  g.save()
+  for (const f of w.funken) {
+    g.globalAlpha = Math.max(0, f.leben / FUNKEN_SEK)
+    g.fillStyle = f.farbe
+    g.beginPath()
+    g.arc(f.x, f.y, 5, 0, Math.PI * 2)
+    g.fill()
+  }
+  g.restore()
 }
 
 /** Trikot in Vereinsfarben mit Rückennummer und Namen — der Verein ist reiner Content. */

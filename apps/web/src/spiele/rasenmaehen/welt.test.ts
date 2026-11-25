@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Druck } from '../../eingabe'
 import {
-  BLOCK, FERTIG_SEK, RASEN_H, RASEN_X, RASEN_Y, SPALTEN, ZEILEN, ZELLE, ZONE_MITTE,
+  BLOCK, FERTIG_SEK, FUNKEN_MAX, FUNKEN_SEK, RASEN_H, RASEN_X, RASEN_Y, SPALTEN, ZEILEN, ZELLE, ZONE_MITTE,
   aktualisiere, bandOben, bandUnten, ergebnis, halbesBand, maehe, neueWelt, urteil,
   zaehle, zoneBei, zoneVon, type Welt, type Zone,
 } from './welt'
@@ -316,5 +316,46 @@ describe('Regler (B1)', () => {
     const w = neueWelt(3)
     zuFest(w)
     expect([w.platz, w.wiederholung]).toEqual([1, false])
+  })
+})
+
+describe('Funken und Klang (A1)', () => {
+  it('meldet einen sauberen Schnitt, aber nichts bei zu leicht oder zu fest', () => {
+    const w = neueWelt(3)
+    const { sp, ze } = zelleIn('normal')
+    const p = mitte(sp, ze)
+    expect(maehe(w, p.x, p.y, p.x, p.y, d(0.05))).toBeUndefined()
+    expect(maehe(w, p.x, p.y, p.x, p.y, d(0.99))).toBeUndefined()
+    const w2 = neueWelt(3)
+    expect(maehe(w2, p.x, p.y, p.x, p.y, d(ZONE_MITTE.normal))).toBe('schnitt')
+  })
+
+  it('meldet den fertigen Platz und zündet dann begrenzte Funken ohne Zufall', () => {
+    const a = neueWelt(3)
+    const b = neueWelt(3)
+    maeheAlles(a)
+    maeheAlles(b)
+    expect(a.funken).toHaveLength(0)
+    expect(aktualisiere(a, 1 / 60)).toBe('platz')
+    aktualisiere(b, 1 / 60)
+    expect(a.funken.length).toBeGreaterThan(0)
+    expect(a.funken.length).toBeLessThanOrEqual(FUNKEN_MAX)
+    expect(a.funken).toEqual(b.funken)
+    expect(aktualisiere(a, 1 / 60)).toBeUndefined()
+  })
+
+  it('lässt die Funken nach ihrer Lebensdauer verschwinden', () => {
+    const w = neueWelt(3)
+    maeheAlles(w)
+    laufe(w, FUNKEN_SEK + 0.1)
+    expect(w.funken).toHaveLength(0)
+  })
+
+  it('zündet bei prefers-reduced-motion keine Funken', () => {
+    const w = neueWelt(3)
+    w.wenigerBewegung = true
+    maeheAlles(w)
+    aktualisiere(w, 1 / 60)
+    expect(w.funken).toHaveLength(0)
   })
 })

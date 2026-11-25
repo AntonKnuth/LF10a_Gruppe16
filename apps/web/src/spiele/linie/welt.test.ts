@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Druck } from '../../eingabe'
 import {
-  JUBEL_SEK, aktualisiere, aufBahn, bahn, ballPunkt, ergebnis, klemme, neueWelt, punktAuf,
+  JUBEL_SEK, FUNKEN_MAX, FUNKEN_SEK, aktualisiere, aufBahn, bahn, ballPunkt, ergebnis, klemme, neueWelt, punktAuf,
   toleranz, ziehe, type Welt,
 } from './welt'
 import { VORGABE_REGLER } from '../regler'
@@ -249,5 +249,50 @@ describe('Regler (B1)', () => {
     const w = neueWelt(3)
     danebenUndDurch(w)
     expect([w.runde, w.wiederholung]).toEqual([1, false])
+  })
+})
+
+describe('Funken und Klang (A1)', () => {
+  it('meldet je Viertel der Bahn einen Etappenton und am Ende das Tor', () => {
+    const w = neueWelt(1)
+    const meldungen: (string | undefined)[] = []
+    for (let i = 0; i <= 40; i++) {
+      const p = punktAuf(w, i / 40)
+      meldungen.push(ziehe(w, p.x, p.y, d()))
+    }
+    expect(meldungen.filter((m) => m === 'etappe')).toHaveLength(3)
+    expect(meldungen.filter((m) => m === 'tor')).toHaveLength(1)
+  })
+
+  it('zündet Funken nur beim Tor, begrenzt und ohne Zufall', () => {
+    const a = neueWelt(1)
+    const b = neueWelt(1)
+    zieheAuf(a, 0, 0.5)
+    expect(a.funken).toHaveLength(0)
+    zieheAuf(a, 0.5, 1)
+    zieheAuf(b, 0, 1)
+    expect(a.funken.length).toBeGreaterThan(0)
+    expect(a.funken.length).toBeLessThanOrEqual(FUNKEN_MAX)
+    expect(a.funken).toEqual(b.funken)
+  })
+
+  it('lässt die Funken nach ihrer Lebensdauer verschwinden', () => {
+    const w = neueWelt(1)
+    zieheAuf(w, 0, 1)
+    laufe(w, FUNKEN_SEK + 0.1)
+    expect(w.funken).toHaveLength(0)
+  })
+
+  it('zündet bei prefers-reduced-motion keine Funken', () => {
+    const w = neueWelt(1)
+    w.wenigerBewegung = true
+    zieheAuf(w, 0, 1)
+    expect(w.funken).toHaveLength(0)
+  })
+
+  it('ändert die Messwerte nicht', () => {
+    const w = neueWelt(1)
+    zieheAuf(w, 0, 1)
+    expect(ergebnis(w, 1000, false)).toMatchObject({ vollstaendigkeit: 1, genauigkeit: 1 })
   })
 })

@@ -3,6 +3,7 @@ import type { SpielProps } from '../index'
 import { druckVon, feinEreignisse, geraetVon, tastenDruckLauscher } from '../../eingabe'
 import { aktualisiere, ergebnis, maehe, neueWelt, type Welt } from './welt'
 import { berechneSicht, zeichne, type Sicht } from './zeichnen'
+import { klang, schliesseKlang, weckeKlang } from './klang'
 
 /**
  * „Platzwart" (B2, Kraftdosierung).
@@ -34,6 +35,10 @@ export function Platzwart({
     const w = weltRef.current
     if (!cv || !g || !w) return
 
+    // Wer weniger Bewegung wünscht, bekommt keine Funken.
+    w.wenigerBewegung =
+      typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
+
     let sicht: Sicht = { s: 1, dx: 0, dy: 0 }
 
     const passeAn = () => {
@@ -60,8 +65,21 @@ export function Platzwart({
        mitgemäht, damit eine schnelle Bewegung keine Streifen stehen lässt. */
     let letzter = { x: 0, y: 0 }
 
+    /* Beim Mähen trifft fast jedes Ereignis eine neue Zelle. Ein Tick je Ereignis wäre
+       ein Dauerton (A4), deshalb höchstens alle 120 ms; der Fertig-Ton kommt immer. */
+    let letzterTick = 0
+    const melde = (ereignis: ReturnType<typeof maehe>) => {
+      if (!ereignis) return
+      const jetzt = performance.now()
+      if (ereignis === 'schnitt' && jetzt - letzterTick < 120) return
+      letzterTick = jetzt
+      klang[ereignis]()
+    }
+
     /* Stift auf den Rasen — bei der Maus tut das die gedrückte Maustaste. */
     const runter = (e: PointerEvent) => {
+      // Der Klang braucht eine Nutzergeste, sonst bleibt der Kontext angehalten.
+      weckeKlang()
       const p = zuLogisch(e)
       w.maeher = { x: p.x, y: p.y, drin: true }
       w.geraet = geraetVon(e)
@@ -69,7 +87,7 @@ export function Platzwart({
       w.maeht = true
       letzter = p
       // Auch ein Tippen ohne Bewegung mäht die Stelle unter dem Mäher.
-      maehe(w, p.x, p.y, p.x, p.y, w.druck)
+      melde(maehe(w, p.x, p.y, p.x, p.y, w.druck))
       cv.setPointerCapture(e.pointerId)
       e.preventDefault()
     }
@@ -85,7 +103,7 @@ export function Platzwart({
       for (const fein of feinEreignisse(e)) {
         const q = zuLogisch(fein)
         const d = druckVon(fein)
-        maehe(w, letzter.x, letzter.y, q.x, q.y, d)
+        melde(maehe(w, letzter.x, letzter.y, q.x, q.y, d))
         letzter = q
         w.druck = d
       }
@@ -115,7 +133,7 @@ export function Platzwart({
       const dt = Math.min(0.05, (jetzt - letzteZeit) / 1000)
       letzteZeit = jetzt
       // Angehalten wird nur gerechnet, nicht gezeichnet.
-      if (!pause.current) aktualisiere(w, dt)
+      if (!pause.current) melde(aktualisiere(w, dt))
       zeichne(g, w, sicht, cv.width, cv.height)
       // Nur die Uhr beendet das Spiel: ein geschaffter Platz wird gefeiert, dann kommt
       // der nächste. Kein Verliererzustand und kein vorzeitiges Ende (C2).
@@ -129,6 +147,7 @@ export function Platzwart({
     return () => {
       cancelAnimationFrame(raf)
       beobachter.disconnect()
+      schliesseKlang()
       cv.removeEventListener('pointerdown', runter)
       cv.removeEventListener('pointermove', bewegen)
       cv.removeEventListener('pointerleave', raus)

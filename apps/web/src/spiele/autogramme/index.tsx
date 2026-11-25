@@ -3,6 +3,7 @@ import type { SpielProps } from '../index'
 import { druckVon, feinEreignisse, geraetVon } from '../../eingabe'
 import { aktualisiere, ergebnis, hebeAb, neueWelt, schreibe, setzeAn, type Welt } from './welt'
 import { berechneSicht, zeichne, type Sicht } from './zeichnen'
+import { klang, schliesseKlang, weckeKlang } from './klang'
 
 /**
  * „Autogrammstunde" (B2, Grafomotorik + Pinzettengriff).
@@ -34,6 +35,10 @@ export function Autogrammstunde({
     const w = weltRef.current
     if (!cv || !g || !w) return
 
+    // Wer weniger Bewegung wünscht, bekommt keine Funken.
+    w.wenigerBewegung =
+      typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
+
     let sicht: Sicht = { s: 1, dx: 0, dy: 0 }
 
     const passeAn = () => {
@@ -56,14 +61,21 @@ export function Autogrammstunde({
       }
     }
 
+    /** Was `schreibe` meldet, klingt sofort — das ist die Rückmeldung unter 100 ms aus A1. */
+    const melde = (ereignis: ReturnType<typeof schreibe>) => {
+      if (ereignis) klang[ereignis]()
+    }
+
     /* Stift aufs Trikot — bei der Maus tut das die gedrückte Maustaste. */
     const runter = (e: PointerEvent) => {
       if (pause.current) return
+      // Der Klang braucht eine Nutzergeste, sonst bleibt der Kontext angehalten.
+      weckeKlang()
       const p = zuLogisch(e)
       w.zeiger = { x: p.x, y: p.y, drin: true }
       w.geraet = geraetVon(e)
       setzeAn(w)
-      schreibe(w, p.x, p.y, druckVon(e))
+      melde(schreibe(w, p.x, p.y, druckVon(e)))
       cv.setPointerCapture(e.pointerId)
       e.preventDefault()
     }
@@ -75,7 +87,7 @@ export function Autogrammstunde({
       // Volle Abtastrate des Pencils: jeder Zwischenwert zählt für die Strecke.
       for (const fein of feinEreignisse(e)) {
         const q = zuLogisch(fein)
-        schreibe(w, q.x, q.y, druckVon(fein))
+        melde(schreibe(w, q.x, q.y, druckVon(fein)))
       }
     }
 
@@ -109,6 +121,7 @@ export function Autogrammstunde({
     return () => {
       cancelAnimationFrame(raf)
       beobachter.disconnect()
+      schliesseKlang()
       cv.removeEventListener('pointerdown', runter)
       cv.removeEventListener('pointermove', bewegen)
       cv.removeEventListener('pointerleave', raus)

@@ -50,6 +50,19 @@ export const MAEHER_R = 26
 /** So lange bleibt der fertige Platz stehen, bevor der nächste anfängt. */
 export const FERTIG_SEK = 1.8
 
+/* ── Funken (A1) ───────────────────────────────────────────────────────────
+   Ein kurzer Funkenstoß, wenn der Platz fertig ist, sonst nichts. Ben hat ADHS (A2): es
+   flackert nichts dauerhaft, jeder Funke lebt genau FUNKEN_SEK und die Zahl ist hart
+   begrenzt. Kein Zufall: die Richtung folgt aus der Nummer des Funkens — so ist jeder
+   Test wiederholbar. */
+export const FUNKEN_SEK = 0.8
+export const FUNKEN_MAX = 24
+
+export type Funke = { x: number; y: number; vx: number; vy: number; leben: number; farbe: string }
+
+/** Was `maehe` und `aktualisiere` dem Aufrufer melden, damit er einen Klang spielen kann (A1). */
+export type Ereignis = 'schnitt' | 'platz'
+
 /* ── Wuchszonen ────────────────────────────────────────────────────────────
    Der Kern der Übung. Jeder Grasstand hat einen eigenen Ziel-Andruck; die Zone bestimmt
    die **Mitte** des erlaubten Bandes, die Stufe seine **Breite**. */
@@ -134,6 +147,9 @@ export type Welt = {
   /** Der Platz ist geschafft und bleibt kurz stehen, bevor der nächste anfängt. */
   platzFertig: boolean
   fertigUhr: number
+  funken: Funke[]
+  /** `prefers-reduced-motion`: dann gibt es keine Funken. Setzt der Aufrufer. */
+  wenigerBewegung: boolean
 }
 
 /** `verein` ist optional, damit der Test die Welt ohne Content-Paket bauen kann. */
@@ -158,7 +174,36 @@ export function neueWelt(
     zeitGesamt: 0,
     platzFertig: false,
     fertigUhr: 0,
+    funken: [],
+    wenigerBewegung: false,
   }
+}
+
+/** Funkenstoß um einen Punkt, in den übergebenen Farben. */
+export function funkenstoss(w: Welt, x: number, y: number, farben: string[], anzahl = 12) {
+  if (w.wenigerBewegung) return
+  for (let i = 0; i < anzahl && w.funken.length < FUNKEN_MAX; i++) {
+    const winkel = (i / anzahl) * Math.PI * 2
+    const tempo = 160 + (i % 3) * 60
+    w.funken.push({
+      x, y,
+      vx: Math.cos(winkel) * tempo,
+      vy: Math.sin(winkel) * tempo - 80,
+      leben: FUNKEN_SEK,
+      farbe: farben[i % farben.length],
+    })
+  }
+}
+
+/** Funken fliegen, fallen und verschwinden nach ihrer festen Lebensdauer. */
+function bewegeFunken(w: Welt, dt: number) {
+  for (const f of w.funken) {
+    f.leben -= dt
+    f.x += f.vx * dt
+    f.y += f.vy * dt
+    f.vy += 400 * dt
+  }
+  w.funken = w.funken.filter((f) => f.leben > 0)
 }
 
 /** Zone unter einem Punkt der Bühne. Außerhalb des Platzes gilt der mittlere Grasstand. */
@@ -171,17 +216,18 @@ export function zoneBei(w: Welt, x: number, y: number): Zone {
 
 /* ── Mähen ─────────────────────────────────────────────────────────────── */
 
-/** Eine einzelne Zelle bearbeiten. */
-function beruehre(w: Welt, sp: number, ze: number, druck: number, zone: Zone) {
+/** Eine einzelne Zelle bearbeiten. Meldet, ob sie dabei sauber geschnitten wurde. */
+function beruehre(w: Welt, sp: number, ze: number, druck: number, zone: Zone): boolean {
   const i = ze * SPALTEN + sp
   // Einmal geschnitten oder kaputt ist endgültig: ein Rückweg über schon gemähtes Gras
   // soll gute Arbeit nicht nachträglich zerstören.
-  if (w.zellen[i] !== 'ungemaeht') return
+  if (w.zellen[i] !== 'ungemaeht') return false
   const u = urteil(druck, w.stufe, zone, w.regler.toleranz)
   // 'zu-leicht' lässt die Zelle bewusst unberührt — das ist die unbegrenzte
   // Wiederholung aus C2 und kein Fehlerzustand.
-  if (u === 'zu-leicht') return
+  if (u === 'zu-leicht') return false
   w.zellen[i] = u === 'gut' ? 'gut' : 'kaputt'
+  return u === 'gut'
 }
 
 /**
@@ -194,24 +240,28 @@ function beruehre(w: Welt, sp: number, ze: number, druck: number, zone: Zone) {
  * Nachbarflecken bleiben deshalb unangetastet und werden mit dem passenden Andruck
  * nachgeholt (C2: Wiederholung statt Bestrafung).
  */
-function maeheBei(w: Welt, x: number, y: number, druck: number) {
+function maeheBei(w: Welt, x: number, y: number, druck: number): boolean {
   const mSp = Math.floor((x - RASEN_X) / ZELLE)
   const mZe = Math.floor((y - RASEN_Y) / ZELLE)
-  if (mSp < 0 || mSp >= SPALTEN || mZe < 0 || mZe >= ZEILEN) return
+  if (mSp < 0 || mSp >= SPALTEN || mZe < 0 || mZe >= ZEILEN) return false
   const zone = zoneVon(mSp, mZe, w.platz)
 
   const sp0 = Math.max(0, Math.floor((x - MAEHER_R - RASEN_X) / ZELLE))
   const sp1 = Math.min(SPALTEN - 1, Math.floor((x + MAEHER_R - RASEN_X) / ZELLE))
   const ze0 = Math.max(0, Math.floor((y - MAEHER_R - RASEN_Y) / ZELLE))
   const ze1 = Math.min(ZEILEN - 1, Math.floor((y + MAEHER_R - RASEN_Y) / ZELLE))
+  let geschnitten = false
   for (let ze = ze0; ze <= ze1; ze++) {
     for (let sp = sp0; sp <= sp1; sp++) {
       if (zoneVon(sp, ze, w.platz) !== zone) continue
       const mx = RASEN_X + (sp + 0.5) * ZELLE
       const my = RASEN_Y + (ze + 0.5) * ZELLE
-      if ((mx - x) ** 2 + (my - y) ** 2 <= MAEHER_R ** 2) beruehre(w, sp, ze, druck, zone)
+      if ((mx - x) ** 2 + (my - y) ** 2 <= MAEHER_R ** 2) {
+        if (beruehre(w, sp, ze, druck, zone)) geschnitten = true
+      }
     }
   }
+  return geschnitten
 }
 
 /**
@@ -221,16 +271,21 @@ function maeheBei(w: Welt, x: number, y: number, druck: number) {
  * paar Zentimeter ein Ereignis. Ohne Interpolation blieben Streifen stehen, die Ben nie
  * ausgelassen hat — und die Vollständigkeit würde ihn dafür bestrafen.
  */
-export function maehe(w: Welt, x0: number, y0: number, x1: number, y1: number, d: Druck) {
+export function maehe(
+  w: Welt, x0: number, y0: number, x1: number, y1: number, d: Druck,
+): Ereignis | undefined {
   // Während der fertige Platz stehen bleibt, wird nicht gemäht.
   if (w.platzFertig) return
   w.druckWerte.push(d.wert)
   if (d.synthetisch) w.synthetisch = true
   const schritte = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) / (ZELLE / 2)))
+  let geschnitten = false
   for (let i = 1; i <= schritte; i++) {
     const t = i / schritte
-    maeheBei(w, x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, d.wert)
+    if (maeheBei(w, x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, d.wert)) geschnitten = true
   }
+  // Nur sauberer Schnitt klingt. Zu leicht oder zu fest bleibt still: kein Strafton (C2).
+  return geschnitten ? 'schnitt' : undefined
 }
 
 export function zaehle(w: Welt) {
@@ -258,8 +313,9 @@ function naechsterPlatz(w: Welt) {
   w.fertigUhr = 0
 }
 
-export function aktualisiere(w: Welt, dt: number) {
+export function aktualisiere(w: Welt, dt: number): Ereignis | undefined {
   w.zeitGesamt += dt
+  bewegeFunken(w, dt)
   if (w.platzFertig) {
     w.fertigUhr -= dt
     if (w.fertigUhr <= 0) naechsterPlatz(w)
@@ -268,6 +324,8 @@ export function aktualisiere(w: Welt, dt: number) {
   if (zaehle(w).offen === 0) {
     w.platzFertig = true
     w.fertigUhr = FERTIG_SEK
+    funkenstoss(w, W / 2, RASEN_Y + RASEN_H / 2, [w.farben.primaer, w.farben.sekundaer, '#ffc800'])
+    return 'platz'
   }
 }
 

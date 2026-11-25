@@ -36,6 +36,22 @@ export const JUBEL_SEK = 1.5
 
 export type Punkt = { x: number; y: number }
 
+/* ── Funken (A1) ───────────────────────────────────────────────────────────
+   Ein kurzer Funkenstoß am Tor, sonst nichts. Ben hat ADHS (A2): es flackert nichts
+   dauerhaft, jeder Funke lebt genau FUNKEN_SEK und die Zahl ist hart begrenzt.
+   Kein Zufall: die Richtung folgt aus der Nummer des Funkens — so ist jeder Test
+   wiederholbar. */
+export const FUNKEN_SEK = 0.8
+export const FUNKEN_MAX = 24
+
+export type Funke = { x: number; y: number; vx: number; vy: number; leben: number; farbe: string }
+
+/** Was `ziehe` dem Aufrufer meldet, damit er einen Klang spielen kann (A1). */
+export type Ereignis = 'etappe' | 'tor'
+
+/** Ab diesem Anteil der Bahn gibt es einen kleinen Ton — danach nicht mehr, kein Dauerton (A4). */
+const ETAPPEN = [0.25, 0.5, 0.75]
+
 /* ── Bahnen ────────────────────────────────────────────────────────────────
    B3 verlangt **wechselnde Muster**. Die Bahn ist immer gerade — das ist der Sinn der
    Übung — aber ihre Neigung wechselt von Runde zu Runde, damit Ben nicht eine einzige
@@ -105,6 +121,11 @@ export type Welt = {
   zeitGesamt: number
   /** Läuft nach einem Tor; solange steht die Bahn still. */
   jubelUhr: number
+  /** Wie viele Etappentöne auf dieser Bahn schon erklangen. */
+  etappen: number
+  funken: Funke[]
+  /** `prefers-reduced-motion`: dann gibt es keine Funken. Setzt der Aufrufer. */
+  wenigerBewegung: boolean
 }
 
 /** `verein` ist optional, damit der Test die Welt ohne Content-Paket bauen kann. */
@@ -136,7 +157,37 @@ export function neueWelt(
     geraet: 'mouse',
     zeitGesamt: 0,
     jubelUhr: 0,
+    etappen: 0,
+    funken: [],
+    wenigerBewegung: false,
   }
+}
+
+/** Funkenstoß um einen Punkt, in den übergebenen Farben. */
+export function funkenstoss(w: Welt, x: number, y: number, farben: string[], anzahl = 12) {
+  if (w.wenigerBewegung) return
+  for (let i = 0; i < anzahl && w.funken.length < FUNKEN_MAX; i++) {
+    const winkel = (i / anzahl) * Math.PI * 2
+    const tempo = 160 + (i % 3) * 60
+    w.funken.push({
+      x, y,
+      vx: Math.cos(winkel) * tempo,
+      vy: Math.sin(winkel) * tempo - 80,
+      leben: FUNKEN_SEK,
+      farbe: farben[i % farben.length],
+    })
+  }
+}
+
+/** Funken fliegen, fallen und verschwinden nach ihrer festen Lebensdauer. */
+function bewegeFunken(w: Welt, dt: number) {
+  for (const f of w.funken) {
+    f.leben -= dt
+    f.x += f.vx * dt
+    f.y += f.vy * dt
+    f.vy += 400 * dt
+  }
+  w.funken = w.funken.filter((f) => f.leben > 0)
 }
 
 /* ── Geometrie ─────────────────────────────────────────────────────────── */
@@ -169,7 +220,7 @@ export const ballPunkt = (w: Welt): Punkt => punktAuf(w, w.fortschritt)
  * trotzdem gezählt — sonst könnte man neben der Bahn beliebig herumfahren, ohne dass es
  * die Genauigkeit berührt.
  */
-export function ziehe(w: Welt, x: number, y: number, d: Druck) {
+export function ziehe(w: Welt, x: number, y: number, d: Druck): Ereignis | undefined {
   if (w.jubelUhr > 0) return
   const { t, abstand } = aufBahn(w, x, y)
   const drin = abstand <= toleranz(w.stufe, w.regler.toleranz)
@@ -191,7 +242,14 @@ export function ziehe(w: Welt, x: number, y: number, d: Druck) {
   if (w.fortschritt >= 1 && w.jubelUhr <= 0) {
     w.tore++
     w.jubelUhr = JUBEL_SEK
+    funkenstoss(w, w.b.x + 17, w.b.y, [w.farben.primaer, w.farben.sekundaer, '#ffffff'])
+    return 'tor'
   }
+  // Ein Ton je Viertel der Bahn — nie zurück, denn der Fortschritt ist monoton.
+  // Springt der Ball über mehrere Marken, klingt es trotzdem nur einmal.
+  const vorher = w.etappen
+  while (w.etappen < ETAPPEN.length && w.fortschritt >= ETAPPEN[w.etappen]) w.etappen++
+  if (w.etappen > vorher) return 'etappe'
 }
 
 /** Nach dem Jubel: nächste Bahn mit anderer Neigung, frische Spur. */
@@ -209,10 +267,12 @@ function naechsteBahn(w: Welt) {
   w.spur = []
   w.jubelUhr = 0
   w.imKorridor = false
+  w.etappen = 0
 }
 
 export function aktualisiere(w: Welt, dt: number) {
   w.zeitGesamt += dt
+  bewegeFunken(w, dt)
   if (w.jubelUhr > 0) {
     w.jubelUhr -= dt
     if (w.jubelUhr <= 0) naechsteBahn(w)

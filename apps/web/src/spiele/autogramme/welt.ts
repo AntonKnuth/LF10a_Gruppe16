@@ -37,6 +37,22 @@ export const TRIKOT_H = 430
 /** So lange jubelt der Fan, bevor das nächste Trikot kommt. */
 export const JUBEL_SEK = 1.4
 
+/* ── Funken (A1) ───────────────────────────────────────────────────────────
+   Ein kurzer Funkenstoß beim fertigen Autogramm, sonst nichts. Ben hat ADHS (A2): es
+   flackert nichts dauerhaft, jeder Funke lebt genau FUNKEN_SEK und die Zahl ist hart
+   begrenzt. Kein Zufall: die Richtung folgt aus der Nummer des Funkens — so ist jeder
+   Test wiederholbar. */
+export const FUNKEN_SEK = 0.8
+export const FUNKEN_MAX = 24
+
+export type Funke = { x: number; y: number; vx: number; vy: number; leben: number; farbe: string }
+
+/** Was `schreibe` dem Aufrufer meldet, damit er einen Klang spielen kann (A1). */
+export type Ereignis = 'etappe' | 'fertig'
+
+/** Ab diesem Anteil des Autogramms gibt es einen kleinen Ton — danach nicht mehr (A4). */
+const ETAPPEN = [1 / 3, 2 / 3]
+
 export type Punkt = { x: number; y: number }
 export type Feld = { x: number; y: number; b: number; h: number }
 
@@ -121,6 +137,11 @@ export type Welt = {
   zeitGesamt: number
   /** Läuft nach einem fertigen Autogramm; solange nimmt das Trikot nichts mehr an. */
   jubelUhr: number
+  /** Wie viele Etappentöne auf diesem Trikot schon erklangen. */
+  etappen: number
+  funken: Funke[]
+  /** `prefers-reduced-motion`: dann gibt es keine Funken. Setzt der Aufrufer. */
+  wenigerBewegung: boolean
 }
 
 /** `verein` ist optional, damit der Test die Welt ohne Content-Paket bauen kann. */
@@ -150,7 +171,37 @@ export function neueWelt(
     geraet: 'mouse',
     zeitGesamt: 0,
     jubelUhr: 0,
+    etappen: 0,
+    funken: [],
+    wenigerBewegung: false,
   }
+}
+
+/** Funkenstoß um einen Punkt, in den übergebenen Farben. */
+export function funkenstoss(w: Welt, x: number, y: number, farben: string[], anzahl = 12) {
+  if (w.wenigerBewegung) return
+  for (let i = 0; i < anzahl && w.funken.length < FUNKEN_MAX; i++) {
+    const winkel = (i / anzahl) * Math.PI * 2
+    const tempo = 160 + (i % 3) * 60
+    w.funken.push({
+      x, y,
+      vx: Math.cos(winkel) * tempo,
+      vy: Math.sin(winkel) * tempo - 80,
+      leben: FUNKEN_SEK,
+      farbe: farben[i % farben.length],
+    })
+  }
+}
+
+/** Funken fliegen, fallen und verschwinden nach ihrer festen Lebensdauer. */
+function bewegeFunken(w: Welt, dt: number) {
+  for (const f of w.funken) {
+    f.leben -= dt
+    f.x += f.vx * dt
+    f.y += f.vy * dt
+    f.vy += 400 * dt
+  }
+  w.funken = w.funken.filter((f) => f.leben > 0)
 }
 
 /** Wessen Trikot gerade drankommt. Der Kader wiederholt sich — es kommen immer neue Fans. */
@@ -178,7 +229,7 @@ export function hebeAb(w: Welt) {
  * Gezählt wird die **Strecke** seit dem letzten Punkt, nicht der Punkt selbst: sonst
  * füllte schnelles Tippen auf derselben Stelle das Autogramm.
  */
-export function schreibe(w: Welt, x: number, y: number, d: Druck) {
+export function schreibe(w: Welt, x: number, y: number, d: Druck): Ereignis | undefined {
   if (w.jubelUhr > 0) return
   const drin = imFeld(w.feld, x, y)
   const neu = w.letzter === null
@@ -202,7 +253,16 @@ export function schreibe(w: Welt, x: number, y: number, d: Druck) {
   if (w.tinte >= zielTinte(w.stufe, w.regler.toleranz)) {
     w.signiert++
     w.jubelUhr = JUBEL_SEK
+    // Zweitfarbe und Gold, weil das Trikot selbst in der Erstfarbe steht und sie schluckte.
+    funkenstoss(w, w.feld.x + w.feld.b / 2, w.feld.y + w.feld.h / 2,
+      [w.farben.sekundaer, '#ffc800', '#ffffff'])
+    return 'fertig'
   }
+  // Springt die Tinte über mehrere Marken, klingt es trotzdem nur einmal.
+  const vorher = w.etappen
+  const a = anteil(w)
+  while (w.etappen < ETAPPEN.length && a >= ETAPPEN[w.etappen]) w.etappen++
+  if (w.etappen > vorher) return 'etappe'
 }
 
 /** Nach dem Jubel: nächster Fan, nächstes Trikot, leeres Feld. */
@@ -216,10 +276,12 @@ function naechstesTrikot(w: Welt) {
   w.schrift = []
   w.letzter = null
   w.jubelUhr = 0
+  w.etappen = 0
 }
 
 export function aktualisiere(w: Welt, dt: number) {
   w.zeitGesamt += dt
+  bewegeFunken(w, dt)
   if (w.jubelUhr > 0) {
     w.jubelUhr -= dt
     if (w.jubelUhr <= 0) naechstesTrikot(w)

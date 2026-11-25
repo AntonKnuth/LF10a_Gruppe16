@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Druck } from '../../eingabe'
 import {
-  JUBEL_SEK, aktualisiere, anteil, autogrammFeld, ergebnis, feldBreite, hebeAb, imFeld,
+  FUNKEN_MAX, FUNKEN_SEK, JUBEL_SEK, aktualisiere, anteil, autogrammFeld, ergebnis, feldBreite, hebeAb, imFeld,
   neueWelt, schreibe, setzeAn, spielerVon, zielTinte, type Welt,
 } from './welt'
 import { VORGABE_REGLER } from '../regler'
@@ -231,5 +231,46 @@ describe('Regler (B1)', () => {
     const w = neueWelt(3)
     danebenUndSigniert(w)
     expect([w.trikot, w.wiederholung]).toEqual([1, false])
+  })
+})
+
+describe('Funken und Klang (A1)', () => {
+  it('meldet Etappentöne und am Ende das fertige Autogramm', () => {
+    const w = neueWelt(1)
+    const meldungen: (string | undefined)[] = []
+    const f = w.feld
+    const y = f.y + f.h / 2
+    setzeAn(w)
+    for (let i = 0; i < 200 && w.jubelUhr === 0; i++) {
+      const x = f.x + 4 + ((i % 2 === 0 ? i % 60 : 59 - (i % 60)) / 59) * (f.b - 8)
+      meldungen.push(schreibe(w, x, y, d()))
+    }
+    expect(meldungen.filter((m) => m === 'etappe').length).toBeGreaterThanOrEqual(1)
+    expect(meldungen.filter((m) => m === 'fertig')).toHaveLength(1)
+  })
+
+  it('zündet Funken nur beim fertigen Autogramm, begrenzt und ohne Zufall', () => {
+    const a = neueWelt(1)
+    const b = neueWelt(1)
+    expect(a.funken).toHaveLength(0)
+    signiere(a)
+    signiere(b)
+    expect(a.funken.length).toBeGreaterThan(0)
+    expect(a.funken.length).toBeLessThanOrEqual(FUNKEN_MAX)
+    expect(a.funken).toEqual(b.funken)
+  })
+
+  it('lässt die Funken nach ihrer Lebensdauer verschwinden', () => {
+    const w = neueWelt(1)
+    signiere(w)
+    laufe(w, FUNKEN_SEK + 0.1)
+    expect(w.funken).toHaveLength(0)
+  })
+
+  it('zündet bei prefers-reduced-motion keine Funken', () => {
+    const w = neueWelt(1)
+    w.wenigerBewegung = true
+    signiere(w)
+    expect(w.funken).toHaveLength(0)
   })
 })
