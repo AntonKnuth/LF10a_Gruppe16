@@ -55,6 +55,38 @@ export function feinEreignisse(e: PointerEvent): PointerEvent[] {
   return fein?.length ? fein : [e]
 }
 
+export const ZEIGER_EREIGNISSE = [
+  'pointerdown', 'pointermove', 'pointerup', 'pointercancel', 'pointerleave',
+] as const
+
+/**
+ * Handballen und zweite Zeiger aussortieren. Je Spiel ein eigener Filter; er sagt zu jedem
+ * Zeigerereignis, ob es durchdarf. Zwei Regeln:
+ *
+ * 1. **Hat in diesem Spiel einmal ein Stift aufgesetzt, zählt keine Berührung mehr** — auch nicht
+ *    zwischen zwei Strichen, denn genau dann liegt der Handballen weiter auf. Im nächsten Spiel
+ *    darf es wieder der Finger sein; sonst ginge ohne Stift gar nichts mehr.
+ * 2. **Es schreibt immer nur ein Zeiger.** Ein weiterer bleibt draußen, bis der erste abhebt.
+ *    Nur der Stift übernimmt sofort: liegt der Handballen zuerst auf, ist er von einem Finger
+ *    nicht zu unterscheiden. Auch ein primärer Zeiger übernimmt — er heißt, dass kein anderer
+ *    Finger aufliegt; sonst sperrte ein verlorenes Abheben den Finger bis zum Spielende aus.
+ */
+export function neuerZeigerfilter() {
+  let aktiv: number | null = null
+  let stiftGesehen = false
+
+  return (e: Pick<PointerEvent, 'type' | 'pointerId' | 'pointerType' | 'isPrimary'>): boolean => {
+    const stift = e.pointerType === 'pen'
+    if (stift && e.type === 'pointerdown') stiftGesehen = true
+    if (stiftGesehen && e.pointerType === 'touch') return false
+
+    if (e.type === 'pointerdown' && (aktiv === null || stift || e.isPrimary)) aktiv = e.pointerId
+    if (aktiv !== null && aktiv !== e.pointerId) return false
+    if (e.type === 'pointerup' || e.type === 'pointercancel') aktiv = null
+    return true
+  }
+}
+
 /** Mittel und Streuung der gesammelten Druckwerte für das SpielErgebnis. */
 export function druckKennzahlen(werte: number[]): { mittel: number; streuung: number } {
   if (werte.length === 0) return { mittel: 0, streuung: 0 }

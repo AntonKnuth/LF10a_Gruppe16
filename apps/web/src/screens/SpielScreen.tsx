@@ -3,7 +3,7 @@ import { SPIELE, type SpielProps } from '../spiele'
 import { VORGABE_REGLER, type Regler } from '../spiele/regler'
 import type { SpielErgebnis } from '../engine/segmente'
 import type { Verein } from '../content/typen'
-import { druckVon, feinEreignisse } from '../eingabe'
+import { ZEIGER_EREIGNISSE, druckVon, feinEreignisse, neuerZeigerfilter } from '../eingabe'
 import { merkeGesehen, schonGesehen } from '../profil'
 import { neueAufzeichnung } from '../rohdaten'
 import { DialogScreen } from './DialogScreen'
@@ -67,6 +67,21 @@ export function SpielScreen({
     const id = setInterval(() => setRest((r) => Math.max(0, r - 1)), 1000)
     return () => clearInterval(id)
   }, [angehalten, erklaerung])
+
+  // Handballen: störende Zeiger schon am Fenster stoppen, bevor Aufzeichnung und Spiel sie sehen.
+  // Am Fenster und in der Capture-Phase, weil die Spiele das Abheben ebenfalls am Fenster hören —
+  // sonst beendete ein abhebender Handballen Bens Strich. Tippen auf Knöpfe bleibt unberührt,
+  // das läuft über `click`.
+  useEffect(() => {
+    const durchlassen = neuerZeigerfilter()
+    const pruefe = (e: PointerEvent) => {
+      if (!durchlassen(e)) e.stopPropagation()
+    }
+    for (const art of ZEIGER_EREIGNISSE) addEventListener(art, pruefe, true)
+    return () => {
+      for (const art of ZEIGER_EREIGNISSE) removeEventListener(art, pruefe, true)
+    }
+  }, [])
 
   const nimmAuf = useCallback((e: React.PointerEvent, druckWert?: number) => {
     const r = flaeche.current?.getBoundingClientRect()
@@ -157,6 +172,8 @@ export function SpielScreen({
         ref={flaeche}
         className="min-h-0 flex-1"
         onPointerDownCapture={(e) => {
+          // Übernimmt der Stift vom Handballen, hat der vorherige Zeiger nie abgesetzt.
+          absetzen(e)
           // Ein Tipp auf einen Knopf ist keine Schreibbewegung: er käme sonst als eigener
           // Strich in die Kennzahlen und verfälschte Höhe, Tempo und Absetzer.
           if (angehalten || (e.target as Element).closest('button')) return
