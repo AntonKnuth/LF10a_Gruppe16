@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react'
-import { api, kategorieTitel, titel, type Kennzahl, type KlientDetail, type Wochenbericht } from '../api'
+import { Fragment, useEffect, useState } from 'react'
+import {
+  api, inhibitionText, kategorieTitel, titel, type Kennzahl, type KlientDetail, type Wochenbericht,
+} from '../api'
 
 /**
  * D3: Wochenbericht auf einer Seite, druckbar.
@@ -100,6 +102,8 @@ export function Bericht({ klient }: { klient: KlientDetail }) {
             anzahl: z.anzahl,
             zeit: z.uebungszeitMinuten,
             mittelwerte: z.mittelwerte,
+            // Eine Textzeile statt eigener Spalten: so bleibt der Bericht auf einer Seite (D3).
+            zusatz: z.inhibition ? inhibitionText(z.inhibition) : undefined,
           }))}
         />
         <p className="mt-1 mb-6 text-xs text-slate-500">
@@ -161,6 +165,8 @@ type Messzeile = {
   stufe?: number
   zeit: number
   mittelwerte: Kennzahl | null
+  /** Zweite Zeile unter der Zeile, z. B. die Impulskontrolle. */
+  zusatz?: string
 }
 
 /** Dieselbe Tabelle für Bereiche und für Einzelübungen — nur die erste Spalte unterscheidet sie. */
@@ -192,7 +198,8 @@ function Messtabelle({
       </thead>
       <tbody>
         {zeilen.map((z) => (
-          <tr key={z.schluessel} className="border-b border-slate-100">
+          <Fragment key={z.schluessel}>
+          <tr className={z.zusatz ? '' : 'border-b border-slate-100'}>
             <td className="py-2 font-semibold text-slate-700">{z.name}</td>
             <td className="py-2">{z.anzahl}</td>
             {stufeZeigen && <td className="py-2">{z.stufe}</td>}
@@ -209,6 +216,12 @@ function Messtabelle({
               <td colSpan={5} className="py-2 text-slate-400">keine Rohdaten</td>
             )}
           </tr>
+          {z.zusatz && (
+            <tr className="border-b border-slate-100">
+              <td colSpan={spalten} className="pb-2 text-xs text-slate-600">{z.zusatz}</td>
+            </tr>
+          )}
+          </Fragment>
         ))}
         {zeilen.length === 0 && (
           <tr>

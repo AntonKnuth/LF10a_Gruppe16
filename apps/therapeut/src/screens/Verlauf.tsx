@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useState } from 'react'
 import {
-  api, reglerAbweichung, titel, zeitpunkt, URKUNDE_ID, type KlientDetail, type VerlaufPunkt,
+  api, DRIBBELN_ID, inhibitionText, reglerAbweichung, titel, zeitpunkt, URKUNDE_ID, type KlientDetail,
+  type VerlaufPunkt,
 } from '../api'
 import { Urkunde } from './Urkunde'
 import { Verlaufskurve } from './Verlaufskurve'
@@ -59,7 +60,9 @@ export function Verlauf({ klient }: { klient: KlientDetail }) {
           miteinander vergleichbar.
         </p>
       ) : (
-        <Verlaufskurve punkte={gefiltert} />
+        // `key`: beim Wechsel der Übung beginnt die Auswahl der Kennzahl von vorn. Sonst bliebe
+        // eine Kennzahl gewählt, die es bei der neuen Übung gar nicht gibt.
+        <Verlaufskurve key={spielId} spielId={spielId} punkte={gefiltert} />
       )}
 
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
@@ -149,6 +152,14 @@ export function Verlauf({ klient }: { klient: KlientDetail }) {
                   </td>
                 </tr>
               )}
+              {p.inhibition && (
+                <tr className="bg-slate-50 text-slate-700">
+                  <td colSpan={9} className="px-3 py-2">
+                    <span className="font-semibold">Impulskontrolle:</span>{' '}
+                    {inhibitionText(p.inhibition)}
+                  </td>
+                </tr>
+              )}
               </Fragment>
             ))}
           </tbody>
@@ -159,6 +170,13 @@ export function Verlauf({ klient }: { klient: KlientDetail }) {
         Zittern ist die mittlere Richtungsänderung zwischen zwei Abtastungen — je kleiner, desto
         ruhiger die Linie. Hinter ± steht die Streuung. Alle Werte stammen aus der Auswertung der
         Rohdaten, nicht aus der Sofortbewertung im Spiel.
+        {spiele.includes(DRIBBELN_ID) && (
+          <>
+            {' '}Impulskontrolle: Reaktion ist der Median vom Pfiff bis zum Stillstand, sauber heißt
+            angehalten innerhalb einer Sekunde, ohne Abheben und ohne Losdribbeln vor dem
+            Doppelpfiff. Wege in Pixeln der Spielfläche. Kein Diagnosewert.
+          </>
+        )}
       </p>
     </div>
   )

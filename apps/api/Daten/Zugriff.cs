@@ -48,6 +48,15 @@ public static class Zugriff
             e.Session!.KlientId == klientId &&
             e.Session.Klient!.Betreuungen.Any(b => b.TherapeutId == therapeutId));
 
+    /// <summary>Die „spiel_ergebnis"-Ereignisse eines Kindes. Aus ihrer Folgenummer ergibt sich die
+    /// Spielreihenfolge im Verlauf. Flach formuliert, aus demselben Grund wie oben (APPLY).</summary>
+    public static IQueryable<SessionEreignis> SpielErgebnisseImProtokoll(
+        TkContext db, int therapeutId, int klientId) =>
+        db.SessionEreignisse.Where(e =>
+            e.Art == "spiel_ergebnis" &&
+            e.Session!.KlientId == klientId &&
+            e.Session.Klient!.Betreuungen.Any(b => b.TherapeutId == therapeutId));
+
     /// <summary>Wird für 403 gebraucht. Eine leere Liste zurückzugeben wäre falsch: leer heißt
     /// in dieser App „nicht geübt", und das würde den Wochenbericht lügen lassen.</summary>
     public static Task<bool> DarfSehen(TkContext db, int therapeutId, int klientId) =>

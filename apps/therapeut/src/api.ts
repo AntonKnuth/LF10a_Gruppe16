@@ -140,8 +140,49 @@ export type VerlaufPunkt = {
   kennzahlen: Kennzahl | null
   /** Nur bei Urkunden gefüllt, sonst null. */
   unterschrift: UnterschriftKennzahl | null
+  /** Nur bei „Dribbeln mit Pfiff" und ab fünf gewerteten Pfiffen gefüllt, sonst null. */
+  inhibition: InhibitionKennzahl | null
   /** Fehlt bei Ergebnissen aus der Zeit vor B1. */
   regler: ReglerWerte | null
+}
+
+/** Das Spiel, zu dem es die Kennzahlen zur Impulskontrolle gibt. */
+export const DRIBBELN_ID = 'dribbeln'
+
+/**
+ * Impulskontrolle aus „Dribbeln mit Pfiff", gerechnet in `apps/api/Auswertung/Inhibition.cs`
+ * (dort stehen die Definitionen). Zeiten in Millisekunden, Wege in Bühnen-Pixeln, `stoppQuote`
+ * von 0 bis 1. `null` heißt: nicht messbar, zum Beispiel Halteausschlag ohne echten Stift.
+ */
+export type InhibitionKennzahl = {
+  gewertet: number
+  reaktionMedianMs: number | null
+  reaktionStreuungMs: number | null
+  nichtAngehalten: number
+  nachlaufMedian: number | null
+  halteausschlagMedian: number | null
+  abheber: number
+  fehlstarts: number
+  stoppQuote: number
+  haltedruckVerhaeltnis: number | null
+}
+
+/** Die Kennzahlen als eine Zeile Text, für Verlauf und Wochenbericht. */
+export function inhibitionText(k: InhibitionKennzahl): string {
+  const teile = [
+    k.reaktionMedianMs === null
+      ? 'Reaktion –'
+      : `Reaktion ${Math.round(k.reaktionMedianMs)} ms` +
+        (k.reaktionStreuungMs === null ? '' : ` (± ${Math.round(k.reaktionStreuungMs)})`),
+    `${Math.round(k.stoppQuote * 100)} % saubere Stopps von ${k.gewertet}`,
+    `${k.fehlstarts} Fehlstart${k.fehlstarts === 1 ? '' : 's'}`,
+    `${k.abheber}× abgehoben`,
+  ]
+  if (k.nichtAngehalten > 0) teile.push(`${k.nichtAngehalten}× nicht angehalten`)
+  if (k.nachlaufMedian !== null) teile.push(`Nachlauf ${Math.round(k.nachlaufMedian)} px`)
+  if (k.halteausschlagMedian !== null) teile.push(`Halteausschlag ${k.halteausschlagMedian.toFixed(1)} px`)
+  if (k.haltedruckVerhaeltnis !== null) teile.push(`Haltedruck × ${k.haltedruckVerhaeltnis.toFixed(2)}`)
+  return teile.join(' · ')
 }
 
 /**
@@ -204,6 +245,8 @@ export type KategorieZeile = {
   uebungszeitMinuten: number
   mittelwerte: Kennzahl | null
   ohneRohdaten: number
+  /** Nur beim Bereich Impulskontrolle: alle Pfiffe des Zeitraums zusammengefasst. */
+  inhibition: InhibitionKennzahl | null
 }
 
 export type Wochenbericht = {
@@ -366,7 +409,7 @@ export const PAUSEN_VORLAGEN = [
 
 /**
  * Anzeigenamen der Fähigkeitsbereiche. Die Zuordnung Spiel → Bereich macht der Server
- * (`Auswertung/Kategorien.cs`) — hier stehen nur die Beschriftungen.
+ * (`Auswertung/Spielkatalog.cs`) — hier stehen nur die Beschriftungen.
  */
 export const KATEGORIE_TITEL: Record<string, string> = {
   'gerade-striche': 'Gerade Striche',

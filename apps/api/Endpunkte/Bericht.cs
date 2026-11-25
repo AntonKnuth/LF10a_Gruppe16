@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using TravelKickers.Api.Auswertung;
 using TravelKickers.Api.Auth;
@@ -18,6 +19,7 @@ public record VerlaufPunkt(
     int? Selbsteinschaetzung,
     Kennzahl? Kennzahlen,
     UnterschriftKennzahl? Unterschrift,
+    InhibitionKennzahl? Inhibition,
     ReglerWerte? Regler);
 
 /// <summary>Alles, was die Therapeuten-App zum Zeichnen der Urkunde braucht. <c>Extra</c> geht
@@ -43,13 +45,17 @@ public record SpielZeile(
 /// Zusammenfassung nach Fähigkeitsbereich. <b>Ein Spiel kann mehrere Bereiche tragen</b> — die
 /// Summe der Anzahlen ist deshalb größer als die Zahl der Übungen. Der Bericht sagt das dazu,
 /// sonst wirkt er falsch addiert.
+///
+/// <c>Inhibition</c> ist nur beim Bereich Impulskontrolle gefüllt: alle Pfiffe der Woche
+/// zusammengefasst, als wären sie ein Spiel.
 /// </summary>
 public record KategorieZeile(
     string Kategorie,
     int Anzahl,
     double UebungszeitMinuten,
     Kennzahl? Mittelwerte,
-    int OhneRohdaten);
+    int OhneRohdaten,
+    InhibitionKennzahl? Inhibition);
 
 public record Wochenbericht(
     DateTime Von,
@@ -84,34 +90,7 @@ public static class Bericht
             if (nutzer.TherapeutId() is not int therapeutId) return Results.Unauthorized();
             if (!await Zugriff.DarfSehen(db, therapeutId, id)) return Results.Forbid();
 
-            var zeilen = await Zugriff.ErgebnisseFuer(db, therapeutId, id)
-                .OrderBy(e => e.Session!.EmpfangenAm)
-                .Select(e => new
-                {
-                    e.Id,
-                    e.SessionId,
-                    e.Session!.EmpfangenAm,
-                    e.SpielId,
-                    e.Stufe,
-                    e.Eingabegeraet,
-                    e.SynthetischerDruck,
-                    e.Abgebrochen,
-                    e.Selbsteinschaetzung,
-                    Roh = e.Rohdaten!.Werte,
-                    e.Extra,
-                })
-                .ToListAsync();
-
-            // Die Unterschrift-Kennzahlen gibt es nur bei der Urkunde. Bei allen anderen Spielen
-            // bleibt das Feld leer, auch wenn deren extra ein JSON ist.
-            return Results.Ok(zeilen.Select(z => new VerlaufPunkt(
-                z.Id, z.SessionId, z.EmpfangenAm, z.SpielId, z.Stufe, z.Eingabegeraet,
-                z.SynthetischerDruck, z.Abgebrochen, z.Selbsteinschaetzung,
-                z.Roh is null ? null : Kennzahlen.Berechne(z.Roh),
-                z.Roh is null || z.SpielId != Spielkatalog.UrkundeId
-                    ? null
-                    : Unterschrift.Berechne(z.Roh, z.Extra),
-                Regler.Lies(z.Extra))));
+            return Results.Ok(await Verlauf(db, therapeutId, id));
         });
 
         // Die Urkunde zum Ansehen und Drucken. Gezeichnet wird im Browser aus den Rohdaten —
@@ -160,6 +139,9 @@ public static class Bericht
                         e.DauerMs,
                         e.Abgebrochen,
                         e.Selbsteinschaetzung,
+                        e.Eingabegeraet,
+                        e.SynthetischerDruck,
+                        e.Extra,
                         Roh = e.Rohdaten!.Werte,
                     }).ToList(),
                 })
@@ -193,6 +175,11 @@ public static class Bericht
                     e.DauerMs,
                     e.Selbsteinschaetzung,
                     Kennzahl = e.Roh is null ? null : Kennzahlen.Berechne(e.Roh),
+                    // Leer bei allen anderen Spielen. Hier noch je Pfiff, zusammengefasst wird erst
+                    // für den Bereich — fünf Pfiffe aus zwei Spielen zählen dann gemeinsam.
+                    Pfiffe = e.SpielId == Inhibition.SpielId
+                        ? Inhibition.Messe(e.Roh, e.Extra, e.Eingabegeraet, e.SynthetischerDruck)
+                        : [],
                 })
                 .ToList();
 
@@ -233,7 +220,10 @@ public static class Bericht
                         Anzahl: g.Count(),
                         UebungszeitMinuten: Math.Round(g.Sum(x => x.e.DauerMs) / 60000.0, 1),
                         Mittelwerte: kennzahlen.Count == 0 ? null : Mitteln(kennzahlen),
-                        OhneRohdaten: g.Count() - kennzahlen.Count);
+                        OhneRohdaten: g.Count() - kennzahlen.Count,
+                        Inhibition: g.Key == Inhibition.Kategorie
+                            ? Inhibition.Zusammenfassen(g.SelectMany(x => x.e.Pfiffe).ToList())
+                            : null);
                 })
                 .ToList();
 
@@ -284,6 +274,84 @@ public static class Bericht
                 Fragebogen: Fragebogen.Zaehle(fragebogenAntworten),
                 Hinweise: hinweise));
         });
+    }
+
+    /// <summary>
+    /// Alle Übungen eines Kindes, nach Einheit und darin in Spielreihenfolge. Ohne HTTP, damit
+    /// sich Reihenfolge und Abfrage mit xUnit gegen SQLite prüfen lassen. Die Betreuung prüft
+    /// der Endpunkt vorher; die Abfragen selbst gehen trotzdem über <see cref="Zugriff"/>.
+    /// </summary>
+    public static async Task<List<VerlaufPunkt>> Verlauf(TkContext db, int therapeutId, int klientId)
+    {
+        var zeilen = await Zugriff.ErgebnisseFuer(db, therapeutId, klientId)
+            .Select(e => new
+            {
+                e.Id,
+                e.SessionId,
+                e.Session!.EmpfangenAm,
+                e.SpielId,
+                e.Stufe,
+                e.Eingabegeraet,
+                e.SynthetischerDruck,
+                e.Abgebrochen,
+                e.Selbsteinschaetzung,
+                Roh = e.Rohdaten!.Werte,
+                e.Extra,
+            })
+            .ToListAsync();
+
+        // Die Spielreihenfolge steht nicht am Ergebnis, sondern im Ereignisprotokoll: jedes
+        // „spiel_ergebnis" trägt seine Folgenummer und in der Nutzlast die Ergebnis-id. Eine
+        // eigene, flache Abfrage statt eines Joins über die Session — das wären zwei
+        // verschachtelte SelectMany, und daraus macht EF Core ein SQL APPLY, das SQLite nicht kennt.
+        var ereignisse = await Zugriff.SpielErgebnisseImProtokoll(db, therapeutId, klientId)
+            .Select(e => new { e.Folgenummer, e.Nutzlast })
+            .ToListAsync();
+
+        var position = new Dictionary<Guid, int>();
+        foreach (var e in ereignisse)
+            if (ErgebnisIdAus(e.Nutzlast) is Guid ergebnisId)
+                position[ergebnisId] = e.Folgenummer;
+
+        // Erst die Einheit, dann die Stelle darin. Ein Ergebnis ohne passendes Ereignis (ältere
+        // Einheiten) kommt ans Ende seiner Einheit, statt zu verschwinden. OrderBy ist stabil:
+        // untereinander bleiben solche Ergebnisse, wie die Datenbank sie liefert.
+        return zeilen
+            .OrderBy(z => z.EmpfangenAm)
+            .ThenBy(z => z.SessionId)
+            .ThenBy(z => position.GetValueOrDefault(z.Id, int.MaxValue))
+            .Select(z => new VerlaufPunkt(
+                z.Id, z.SessionId, z.EmpfangenAm, z.SpielId, z.Stufe, z.Eingabegeraet,
+                z.SynthetischerDruck, z.Abgebrochen, z.Selbsteinschaetzung,
+                z.Roh is null ? null : Kennzahlen.Berechne(z.Roh),
+                // Spielspezifische Kennzahlen nur beim passenden Spiel, auch wenn das extra
+                // anderer Spiele ebenfalls ein JSON ist.
+                z.Roh is null || z.SpielId != Spielkatalog.UrkundeId
+                    ? null
+                    : Unterschrift.Berechne(z.Roh, z.Extra),
+                z.SpielId != Inhibition.SpielId
+                    ? null
+                    : Inhibition.Berechne(z.Roh, z.Extra, z.Eingabegeraet, z.SynthetischerDruck),
+                Regler.Lies(z.Extra)))
+            .ToList();
+    }
+
+    /// <summary>Die Ergebnis-id aus der Nutzlast eines „spiel_ergebnis":
+    /// <c>{"ergebnis":{"id":"…", …}}</c> (<c>apps/web/src/api.ts</c>, <c>nutzlast</c>).
+    /// Fehlt sie oder ist die Nutzlast kaputt, gibt es keine Position — kein Serverfehler.</summary>
+    private static Guid? ErgebnisIdAus(string? nutzlast)
+    {
+        if (string.IsNullOrWhiteSpace(nutzlast)) return null;
+        try
+        {
+            using var dok = JsonDocument.Parse(nutzlast);
+            return dok.RootElement.GetProperty("ergebnis").GetProperty("id").GetGuid();
+        }
+        catch (Exception e) when (e is JsonException or InvalidOperationException
+            or KeyNotFoundException or FormatException)
+        {
+            return null;
+        }
     }
 
     private static Kennzahl Mitteln(IReadOnlyCollection<Kennzahl> k) => new(

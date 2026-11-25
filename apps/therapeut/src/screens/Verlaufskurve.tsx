@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { reglerAbweichung, zeitpunkt, type VerlaufPunkt } from '../api'
+import { DRIBBELN_ID, reglerAbweichung, zeitpunkt, type VerlaufPunkt } from '../api'
 
 /**
  * Liniendiagramm einer Übung (C4). Reines SVG, keine Bibliothek.
@@ -9,15 +9,47 @@ import { reglerAbweichung, zeitpunkt, type VerlaufPunkt } from '../api'
  * wie eine Verschlechterung aus. Für die Regler gilt dasselbe.
  */
 
-type KennzahlName = 'zittern' | 'tempoMittel' | 'druckMittel' | 'druckStreuung' | 'absetzer'
+/** Eine wählbare Kennzahl. `wert` gibt `null`, wenn es sie bei dieser Übung nicht gibt — der
+ *  Punkt fällt dann aus der Kurve und wird als ausgelassen gezählt. */
+type Kennzahl = {
+  name: string
+  titel: string
+  achse: string
+  stellen: number
+  wert: (p: VerlaufPunkt) => number | null
+}
 
-const KENNZAHLEN: { name: KennzahlName; titel: string; achse: string; stellen: number }[] = [
-  { name: 'zittern', titel: 'Zittern', achse: 'Zittern (Grad)', stellen: 1 },
-  { name: 'tempoMittel', titel: 'Tempo', achse: 'Tempo (Bildpunkte je Sekunde)', stellen: 1 },
-  { name: 'druckMittel', titel: 'Druck', achse: 'Druck (0 bis 1)', stellen: 2 },
-  { name: 'druckStreuung', titel: 'Druck-Streuung', achse: 'Druck-Streuung', stellen: 2 },
-  { name: 'absetzer', titel: 'Absetzer', achse: 'Absetzer (Anzahl)', stellen: 0 },
+/** Gibt es bei jeder Übung mit Rohdaten. */
+const KENNZAHLEN: Kennzahl[] = [
+  { name: 'zittern', titel: 'Zittern', achse: 'Zittern (Grad)', stellen: 1,
+    wert: (p) => p.kennzahlen?.zittern ?? null },
+  { name: 'tempoMittel', titel: 'Tempo', achse: 'Tempo (Bildpunkte je Sekunde)', stellen: 1,
+    wert: (p) => p.kennzahlen?.tempoMittel ?? null },
+  { name: 'druckMittel', titel: 'Druck', achse: 'Druck (0 bis 1)', stellen: 2,
+    wert: (p) => p.kennzahlen?.druckMittel ?? null },
+  { name: 'druckStreuung', titel: 'Druck-Streuung', achse: 'Druck-Streuung', stellen: 2,
+    wert: (p) => p.kennzahlen?.druckStreuung ?? null },
+  { name: 'absetzer', titel: 'Absetzer', achse: 'Absetzer (Anzahl)', stellen: 0,
+    wert: (p) => p.kennzahlen?.absetzer ?? null },
 ]
+
+/** Nur bei „Dribbeln mit Pfiff". Sie stehen dort vorn, weil um sie es in dem Spiel geht. */
+const INHIBITION_KENNZAHLEN: Kennzahl[] = [
+  { name: 'reaktion', titel: 'Reaktionszeit', achse: 'Reaktionszeit, Median (ms)', stellen: 0,
+    wert: (p) => p.inhibition?.reaktionMedianMs ?? null },
+  { name: 'reaktionStreuung', titel: 'Reaktion-Streuung', achse: 'Streuung der Reaktionszeit (ms)',
+    stellen: 0, wert: (p) => p.inhibition?.reaktionStreuungMs ?? null },
+  // Prozent nur hier im Therapeutenbereich (C4).
+  { name: 'stoppQuote', titel: 'Saubere Stopps', achse: 'Saubere Stopps (%)', stellen: 0,
+    wert: (p) => (p.inhibition ? p.inhibition.stoppQuote * 100 : null) },
+  { name: 'fehlstarts', titel: 'Fehlstarts', achse: 'Fehlstarts (Anzahl)', stellen: 0,
+    wert: (p) => p.inhibition?.fehlstarts ?? null },
+  { name: 'abheber', titel: 'Abgehoben', achse: 'Beim Stopp abgehoben (Anzahl)', stellen: 0,
+    wert: (p) => p.inhibition?.abheber ?? null },
+]
+
+const kennzahlenFuer = (spielId: string) =>
+  spielId === DRIBBELN_ID ? [...INHIBITION_KENNZAHLEN, ...KENNZAHLEN] : KENNZAHLEN
 
 /** Von hell nach dunkel: eine höhere Stufe ist auch ohne Farbensehen dunkler. */
 const STUFEN_FARBE = ['#86b6ef', '#5598e7', '#2a78d6', '#1c5cab', '#0d366b']
@@ -34,11 +66,12 @@ const RADIUS = 9
 /** Schmaler darf ein Platz nicht werden, sonst verdecken sich die Punkte. Dann scrollt das Bild. */
 const PLATZ_MIN = 2 * RADIUS + 4
 
-export function Verlaufskurve({ punkte }: { punkte: VerlaufPunkt[] }) {
-  const [name, setName] = useState<KennzahlName>('zittern')
-  const kennzahl = KENNZAHLEN.find((k) => k.name === name)!
+export function Verlaufskurve({ spielId, punkte }: { spielId: string; punkte: VerlaufPunkt[] }) {
+  const auswahl = kennzahlenFuer(spielId)
+  const [name, setName] = useState(auswahl[0].name)
+  const kennzahl = auswahl.find((k) => k.name === name) ?? auswahl[0]
 
-  const mitWerten = punkte.filter((p) => p.kennzahlen !== null)
+  const mitWerten = punkte.filter((p) => kennzahl.wert(p) !== null)
   const ausgelassen = punkte.length - mitWerten.length
 
   return (
@@ -48,16 +81,17 @@ export function Verlaufskurve({ punkte }: { punkte: VerlaufPunkt[] }) {
         <select
           id="kennzahl"
           value={name}
-          onChange={(e) => setName(e.target.value as KennzahlName)}
+          onChange={(e) => setName(e.target.value)}
           className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
         >
-          {KENNZAHLEN.map((k) => (
+          {auswahl.map((k) => (
             <option key={k.name} value={k.name}>{k.titel}</option>
           ))}
         </select>
         {ausgelassen > 0 && (
           <span className="text-xs text-slate-500">
-            {ausgelassen} ohne verwertbare Aufzeichnung ausgelassen
+            {/* Bei der Impulskontrolle auch, wenn es weniger als fünf gewertete Pfiffe gab. */}
+            {ausgelassen} ohne Wert für diese Kennzahl ausgelassen
           </span>
         )}
       </div>
@@ -76,16 +110,14 @@ export function Verlaufskurve({ punkte }: { punkte: VerlaufPunkt[] }) {
 
 type Stelle = { p: VerlaufPunkt; wert: number; x: number; y: number }
 
-function Kurve({ punkte, kennzahl }: {
-  punkte: VerlaufPunkt[]
-  kennzahl: (typeof KENNZAHLEN)[number]
-}) {
+function Kurve({ punkte, kennzahl }: { punkte: VerlaufPunkt[]; kennzahl: Kennzahl }) {
   const breite = Math.max(BREITE, RAND.links + RAND.rechts + punkte.length * PLATZ_MIN)
   const platz = (breite - RAND.links - RAND.rechts) / punkte.length
   const unten = HOEHE - RAND.unten
 
   // Die Skala beginnt bei 0: ein abgeschnittener Anfang ließe kleine Schwankungen groß aussehen.
-  const werte = punkte.map((p) => p.kennzahlen![kennzahl.name])
+  // Punkte ohne Wert hat der Aufrufer schon herausgefiltert.
+  const werte = punkte.map((p) => kennzahl.wert(p)!)
   const schritt = schrittweite(Math.max(...werte), kennzahl.stellen)
   const oberkante = schritt * Math.max(1, Math.ceil(Math.max(...werte) / schritt))
   const yVon = (wert: number) => unten - (wert / oberkante) * (unten - RAND.oben)
