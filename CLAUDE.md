@@ -418,6 +418,8 @@ Komponente selbst (`apps/web/src/spiele/index.ts`) nicht mitgezählt:
 | `apps/therapeut/src/api.ts` (`SPIEL_TITEL`) | der Klartextname. Ohne ihn steht in der Therapeuten-App die rohe Spiel-ID |
 | `apps/therapeut/src/api.ts` (`SPIEL_REGLER`) | welche B1-Regler das Spiel nutzt. Ohne den Eintrag zeigt die Oberfläche keinen |
 
+**Vergessene oder abweichende Einträge findet ein Test:** `apps/web/src/spiele/katalogAbgleich.test.ts` liest `Spielkatalog.cs` und `api.ts` als Text und vergleicht IDs, Rollen, Bereiche, Titel und Regler mit `KATALOG` — `npm test` wird rot, bevor es jemand im Bericht merkt.
+
 Die **Einstellungszeilen legt der Seed bei jedem Start nach** (`ErgaenzeEinstellungen`, IDs aus
 `Spielkatalog.cs`). Das war einmal ein vierter Eintrag von Hand, und genau der wurde vergessen:
 die Datenbank existierte schon, also fehlte dem bestehenden Kind die Zeile für das neue Spiel.
