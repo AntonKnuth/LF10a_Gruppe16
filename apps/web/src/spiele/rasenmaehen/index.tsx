@@ -108,7 +108,7 @@ export function Platzwart({
     })
 
     const endeSchleife = starteBildschleife((dt) => {
-      // Angehalten wird nur gerechnet, nicht gezeichnet.
+      // Angehalten wird nur gezeichnet, nicht gerechnet: das Bild steht still.
       if (!pause.current) melde(aktualisiere(w, dt))
       zeichne(g, w, sicht, cv.width, cv.height)
       // Nur die Uhr beendet das Spiel: ein geschaffter Platz wird gefeiert, dann kommt

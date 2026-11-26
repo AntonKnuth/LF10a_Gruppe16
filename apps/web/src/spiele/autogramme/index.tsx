@@ -86,7 +86,7 @@ export function Autogrammstunde({
     addEventListener('blur', hoch)
 
     const endeSchleife = starteBildschleife((dt) => {
-      // Angehalten wird nur gerechnet, nicht gezeichnet.
+      // Angehalten wird nur gezeichnet, nicht gerechnet: das Bild steht still.
       if (!pause.current) aktualisiere(w, dt)
       zeichne(g, w, sicht, cv.width, cv.height)
       if (zeitAus.current) meldeFertig(() => ergebnis(w, Math.round(w.zeitGesamt * 1000), false))

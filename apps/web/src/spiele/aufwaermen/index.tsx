@@ -86,7 +86,7 @@ export function Aufwaermen({
     addEventListener('blur', hoch)
 
     const endeSchleife = starteBildschleife((dt) => {
-      // Angehalten wird nur gerechnet, nicht gezeichnet.
+      // Angehalten wird nur gezeichnet, nicht gerechnet: das Bild steht still.
       if (!pause.current) aktualisiere(w, dt)
       zeichne(g, w, sicht, cv.width, cv.height)
       if (w.fertig || zeitAus.current) {

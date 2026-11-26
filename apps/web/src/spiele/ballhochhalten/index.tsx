@@ -76,7 +76,7 @@ export function BallHochhalten({
     const abTasten = tastenDruckLauscher((d) => stelleDruck(w, d))
 
     const endeSchleife = starteBildschleife((dt) => {
-      // Angehalten wird nur gerechnet, nicht gezeichnet: das Bild bleibt stehen, die Uhr des
+      // Angehalten wird nur gezeichnet, nicht gerechnet: das Bild bleibt stehen, die Uhr des
       // Spiels läuft nicht weiter.
       if (!pause.current) aktualisiere(w, dt)
       zeichne(g, w, sicht, cv.width, cv.height)

@@ -76,7 +76,7 @@ export function Elfmeter({
 
     const endeSchleife = starteBildschleife((dt) => {
 
-      // Angehalten wird nur gerechnet, nicht gezeichnet.
+      // Angehalten wird nur gezeichnet, nicht gerechnet: das Bild steht still.
       if (!pause.current) {
         const ereignis = aktualisiere(w, dt)
         if (ereignis) klang[ereignis]()
