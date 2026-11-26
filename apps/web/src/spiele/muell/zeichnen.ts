@@ -8,6 +8,8 @@
  * Zeichenreihenfolge: Rasen → Linien → Müll → Kreise → Greiferschatten → Seile → Kamera → Funken.
  */
 
+import { zeichneFunken } from '../funken'
+import { berechneSicht as sichtFuer, kreis, type Sicht } from '../geometrie'
 import {
   FUNKEN_SEK, H, HINWEIS_SEK, SCHWENK_SEK, VERBLASS_SEK, W, abschnittVon, greiferRadius,
   kameraAnteil, ringGross, spruch, toleranzVon, type Muell, type Punkt, type Welt,
@@ -35,17 +37,11 @@ const BANDE = 28
 
 type G = CanvasRenderingContext2D
 
-/** Sichtfenster: Maßstab und Rand, damit die 900×640-Bühne mittig ins Canvas passt. */
-export type Sicht = { s: number; dx: number; dy: number }
+export type { Sicht }
 
+/** Sichtfenster für die Bühne dieses Spiels; gerechnet wird in geometrie.ts. */
 export function berechneSicht(breite: number, hoehe: number): Sicht {
-  const s = Math.min(breite / W, hoehe / H)
-  return { s, dx: (breite - W * s) / 2, dy: (hoehe - H * s) / 2 }
-}
-
-function kreis(g: G, x: number, y: number, r: number) {
-  g.beginPath()
-  g.arc(x, y, r, 0, Math.PI * 2)
+  return sichtFuer(breite, hoehe, W, H)
 }
 
 function pfad(g: G, punkte: Punkt[], zu: boolean) {
@@ -89,7 +85,7 @@ export function zeichne(g: G, w: Welt, sicht: Sicht, breite: number, hoehe: numb
   hinweis(g, w)
   bande(g, w)
   kamera(g, w)
-  funken(g, w)
+  zeichneFunken(g, w.funken, FUNKEN_SEK)
   g.restore()
 
   if (w.schwenkUhr > SCHWENK_SEK / 2) sauberBanner(g, w)
@@ -396,17 +392,6 @@ function kamera(g: G, w: Welt) {
   g.fillStyle = F.linse
   kreis(g, 0, 3, 7)
   g.fill()
-  g.restore()
-}
-
-function funken(g: G, w: Welt) {
-  g.save()
-  for (const f of w.funken) {
-    g.globalAlpha = Math.max(0, f.leben / FUNKEN_SEK)
-    g.fillStyle = f.farbe
-    kreis(g, f.x, f.y, 5)
-    g.fill()
-  }
   g.restore()
 }
 

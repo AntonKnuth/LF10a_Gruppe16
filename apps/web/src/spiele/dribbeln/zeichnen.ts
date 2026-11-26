@@ -10,6 +10,7 @@
  * der Form, nicht nur in der Farbe (Rot-Grün-Schwäche).
  */
 
+import { berechneSicht as sichtFuer, kreis, type Sicht } from '../geometrie'
 import {
   BALL_R, FANG_R, H, HILFE_TEXT, HUETCHEN, PFEIL_SEK, STERNE_SEK, W, aktuellerPfiff, ballPunkt,
   kuendigtAn, nummer, punktAuf, type Punkt, type Welt,
@@ -33,19 +34,14 @@ const F = {
 const SCHRIFT = 'system-ui, sans-serif'
 const schrift = (px: number, gewicht = 600) => `${gewicht} ${px}px ${SCHRIFT}`
 
-/** Sichtfenster: Maßstab und Rand, damit die 900×640-Bühne mittig ins Canvas passt. */
-export type Sicht = { s: number; dx: number; dy: number }
+export type { Sicht }
 
+/** Sichtfenster für die Bühne dieses Spiels; gerechnet wird in geometrie.ts. */
 export function berechneSicht(breite: number, hoehe: number): Sicht {
-  const s = Math.min(breite / W, hoehe / H)
-  return { s, dx: (breite - W * s) / 2, dy: (hoehe - H * s) / 2 }
+  return sichtFuer(breite, hoehe, W, H)
 }
 
 /* ── Formhelfer ────────────────────────────────────────────────────────── */
-function kreis(g: CanvasRenderingContext2D, x: number, y: number, r: number) {
-  g.beginPath()
-  g.arc(x, y, r, 0, Math.PI * 2)
-}
 
 function rundRect(
   g: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number,

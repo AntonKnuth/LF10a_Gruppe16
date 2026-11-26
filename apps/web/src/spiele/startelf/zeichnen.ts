@@ -6,6 +6,8 @@
  * C2: kein Rot. Rote Striche an Buchstaben kennt ein Kind aus der Heftkorrektur.
  */
 
+import { zeichneFunken } from '../funken'
+import { berechneSicht as sichtFuer, type Sicht } from '../geometrie'
 import { anfangVon, laenge, punktBei, type Strich } from '../schrift'
 import {
   BALL_SEK, FUNKEN_SEK, H, JUBEL_SEK, PLAETZE, PULS_SEK, SCHLUSS_SEK, W, ZEILE, aktiverStrich, band,
@@ -41,12 +43,11 @@ const MAGNET_R = 25
 const TRIKOT = { x: 800, y: 92 }
 const FLUG_SEK = 0.6
 
-/** Sichtfenster: Maßstab und Rand, damit die 900×640-Bühne mittig ins Canvas passt. */
-export type Sicht = { s: number; dx: number; dy: number }
+export type { Sicht }
 
+/** Sichtfenster für die Bühne dieses Spiels; gerechnet wird in geometrie.ts. */
 export function berechneSicht(breite: number, hoehe: number): Sicht {
-  const s = Math.min(breite / W, hoehe / H)
-  return { s, dx: (breite - W * s) / 2, dy: (hoehe - H * s) / 2 }
+  return sichtFuer(breite, hoehe, W, H)
 }
 
 /* ── Formhelfer ────────────────────────────────────────────────────────── */
@@ -100,7 +101,7 @@ export function zeichne(g: CanvasRenderingContext2D, w: Welt, sicht: Sicht, brei
     if (w.phase === 'schreiben') startpunkt(g, w)
   }
   magnete(g, w)
-  funken(g, w)
+  zeichneFunken(g, w.funken, FUNKEN_SEK)
   if (w.phase === 'jubel') jubel(g, w)
   if (w.phase === 'tafelVoll' || w.phase === 'schluss' || w.phase === 'fertig') tafelSteht(g)
   if (w.blase) sprechblase(g, w, w.blase.text)
@@ -335,15 +336,6 @@ function ball(g: CanvasRenderingContext2D, s: Strich, bei: number) {
   kreis(g, p.x, p.y, 13, F.text)
   kreis(g, p.x, p.y, 11, '#ffffff')
   kreis(g, p.x, p.y, 4.5, F.text)
-}
-
-function funken(g: CanvasRenderingContext2D, w: Welt) {
-  g.save()
-  for (const f of w.funken) {
-    g.globalAlpha = Math.max(0, f.leben / FUNKEN_SEK)
-    kreis(g, f.x, f.y, 5, f.farbe)
-  }
-  g.restore()
 }
 
 /** Die Kurve ruft den Nachnamen, beim Kapitän doppelt. */

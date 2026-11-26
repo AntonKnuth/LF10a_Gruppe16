@@ -12,6 +12,7 @@
  * A2: keine Sterne, keine Zahl, kein Lob. Die Urkunde bleibt im Spiel neutral (C3).
  */
 
+import { berechneSicht as sichtFuer, type Sicht } from '../geometrie'
 import {
   AUFROLLEN_SEK, EINROLLEN_SEK, GRUNDLINIE_Y, H, W, unterlinieY, type Welt,
 } from './welt'
@@ -38,12 +39,11 @@ export const URKUNDE = { x: 60, y: 16, b: 780, h: 548 }
 /** Die leere Linie für den Profi rechts neben Bens Band. Im Spiel bleibt sie leer. */
 export const PROFI_LINIE = { x: 700, y: GRUNDLINIE_Y, breite: 110 }
 
-/** Sichtfenster: Maßstab und Rand, damit die 900×640-Bühne mittig ins Canvas passt. */
-export type Sicht = { s: number; dx: number; dy: number }
+export type { Sicht }
 
+/** Sichtfenster für die Bühne dieses Spiels; gerechnet wird in geometrie.ts. */
 export function berechneSicht(breite: number, hoehe: number): Sicht {
-  const s = Math.min(breite / W, hoehe / H)
-  return { s, dx: (breite - W * s) / 2, dy: (hoehe - H * s) / 2 }
+  return sichtFuer(breite, hoehe, W, H)
 }
 
 /** Alles, was auf dem Blatt steht. Die Welt hat diese Felder; das Lob baut sie aus `extra`. */

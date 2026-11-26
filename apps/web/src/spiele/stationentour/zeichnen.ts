@@ -6,6 +6,8 @@
  * nicht rot — rote Striche an Buchstaben kennt ein Kind aus der Heftkorrektur.
  */
 
+import { zeichneFunken } from '../funken'
+import { berechneSicht as sichtFuer, type Sicht } from '../geometrie'
 import { anfangVon, laenge, punktBei, type Strich } from '../schrift'
 import {
   ABGANG_SEK, FAN_SEK, FUNKEN_SEK, H, PULS_SEK, TAFEL, W, WARTE_TEXT, WORTFELD, aktiverStrich, band,
@@ -38,12 +40,11 @@ const schrift = (px: number, gewicht = 700) => `${gewicht} ${px}px ${SCHRIFT}`
 /** Auf dieser Höhe stehen die Füße der vorderen Reihe. */
 const BODEN = 608
 
-/** Sichtfenster: Maßstab und Rand, damit die 900×640-Bühne mittig ins Canvas passt. */
-export type Sicht = { s: number; dx: number; dy: number }
+export type { Sicht }
 
+/** Sichtfenster für die Bühne dieses Spiels; gerechnet wird in geometrie.ts. */
 export function berechneSicht(breite: number, hoehe: number): Sicht {
-  const s = Math.min(breite / W, hoehe / H)
-  return { s, dx: (breite - W * s) / 2, dy: (hoehe - H * s) / 2 }
+  return sichtFuer(breite, hoehe, W, H)
 }
 
 /* ── Formhelfer ────────────────────────────────────────────────────────── */
@@ -93,7 +94,7 @@ export function zeichne(g: CanvasRenderingContext2D, w: Welt, sicht: Sicht, brei
   tinte(g, w)
   if (w.phase === 'schreiben') startpunkt(g, w)
   if (w.phase === 'fakt') fakt(g, w)
-  funken(g, w)
+  zeichneFunken(g, w.funken, FUNKEN_SEK)
   gruppe(g, w)
   fuehrer(g, w)
   if (w.blase) sprechblase(g, w)
@@ -234,15 +235,6 @@ function fakt(g: CanvasRenderingContext2D, w: Welt) {
   zeilen.push(zeile)
   const mitte = (WORTFELD.y + WORTFELD.h + TAFEL.y + TAFEL.h) / 2
   zeilen.forEach((z, i) => g.fillText(z, W / 2, mitte + (i - (zeilen.length - 1) / 2) * 38))
-}
-
-function funken(g: CanvasRenderingContext2D, w: Welt) {
-  g.save()
-  w.funken.forEach((f, i) => {
-    g.globalAlpha = Math.max(0, f.leben / FUNKEN_SEK)
-    kreis(g, f.x, f.y, 5, i % 2 ? F.leuchtet : w.farben.sekundaer)
-  })
-  g.restore()
 }
 
 /* ── Figuren ───────────────────────────────────────────────────────────── */

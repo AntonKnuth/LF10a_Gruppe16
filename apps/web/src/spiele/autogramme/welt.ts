@@ -19,6 +19,8 @@
  * Genauigkeit — und die sieht ausschließlich Thomas.
  */
 
+import * as Funken from '../funken'
+import { klemme } from '../geometrie'
 import type { Verein } from '../../content/typen'
 import type { Druck, Eingabegeraet } from '../../eingabe'
 import { druckKennzahlen } from '../../eingabe'
@@ -45,7 +47,8 @@ export const JUBEL_SEK = 1.4
 export const FUNKEN_SEK = 0.8
 export const FUNKEN_MAX = 24
 
-export type Funke = { x: number; y: number; vx: number; vy: number; leben: number; farbe: string }
+/** So sehen die Funken dieses Spiels aus; die Mechanik steht in funken.ts. */
+const STOSS: Funken.Stossart = { leben: FUNKEN_SEK, max: FUNKEN_MAX, tempo: 160, tempoStufe: 60, auftrieb: 80 }
 
 /** Was `schreibe` dem Aufrufer meldet, damit er einen Klang spielen kann (A1). */
 export type Ereignis = 'etappe' | 'fertig'
@@ -82,8 +85,6 @@ export function autogrammFeld(stufe: number, faktor = 1): Feld {
  * schwer — die Stufe soll die Feinheit erhöhen, nicht die Menge.
  */
 export const zielTinte = (stufe: number, faktor = 1) => feldBreite(stufe, faktor) * 2
-
-export const klemme = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v))
 
 export const imFeld = (f: Feld, x: number, y: number) =>
   x >= f.x && x <= f.x + f.b && y >= f.y && y <= f.y + f.h
@@ -139,7 +140,7 @@ export type Welt = {
   jubelUhr: number
   /** Wie viele Etappentöne auf diesem Trikot schon erklangen. */
   etappen: number
-  funken: Funke[]
+  funken: Funken.Funke[]
   /** `prefers-reduced-motion`: dann gibt es keine Funken. Setzt der Aufrufer. */
   wenigerBewegung: boolean
 }
@@ -180,28 +181,7 @@ export function neueWelt(
 /** Funkenstoß um einen Punkt, in den übergebenen Farben. */
 export function funkenstoss(w: Welt, x: number, y: number, farben: string[], anzahl = 12) {
   if (w.wenigerBewegung) return
-  for (let i = 0; i < anzahl && w.funken.length < FUNKEN_MAX; i++) {
-    const winkel = (i / anzahl) * Math.PI * 2
-    const tempo = 160 + (i % 3) * 60
-    w.funken.push({
-      x, y,
-      vx: Math.cos(winkel) * tempo,
-      vy: Math.sin(winkel) * tempo - 80,
-      leben: FUNKEN_SEK,
-      farbe: farben[i % farben.length],
-    })
-  }
-}
-
-/** Funken fliegen, fallen und verschwinden nach ihrer festen Lebensdauer. */
-function bewegeFunken(w: Welt, dt: number) {
-  for (const f of w.funken) {
-    f.leben -= dt
-    f.x += f.vx * dt
-    f.y += f.vy * dt
-    f.vy += 400 * dt
-  }
-  w.funken = w.funken.filter((f) => f.leben > 0)
+  Funken.funkenstoss(w.funken, x, y, farben, anzahl, STOSS)
 }
 
 /** Wessen Trikot gerade drankommt. Der Kader wiederholt sich — es kommen immer neue Fans. */
@@ -281,7 +261,7 @@ function naechstesTrikot(w: Welt) {
 
 export function aktualisiere(w: Welt, dt: number) {
   w.zeitGesamt += dt
-  bewegeFunken(w, dt)
+  w.funken = Funken.bewegeFunken(w.funken, dt)
   if (w.jubelUhr > 0) {
     w.jubelUhr -= dt
     if (w.jubelUhr <= 0) naechstesTrikot(w)

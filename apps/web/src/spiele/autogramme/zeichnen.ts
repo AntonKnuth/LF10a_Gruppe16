@@ -6,6 +6,8 @@
  * Feld; wie sauber er war, sieht man an der eigenen Schrift.
  */
 
+import { zeichneFunken } from '../funken'
+import { berechneSicht as sichtFuer, type Sicht } from '../geometrie'
 import {
   FUNKEN_SEK, H, TRIKOT_B, TRIKOT_H, TRIKOT_Y, W, anteil, spielerVon, type Welt,
 } from './welt'
@@ -27,12 +29,11 @@ const schrift = (px: number, gewicht = 600) => `${gewicht} ${px}px ${SCHRIFT}`
 
 const TRIKOT_X = W / 2 - TRIKOT_B / 2
 
-/** Sichtfenster: Maßstab und Rand, damit die 900×640-Bühne mittig ins Canvas passt. */
-export type Sicht = { s: number; dx: number; dy: number }
+export type { Sicht }
 
+/** Sichtfenster für die Bühne dieses Spiels; gerechnet wird in geometrie.ts. */
 export function berechneSicht(breite: number, hoehe: number): Sicht {
-  const s = Math.min(breite / W, hoehe / H)
-  return { s, dx: (breite - W * s) / 2, dy: (hoehe - H * s) / 2 }
+  return sichtFuer(breite, hoehe, W, H)
 }
 
 /* ── Formhelfer ────────────────────────────────────────────────────────── */
@@ -64,21 +65,8 @@ export function zeichne(g: CanvasRenderingContext2D, w: Welt, sicht: Sicht, brei
   feld(g, w)
   schrift_(g, w)
   fortschritt(g, w)
-  funken(g, w)
+  zeichneFunken(g, w.funken, FUNKEN_SEK)
   if (w.jubelUhr > 0) jubel(g, w)
-}
-
-/** Funkenstoß beim fertigen Autogramm: kleine Punkte, die mit ihrer Lebensdauer verblassen. */
-function funken(g: CanvasRenderingContext2D, w: Welt) {
-  g.save()
-  for (const f of w.funken) {
-    g.globalAlpha = Math.max(0, f.leben / FUNKEN_SEK)
-    g.fillStyle = f.farbe
-    g.beginPath()
-    g.arc(f.x, f.y, 5, 0, Math.PI * 2)
-    g.fill()
-  }
-  g.restore()
 }
 
 /** Trikot in Vereinsfarben mit Rückennummer und Namen — der Verein ist reiner Content. */

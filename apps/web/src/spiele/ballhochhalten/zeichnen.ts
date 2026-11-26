@@ -3,10 +3,11 @@
  * dadurch bleibt die Physik in welt.ts ohne Canvas testbar.
  */
 
+import { berechneSicht as sichtFuer, klemme, kreis, type Sicht } from '../geometrie'
 import { tastenDruckWert } from '../../eingabe'
 import {
   BODEN_Y, DECKE_Y, H, REICHWEITE, W,
-  helligkeit, inReichweite, klemme, komboMulti, kraftAus, mischeFarbe, vorhersage,
+  helligkeit, inReichweite, komboMulti, kraftAus, mischeFarbe, vorhersage,
   type Ballon, type Deko, type Teilchen, type Welt,
 } from './welt'
 
@@ -29,19 +30,14 @@ const BANDE_Y = 500
 const SCHRIFT = 'system-ui, sans-serif'
 const schrift = (px: number, gewicht = 600) => `${gewicht} ${px}px ${SCHRIFT}`
 
-/** Sichtfenster: Maßstab und Rand, damit die 900×640-Bühne mittig ins Canvas passt. */
-export type Sicht = { s: number; dx: number; dy: number }
+export type { Sicht }
 
+/** Sichtfenster für die Bühne dieses Spiels; gerechnet wird in geometrie.ts. */
 export function berechneSicht(breite: number, hoehe: number): Sicht {
-  const s = Math.min(breite / W, hoehe / H)
-  return { s, dx: (breite - W * s) / 2, dy: (hoehe - H * s) / 2 }
+  return sichtFuer(breite, hoehe, W, H)
 }
 
 /* ── Formhelfer ────────────────────────────────────────────────────────── */
-function kreis(g: CanvasRenderingContext2D, x: number, y: number, r: number) {
-  g.beginPath()
-  g.arc(x, y, r, 0, Math.PI * 2)
-}
 
 function rundRect(g: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   const rr = Math.min(r, w / 2, h / 2)

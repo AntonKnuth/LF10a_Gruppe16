@@ -17,6 +17,7 @@
  * Strich vor, dann fährt er dauerhaft voraus. Von selbst fertig wird ein Strich nie.
  */
 
+import * as Funken from '../funken'
 import type { Verein } from '../../content/typen'
 import type { Druck, Eingabegeraet } from '../../eingabe'
 import { druckKennzahlen } from '../../eingabe'
@@ -61,7 +62,8 @@ export const ERMUTIGUNG_TEXT = 'Wir schreiben zusammen weiter.'
 export const FUNKEN_SEK = 0.6
 export const FUNKEN_MAX = 24
 
-export type Funke = { x: number; y: number; vx: number; vy: number; leben: number; farbe: string }
+/** So sehen die Funken dieses Spiels aus; die Mechanik steht in funken.ts. */
+const STOSS: Funken.Stossart = { leben: FUNKEN_SEK, max: FUNKEN_MAX, tempo: 130, tempoStufe: 0, auftrieb: 40 }
 
 /** Was die Welt dem Aufrufer meldet, damit er sofort einen Klang spielen kann (A1). */
 export type Ereignis = 'strich' | 'zeichen' | 'spieler' | 'tafel' | 'hilfe' | 'ermutigung'
@@ -229,7 +231,7 @@ export type Welt = {
   ermutigt: boolean
   blase: { text: string; uhr: number } | null
   pulsUhr: number
-  funken: Funke[]
+  funken: Funken.Funke[]
   /** `prefers-reduced-motion`: dann gibt es keine Funken. Setzt der Aufrufer. */
   wenigerBewegung: boolean
   // --- Zähler für das Ergebnis ---
@@ -379,26 +381,7 @@ function beginneStrich(w: Welt) {
 function funkenstoss(w: Welt, x: number, y: number, anzahl: number) {
   if (w.wenigerBewegung) return
   const farben = [w.farben.primaer, '#ffc800', '#2fd06a']
-  for (let i = 0; i < anzahl && w.funken.length < FUNKEN_MAX; i++) {
-    const winkel = (i / anzahl) * Math.PI * 2
-    w.funken.push({
-      x, y,
-      vx: Math.cos(winkel) * 130,
-      vy: Math.sin(winkel) * 130 - 40,
-      leben: FUNKEN_SEK,
-      farbe: farben[i % farben.length],
-    })
-  }
-}
-
-function bewegeFunken(w: Welt, dt: number) {
-  for (const f of w.funken) {
-    f.leben -= dt
-    f.x += f.vx * dt
-    f.y += f.vy * dt
-    f.vy += 400 * dt
-  }
-  w.funken = w.funken.filter((f) => f.leben > 0)
+  Funken.funkenstoss(w.funken, x, y, farben, anzahl, STOSS)
 }
 
 /* ── Schreiben ─────────────────────────────────────────────────────────── */
@@ -564,7 +547,7 @@ function starteSchluss(w: Welt) {
 
 export function aktualisiere(w: Welt, dt: number): Ereignis | undefined {
   w.zeitGesamt += dt
-  bewegeFunken(w, dt)
+  w.funken = Funken.bewegeFunken(w.funken, dt)
   w.pulsUhr = Math.max(0, w.pulsUhr - dt)
   w.ballUhr = Math.max(0, w.ballUhr - dt)
   if (w.blase && (w.blase.uhr -= dt) <= 0) w.blase = null

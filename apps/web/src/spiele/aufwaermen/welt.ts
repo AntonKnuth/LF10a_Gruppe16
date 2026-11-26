@@ -15,6 +15,7 @@
  * das Kriterium — Kraftdosierung ist die Aufgabe von „Platzwart".
  */
 
+import { klemme } from '../geometrie'
 import type { Verein } from '../../content/typen'
 import type { Druck, Eingabegeraet } from '../../eingabe'
 import { druckKennzahlen } from '../../eingabe'
@@ -81,8 +82,6 @@ export const huetchenAuf = (runde: number): number[] =>
 
    Startwerte, kein Messwert — mit echtem Pencil auf dem Zielgerät nachziehen. */
 export const toleranz = (stufe: number, faktor = 1) => Math.max(16, 56 - stufe * 6) * faktor
-
-export const klemme = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v))
 
 /* ── Zustand ───────────────────────────────────────────────────────────── */
 

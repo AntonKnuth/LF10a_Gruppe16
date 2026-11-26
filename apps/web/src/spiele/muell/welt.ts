@@ -21,6 +21,8 @@
  * solange Ben arbeitet, kommt kein neuer dazu — sonst wäre es ein Wettlauf gegen einen Haufen.
  */
 
+import * as Funken from '../funken'
+import { klemme } from '../geometrie'
 import type { Spruch, Verein } from '../../content/typen'
 import type { Druck, Eingabegeraet } from '../../eingabe'
 import { druckKennzahlen } from '../../eingabe'
@@ -60,7 +62,10 @@ export const NACHSPIEL_SEK = 5
    des Funkens statt Zufall — so bleibt jeder Test wiederholbar. */
 export const FUNKEN_SEK = 0.6
 export const FUNKEN_MAX = 24
-export type Funke = { x: number; y: number; vx: number; vy: number; leben: number; farbe: string }
+/** So sehen die Funken dieses Spiels aus; die Mechanik steht in funken.ts. */
+const STOSS: Funken.Stossart = { leben: FUNKEN_SEK, max: FUNKEN_MAX, tempo: 120, tempoStufe: 50, auftrieb: 60 }
+/** Die Funken fallen hier sanfter als in den anderen Spielen (dort 400). */
+const FUNKEN_SCHWERKRAFT = 300
 
 /* ── Abschnitte ────────────────────────────────────────────────────────────
    Feste Folge, danach geht es von vorn los — mit anderer Verteilung, weil die Saat die
@@ -89,7 +94,6 @@ export const schliessToleranz = (stufe: number, faktor = 1) =>
  */
 export const drift = (stufe: number, faktor = 1) => Math.min(40, Math.max(0, 5 * (stufe - 2)) * faktor)
 
-export const klemme = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v))
 const abstand = (a: Punkt, b: Punkt) => Math.hypot(a.x - b.x, a.y - b.y)
 
 /* ── Müll ──────────────────────────────────────────────────────────────── */
@@ -227,7 +231,7 @@ export type Welt = {
   schwenkUhr: number
   /** Der zuletzt gefundene Spieler, für den Satz im Bild. */
   fund: Verein['kader'][number] | null
-  funken: Funke[]
+  funken: Funken.Funke[]
   /** Offene bzw. zu große Kreise hintereinander — daran hängen die Hilfen. */
   offenInFolge: number; grossInFolge: number
   /** Uhr abgelaufen: kein neuer Strich mehr, Laufendes darf zu Ende gehen. */
@@ -357,13 +361,7 @@ function schliesse(w: Welt): Ereignis {
 function funkenstoss(w: Welt, p: Punkt, anzahl: number) {
   if (w.wenigerBewegung) return
   const farben = [w.farben.primaer, w.farben.sekundaer, '#ffc800']
-  for (let i = 0; i < anzahl && w.funken.length < FUNKEN_MAX; i++) {
-    const winkel = (i / anzahl) * Math.PI * 2
-    const tempo = 120 + (i % 3) * 50
-    const vx = Math.cos(winkel) * tempo
-    const vy = Math.sin(winkel) * tempo - 60
-    w.funken.push({ x: p.x, y: p.y, vx, vy, leben: FUNKEN_SEK, farbe: farben[i % farben.length] })
-  }
+  Funken.funkenstoss(w.funken, p.x, p.y, farben, anzahl, STOSS)
 }
 
 /* ── Lauf der Dinge ────────────────────────────────────────────────────── */
@@ -395,13 +393,7 @@ function fahreLos(w: Welt, phase: 'faehrt' | 'heim') {
 export function aktualisiere(w: Welt, dt: number): Ereignis {
   w.zeitGesamt += dt
 
-  for (const f of w.funken) {
-    f.leben -= dt
-    f.x += f.vx * dt
-    f.y += f.vy * dt
-    f.vy += 300 * dt
-  }
-  w.funken = w.funken.filter((f) => f.leben > 0)
+  w.funken = Funken.bewegeFunken(w.funken, dt, FUNKEN_SCHWERKRAFT)
   for (const v of w.verblassen) v.uhr -= dt
   w.verblassen = w.verblassen.filter((v) => v.uhr > 0)
   if (w.hinweis) {

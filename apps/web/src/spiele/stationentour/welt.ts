@@ -15,6 +15,8 @@
  * `../schrift.ts` und ist dasselbe wie in der Startelf.
  */
 
+import * as Funken from '../funken'
+import { klemme } from '../geometrie'
 import type { Fakt, Verein } from '../../content/typen'
 import type { Druck, Eingabegeraet } from '../../eingabe'
 import { druckKennzahlen } from '../../eingabe'
@@ -101,7 +103,13 @@ export const SCHLUSS_TEXT = 'Danke für die Führung!'
 export const FUNKEN_SEK = 0.4
 export const FUNKEN_JE_ZEICHEN = 10
 
-export type Funke = { x: number; y: number; vx: number; vy: number; leben: number }
+/** So sehen die Funken dieses Spiels aus; die Mechanik steht in funken.ts. */
+const STOSS: Funken.Stossart = {
+  leben: FUNKEN_SEK,
+  // Keine Obergrenze: es gibt nur einen Stoß je fertigem Zeichen, und der verlischt schnell.
+  max: Infinity,
+  tempo: 130, tempoStufe: 0, auftrieb: 40,
+}
 
 /** Was die Welt dem Aufrufer meldet, damit er sofort einen Klang spielen kann (A1). */
 export type Ereignis = 'strich' | 'zeichen' | 'wort' | 'hilfe' | 'locker' | 'schluss'
@@ -116,8 +124,6 @@ const STUFEN = [
   { glyphHoehe: 90, toleranz: 16, tempoBand: 0.25, druckBand: 0.08, mindestTakt: 0.8 },
   { glyphHoehe: 90, toleranz: 12, tempoBand: 0.25, druckBand: 0.08, mindestTakt: 0.8 },
 ]
-
-const klemme = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v))
 
 export type Vorgaben = {
   glyphHoehe: number
@@ -241,7 +247,7 @@ export type Welt = {
   /** Wer spricht: die Besucher unten oder der Stadionsprecher. */
   blase: { text: string; uhr: number; wer: 'gruppe' | 'sprecher' } | null
   pulsUhr: number
-  funken: Funke[]
+  funken: Funken.Funke[]
   /** `prefers-reduced-motion`: dann gibt es keine Funken. Setzt der Aufrufer. */
   wenigerBewegung: boolean
   // --- Zähler für das Ergebnis ---
@@ -503,15 +509,9 @@ function strichFertig(w: Welt): Ereignis {
 
 function funkenstoss(w: Welt, q: Punkt) {
   if (w.wenigerBewegung) return
-  for (let i = 0; i < FUNKEN_JE_ZEICHEN; i++) {
-    const winkel = (i / FUNKEN_JE_ZEICHEN) * Math.PI * 2
-    w.funken.push({
-      x: q.x, y: q.y,
-      vx: Math.cos(winkel) * 130,
-      vy: Math.sin(winkel) * 130 - 40,
-      leben: FUNKEN_SEK,
-    })
-  }
+  // Abwechselnd Vereinsfarbe und dasselbe Gelb wie `F.leuchtet` in zeichnen.ts.
+  const farben = [w.farben.sekundaer, '#ffd54a']
+  Funken.funkenstoss(w.funken, q.x, q.y, farben, FUNKEN_JE_ZEICHEN, STOSS)
 }
 
 /* ── Tempo und Druck ───────────────────────────────────────────────────── */
@@ -593,13 +593,7 @@ export function aktualisiere(w: Welt, dt: number): Ereignis | undefined {
   w.pulsUhr = Math.max(0, w.pulsUhr - dt)
   w.fanUhr = Math.max(0, w.fanUhr - dt)
   if (w.blase && (w.blase.uhr -= dt) <= 0) w.blase = null
-  for (const f of w.funken) {
-    f.leben -= dt
-    f.x += f.vx * dt
-    f.y += f.vy * dt
-    f.vy += 400 * dt
-  }
-  w.funken = w.funken.filter((f) => f.leben > 0)
+  w.funken = Funken.bewegeFunken(w.funken, dt)
   bewegeGruppe(w, dt)
   if (w.zeitAus && !w.schreibt) w.schreibEnde ??= w.zeitGesamt
 

@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import type { Druck } from '../../eingabe'
 import {
-  JUBEL_SEK, FUNKEN_MAX, FUNKEN_SEK, aktualisiere, aufBahn, bahn, ballPunkt, ergebnis, klemme, neueWelt, punktAuf,
+  JUBEL_SEK, FUNKEN_MAX, FUNKEN_SEK, aktualisiere, aufBahn, bahn, ballPunkt, ergebnis, neueWelt, punktAuf,
   toleranz, ziehe, type Welt,
 } from './welt'
 import { VORGABE_REGLER } from '../regler'
+import { klemme } from '../geometrie'
 
 const d = (wert = 0.5): Druck => ({ wert, synthetisch: true })
 

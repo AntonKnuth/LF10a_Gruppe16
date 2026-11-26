@@ -9,10 +9,12 @@
  * Jungen haben eine Rot-Grün-Schwäche, und Rot ist bei manchen Vereinen schon Vereinsfarbe.
  */
 
+import { zeichneFunken } from '../funken'
+import { berechneSicht as sichtFuer, klemme, kreis, type Sicht } from '../geometrie'
 import { tastenDruckWert } from '../../eingabe'
 import {
   FUNKEN_SEK, GEHT_SEK, H, HUEPF_SEK, KISTE, KOMMT_SEK, LAOLA_SEK, REIHEN, TASCHE, W, WACKEL_SEK,
-  bandOben, bandUnten, greifAnteil, griffOrt, griffUrteil, hilfeFuer, kisteRadius, klemme,
+  bandOben, bandUnten, greifAnteil, griffOrt, griffUrteil, hilfeFuer, kisteRadius,
   objektRadius, spielerDerTasche, spruch, type Art, type Ding, type Punkt, type Urteil, type Welt,
 } from './welt'
 
@@ -44,19 +46,14 @@ const schrift = (px: number, gewicht = 600) => `${gewicht} ${px}px ${SCHRIFT}`
 
 type G = CanvasRenderingContext2D
 
-/** Sichtfenster: Maßstab und Rand, damit die 900×640-Bühne mittig ins Canvas passt. */
-export type Sicht = { s: number; dx: number; dy: number }
+export type { Sicht }
 
+/** Sichtfenster für die Bühne dieses Spiels; gerechnet wird in geometrie.ts. */
 export function berechneSicht(breite: number, hoehe: number): Sicht {
-  const s = Math.min(breite / W, hoehe / H)
-  return { s, dx: (breite - W * s) / 2, dy: (hoehe - H * s) / 2 }
+  return sichtFuer(breite, hoehe, W, H)
 }
 
 /* ── Formhelfer ────────────────────────────────────────────────────────── */
-function kreis(g: G, x: number, y: number, r: number) {
-  g.beginPath()
-  g.arc(x, y, r, 0, Math.PI * 2)
-}
 
 function rundRect(g: G, x: number, y: number, w: number, h: number, r: number) {
   const rr = Math.min(r, w / 2, h / 2)
@@ -103,7 +100,7 @@ export function zeichne(g: G, w: Welt, sicht: Sicht, breite: number, hoehe: numb
   tasche(g, w)
   fan(g, w)
   dinge(g, w)
-  funken(g, w)
+  zeichneFunken(g, w.funken, FUNKEN_SEK)
   danke(g, w)
   if (w.laolaUhr > 0) ausverkauft(g)
   hilfe(g, w)
@@ -464,15 +461,6 @@ function gegriffenes(g: G, w: Welt) {
     kreis(g, p.x, p.y, r + 15)
     g.stroke()
   }
-}
-
-function funken(g: G, w: Welt) {
-  g.save()
-  for (const f of w.funken) {
-    g.globalAlpha = Math.max(0, f.leben / FUNKEN_SEK)
-    scheibe(g, f.farbe, f.x, f.y, 5)
-  }
-  g.restore()
 }
 
 /** Ist die Tasche leer, bedankt sich der Fan mit einem Spruch seines Vereins. */

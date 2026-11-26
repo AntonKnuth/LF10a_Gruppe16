@@ -9,6 +9,8 @@
  * Kind Willkür: der Ball bliebe stehen, ohne dass zu sehen ist, warum.
  */
 
+import { zeichneFunken } from '../funken'
+import { berechneSicht as sichtFuer, kreis, type Sicht } from '../geometrie'
 import { BALL_R, FUNKEN_SEK, H, W, ballPunkt, punktAuf, toleranz, type Punkt, type Welt } from './welt'
 
 const F = {
@@ -25,19 +27,14 @@ const F = {
 const SCHRIFT = 'system-ui, sans-serif'
 const schrift = (px: number, gewicht = 600) => `${gewicht} ${px}px ${SCHRIFT}`
 
-/** Sichtfenster: Maßstab und Rand, damit die 900×640-Bühne mittig ins Canvas passt. */
-export type Sicht = { s: number; dx: number; dy: number }
+export type { Sicht }
 
+/** Sichtfenster für die Bühne dieses Spiels; gerechnet wird in geometrie.ts. */
 export function berechneSicht(breite: number, hoehe: number): Sicht {
-  const s = Math.min(breite / W, hoehe / H)
-  return { s, dx: (breite - W * s) / 2, dy: (hoehe - H * s) / 2 }
+  return sichtFuer(breite, hoehe, W, H)
 }
 
 /* ── Formhelfer ────────────────────────────────────────────────────────── */
-function kreis(g: CanvasRenderingContext2D, x: number, y: number, r: number) {
-  g.beginPath()
-  g.arc(x, y, r, 0, Math.PI * 2)
-}
 
 function rundRect(g: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   const rr = Math.min(r, w / 2, h / 2)
@@ -71,20 +68,8 @@ export function zeichne(g: CanvasRenderingContext2D, w: Welt, sicht: Sicht, brei
   spur(g, w)
   vormachen(g, w)
   ball(g, w)
-  funken(g, w)
+  zeichneFunken(g, w.funken, FUNKEN_SEK)
   if (w.jubelUhr > 0) jubel(g)
-}
-
-/** Funkenstoß am Tor: kleine Punkte, die mit ihrer Lebensdauer verblassen. */
-function funken(g: CanvasRenderingContext2D, w: Welt) {
-  g.save()
-  for (const f of w.funken) {
-    g.globalAlpha = Math.max(0, f.leben / FUNKEN_SEK)
-    g.fillStyle = f.farbe
-    kreis(g, f.x, f.y, 5)
-    g.fill()
-  }
-  g.restore()
 }
 
 /** Rasen mit Mähstreifen — dieselbe Bildsprache wie „Platzwart". */

@@ -15,6 +15,7 @@
  *        sich Pfiffe und Stiftpunkte nicht übereinanderlegen.
  */
 
+import { klemme } from '../geometrie'
 import type { Verein } from '../../content/typen'
 import type { Druck, Eingabegeraet } from '../../eingabe'
 import { druckKennzahlen } from '../../eingabe'
@@ -115,7 +116,6 @@ export function punktAuf(bahn: Punkt[], t: number): Punkt {
 }
 
 export const abstand = (a: Punkt, b: Punkt) => Math.hypot(a.x - b.x, a.y - b.y)
-export const klemme = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v))
 
 /* ── Stufe (B1) ─────────────────────────────────────────────────────────────
    Je Stufe eine Zeile, während des Spiels fest. Startwerte, kein Messwert — mit echtem Pencil

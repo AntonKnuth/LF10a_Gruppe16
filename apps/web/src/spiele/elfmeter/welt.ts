@@ -18,6 +18,7 @@
  * dadurch vergleichbar, und der Test kann alles vorhersagen.
  */
 
+import { klemme } from '../geometrie'
 import type { Verein } from '../../content/typen'
 import type { Druck, Eingabegeraet } from '../../eingabe'
 import { druckKennzahlen } from '../../eingabe'
@@ -121,8 +122,6 @@ export function fenster(stufe: number, r: Regler = VORGABE_REGLER) {
     max: (mitte + halb) / r.zielgeschwindigkeit,
   }
 }
-
-export const klemme = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v))
 
 export const abstand = (a: Punkt, b: Punkt) => Math.hypot(a.x - b.x, a.y - b.y)
 

@@ -12,6 +12,7 @@
  * beendet wird das Spiel ausschließlich von der Uhr des SpielScreens.
  */
 
+import { klemme } from '../geometrie'
 import type { Verein } from '../../content/typen'
 import type { Druck, Eingabegeraet } from '../../eingabe'
 import { druckKennzahlen } from '../../eingabe'
@@ -272,7 +273,6 @@ export type Welt = {
 }
 
 /* ── Helfer ────────────────────────────────────────────────────────────── */
-export const klemme = (v: number, a: number, b: number) => (v < a ? a : v > b ? b : v)
 const misch = (a: number, b: number, t: number) => a + (b - a) * t
 const zuf = (a = 1, b = 0) => b + Math.random() * (a - b)
 const waehle = <T>(a: T[]): T => a[Math.floor(Math.random() * a.length)]

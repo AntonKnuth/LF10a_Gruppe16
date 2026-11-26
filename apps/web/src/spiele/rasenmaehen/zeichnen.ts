@@ -10,11 +10,13 @@
  * allein wäre auf einem iPad aus zwei Metern Abstand nicht lesbar.
  */
 
+import { zeichneFunken } from '../funken'
+import { berechneSicht as sichtFuer, klemme, kreis, type Sicht } from '../geometrie'
 import { tastenDruckWert } from '../../eingabe'
 import {
   FUNKEN_SEK, H, MAEHER_R, RASEN_B, RASEN_H, RASEN_X, RASEN_Y, SPALTEN, W, ZEILEN, ZELLE,
   ZONE_MITTE,
-  bandOben, bandUnten, klemme, urteil, zoneBei, zoneVon, type Welt, type Zone,
+  bandOben, bandUnten, urteil, zoneBei, zoneVon, type Welt, type Zone,
 } from './welt'
 
 const F = {
@@ -43,19 +45,14 @@ const BALKEN_H = 24
 const SCHRIFT = 'system-ui, sans-serif'
 const schrift = (px: number, gewicht = 600) => `${gewicht} ${px}px ${SCHRIFT}`
 
-/** Sichtfenster: Maßstab und Rand, damit die 900×640-Bühne mittig ins Canvas passt. */
-export type Sicht = { s: number; dx: number; dy: number }
+export type { Sicht }
 
+/** Sichtfenster für die Bühne dieses Spiels; gerechnet wird in geometrie.ts. */
 export function berechneSicht(breite: number, hoehe: number): Sicht {
-  const s = Math.min(breite / W, hoehe / H)
-  return { s, dx: (breite - W * s) / 2, dy: (hoehe - H * s) / 2 }
+  return sichtFuer(breite, hoehe, W, H)
 }
 
 /* ── Formhelfer ────────────────────────────────────────────────────────── */
-function kreis(g: CanvasRenderingContext2D, x: number, y: number, r: number) {
-  g.beginPath()
-  g.arc(x, y, r, 0, Math.PI * 2)
-}
 
 function rundRect(g: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   const rr = Math.min(r, w / 2, h / 2)
@@ -84,20 +81,8 @@ export function zeichne(g: CanvasRenderingContext2D, w: Welt, sicht: Sicht, brei
   druckBalken(g, w, zone)
   ersatzdruckHinweis(g, zone)
   maeher(g, w, zone)
-  funken(g, w)
+  zeichneFunken(g, w.funken, FUNKEN_SEK)
   if (w.platzFertig) fertigBanner(g)
-}
-
-/** Funkenstoß beim fertigen Platz: kleine Punkte, die mit ihrer Lebensdauer verblassen. */
-function funken(g: CanvasRenderingContext2D, w: Welt) {
-  g.save()
-  for (const f of w.funken) {
-    g.globalAlpha = Math.max(0, f.leben / FUNKEN_SEK)
-    g.fillStyle = f.farbe
-    kreis(g, f.x, f.y, 5)
-    g.fill()
-  }
-  g.restore()
 }
 
 /** Bande rund um den Platz in Vereinsfarben — C1: das ist ein Stadion, kein Vorgarten. */

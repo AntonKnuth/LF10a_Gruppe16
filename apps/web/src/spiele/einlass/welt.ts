@@ -20,6 +20,8 @@
  * C2: kein Verliererzustand. Was fällt, liegt wieder da; der Fan wartet beliebig lange.
  */
 
+import * as Funken from '../funken'
+import { klemme } from '../geometrie'
 import type { Spruch, Verein } from '../../content/typen'
 import type { Druck, Eingabegeraet } from '../../eingabe'
 import { druckKennzahlen } from '../../eingabe'
@@ -70,7 +72,8 @@ export const NACHSPIEL_SEK = 5
 export const FUNKEN_SEK = 0.7
 export const FUNKEN_MAX = 24
 
-export type Funke = { x: number; y: number; vx: number; vy: number; leben: number; farbe: string }
+/** So sehen die Funken dieses Spiels aus; die Mechanik steht in funken.ts. */
+const STOSS: Funken.Stossart = { leben: FUNKEN_SEK, max: FUNKEN_MAX, tempo: 150, tempoStufe: 60, auftrieb: 90 }
 
 /* ── Dinge ─────────────────────────────────────────────────────────────────
    Nur Alltagsdinge. Der Fan hat sie aus Versehen eingepackt und bekommt sie nach dem Spiel
@@ -126,7 +129,6 @@ export function urteil(druck: number, stufe: number, g: Gewicht, faktor = 1): Ur
   return 'gut'
 }
 
-export const klemme = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v))
 const abstand = (a: Punkt, b: Punkt) => Math.hypot(a.x - b.x, a.y - b.y)
 
 /* ── Inhalt der Taschen ────────────────────────────────────────────────────
@@ -223,7 +225,7 @@ export type Welt = {
   /** Letzter Andruck, für den Druckbalken der Hilfe. */
   druck: number
   laolaUhr: number
-  funken: Funke[]
+  funken: Funken.Funke[]
   /** Uhr abgelaufen: kein neuer Griff mehr, ein laufender darf zu Ende gehen. */
   schluss: boolean
   nachspielUhr: number
@@ -482,17 +484,7 @@ function gibAb(w: Welt, ding: Ding, ort: Punkt) {
 function funkenstoss(w: Welt, x: number, y: number) {
   if (w.wenigerBewegung) return
   const farben = [w.farben.primaer, w.farben.sekundaer, '#ffc800']
-  for (let i = 0; i < 12 && w.funken.length < FUNKEN_MAX; i++) {
-    const winkel = (i / 12) * Math.PI * 2
-    const tempo = 150 + (i % 3) * 60
-    w.funken.push({
-      x, y,
-      vx: Math.cos(winkel) * tempo,
-      vy: Math.sin(winkel) * tempo - 90,
-      leben: FUNKEN_SEK,
-      farbe: farben[i % farben.length],
-    })
-  }
+  Funken.funkenstoss(w.funken, x, y, farben, 12, STOSS)
 }
 
 /* ── Lauf der Dinge ────────────────────────────────────────────────────── */
@@ -510,13 +502,7 @@ export function aktualisiere(w: Welt, dt: number): Ereignis {
   w.zeitGesamt += dt
   if (w.laolaUhr > 0) w.laolaUhr -= dt
 
-  for (const f of w.funken) {
-    f.leben -= dt
-    f.x += f.vx * dt
-    f.y += f.vy * dt
-    f.vy += 400 * dt
-  }
-  w.funken = w.funken.filter((f) => f.leben > 0)
+  w.funken = Funken.bewegeFunken(w.funken, dt)
 
   for (const d of w.dinge) {
     if (d.wackelUhr > 0) d.wackelUhr -= dt

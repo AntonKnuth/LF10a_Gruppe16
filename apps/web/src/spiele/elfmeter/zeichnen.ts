@@ -7,9 +7,10 @@
  * bewegen sich nur Zielmarke, Torwart und der Ring um den Ball.
  */
 
+import { berechneSicht as sichtFuer, klemme, kreis, type Sicht } from '../geometrie'
 import {
   ANLAUF, BAELLE_JE_RUNDE, BALL, BALL_R, H, KREIS_R, NACHLEGEN_SEK, REAKTION_SEK, TOR, W,
-  fenster, istWappen, klemme, ziel, zielArt, zielRadius, type Punkt, type Welt,
+  fenster, istWappen, ziel, zielArt, zielRadius, type Punkt, type Welt,
 } from './welt'
 
 const F = {
@@ -33,19 +34,14 @@ const schrift = (px: number, gewicht = 600) => `${gewicht} ${px}px ${SCHRIFT}`
 /** Wo der Ballsack steht. Von hier rollt der nächste Ball auf den Punkt. */
 const SACK: Punkt = { x: 112, y: 578 }
 
-/** Sichtfenster: Maßstab und Rand, damit die 900×640-Bühne mittig ins Canvas passt. */
-export type Sicht = { s: number; dx: number; dy: number }
+export type { Sicht }
 
+/** Sichtfenster für die Bühne dieses Spiels; gerechnet wird in geometrie.ts. */
 export function berechneSicht(breite: number, hoehe: number): Sicht {
-  const s = Math.min(breite / W, hoehe / H)
-  return { s, dx: (breite - W * s) / 2, dy: (hoehe - H * s) / 2 }
+  return sichtFuer(breite, hoehe, W, H)
 }
 
 /* ── Formhelfer ────────────────────────────────────────────────────────── */
-function kreis(g: CanvasRenderingContext2D, x: number, y: number, r: number) {
-  g.beginPath()
-  g.arc(x, y, r, 0, Math.PI * 2)
-}
 
 function rundRect(
   g: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number,

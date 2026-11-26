@@ -21,6 +21,7 @@
  * `hand-auge` (den bewegten Zuschauern ausweichen).
  */
 
+import { klemme } from '../geometrie'
 import type { Verein } from '../../content/typen'
 import type { Druck, Eingabegeraet } from '../../eingabe'
 import { druckKennzahlen } from '../../eingabe'
@@ -151,8 +152,6 @@ export const anzahlLaeufer = (stufe: number) => 1 + stufe
 
 /** Quer durch die Sitzreihen geht es nur schleichend voran. */
 const NEBENWEG_TEMPO = 0.3
-
-export const klemme = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v))
 
 /* ── Zustand ───────────────────────────────────────────────────────────── */
 

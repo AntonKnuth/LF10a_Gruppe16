@@ -22,6 +22,7 @@
  * der Uhr des SpielScreens.
  */
 
+import * as Funken from '../funken'
 import type { Verein } from '../../content/typen'
 import type { Druck, Eingabegeraet } from '../../eingabe'
 import { druckKennzahlen } from '../../eingabe'
@@ -58,7 +59,8 @@ export const FERTIG_SEK = 1.8
 export const FUNKEN_SEK = 0.8
 export const FUNKEN_MAX = 24
 
-export type Funke = { x: number; y: number; vx: number; vy: number; leben: number; farbe: string }
+/** So sehen die Funken dieses Spiels aus; die Mechanik steht in funken.ts. */
+const STOSS: Funken.Stossart = { leben: FUNKEN_SEK, max: FUNKEN_MAX, tempo: 160, tempoStufe: 60, auftrieb: 80 }
 
 /** Was `maehe` und `aktualisiere` dem Aufrufer melden, damit er einen Klang spielen kann (A1). */
 export type Ereignis = 'schnitt' | 'platz'
@@ -106,8 +108,6 @@ export const bandUnten = (stufe: number, zone: Zone, faktor = 1) =>
 export const bandOben = (stufe: number, zone: Zone, faktor = 1) =>
   ZONE_MITTE[zone] + halbesBand(stufe, faktor)
 
-export const klemme = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v))
-
 /* ── Zustand ───────────────────────────────────────────────────────────── */
 export type Zelle = 'ungemaeht' | 'gut' | 'kaputt'
 export type Urteil = 'zu-leicht' | 'gut' | 'zu-fest'
@@ -147,7 +147,7 @@ export type Welt = {
   /** Der Platz ist geschafft und bleibt kurz stehen, bevor der nächste anfängt. */
   platzFertig: boolean
   fertigUhr: number
-  funken: Funke[]
+  funken: Funken.Funke[]
   /** `prefers-reduced-motion`: dann gibt es keine Funken. Setzt der Aufrufer. */
   wenigerBewegung: boolean
 }
@@ -182,28 +182,7 @@ export function neueWelt(
 /** Funkenstoß um einen Punkt, in den übergebenen Farben. */
 export function funkenstoss(w: Welt, x: number, y: number, farben: string[], anzahl = 12) {
   if (w.wenigerBewegung) return
-  for (let i = 0; i < anzahl && w.funken.length < FUNKEN_MAX; i++) {
-    const winkel = (i / anzahl) * Math.PI * 2
-    const tempo = 160 + (i % 3) * 60
-    w.funken.push({
-      x, y,
-      vx: Math.cos(winkel) * tempo,
-      vy: Math.sin(winkel) * tempo - 80,
-      leben: FUNKEN_SEK,
-      farbe: farben[i % farben.length],
-    })
-  }
-}
-
-/** Funken fliegen, fallen und verschwinden nach ihrer festen Lebensdauer. */
-function bewegeFunken(w: Welt, dt: number) {
-  for (const f of w.funken) {
-    f.leben -= dt
-    f.x += f.vx * dt
-    f.y += f.vy * dt
-    f.vy += 400 * dt
-  }
-  w.funken = w.funken.filter((f) => f.leben > 0)
+  Funken.funkenstoss(w.funken, x, y, farben, anzahl, STOSS)
 }
 
 /** Zone unter einem Punkt der Bühne. Außerhalb des Platzes gilt der mittlere Grasstand. */
@@ -315,7 +294,7 @@ function naechsterPlatz(w: Welt) {
 
 export function aktualisiere(w: Welt, dt: number): Ereignis | undefined {
   w.zeitGesamt += dt
-  bewegeFunken(w, dt)
+  w.funken = Funken.bewegeFunken(w.funken, dt)
   if (w.platzFertig) {
     w.fertigUhr -= dt
     if (w.fertigUhr <= 0) naechsterPlatz(w)
