@@ -152,4 +152,4 @@ schon existiert. Sonst wäre ein neues Spiel im Therapeutenbereich unsichtbar.
 - Pfeile im Onboarding — der Profi erklärt das Spiel beim ersten Mal, zeigt aber auf nichts
 - Abschiedsgeschenk per Kamera und der Upload der Arbeitsproben (Schema steht, Endpunkt fehlt)
 - HTTPS unter festem Namen — nötig für echte iPads, sonst stürzt die App beim Sessionstart ab
-- Vereinsassets sind Platzhalter mit echten Bezügen und müssen vor einer Veröffentlichung ersetzt werden
+- Vereinsassets sind Platzhalter mit echten Bezügen und müssen vor einer Veröffentlichung ersetzt werden.
