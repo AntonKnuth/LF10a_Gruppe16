@@ -6,7 +6,10 @@ import {
   HILFE_TEXT, LOCKER_TEXT, SCHLUSS_TEXT, aktualisiere, beende, ergebnis, faktVon, hebeAb, neueWelt,
   schreibe, setzeAn, type Ereignis, type Welt,
 } from './welt'
-import { berechneSicht, zeichne, type Sicht } from './zeichnen'
+import { berechneSicht, zeichne } from './zeichnen'
+import {
+  LEERE_SICHT, beobachteLeinwand, starteBildschleife, useSpielSteuerung, wenigerBewegung, zuLogisch,
+} from '../leinwand'
 import { klang, schliesseKlang, weckeKlang } from './klang'
 
 /**
@@ -26,10 +29,7 @@ export function Stadionfuehrung({
 }: SpielProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const weltRef = useRef<Welt | null>(null)
-  const fertig = useRef(false)
-  // Die Bildschleife liegt außerhalb von React und liest den Wert über diese Referenz.
-  const pause = useRef(angehalten)
-  const beiFertig = useRef(onFertig)
+  const { pause, meldeFertig } = useSpielSteuerung(angehalten, zeitAbgelaufen, onFertig)
   weltRef.current ??= neueWelt(stufe, verein, regler)
 
   useEffect(() => {
@@ -39,30 +39,12 @@ export function Stadionfuehrung({
     if (!cv || !g || !w) return
 
     // Wer weniger Bewegung wünscht, bekommt keine Funken und kein Pulsieren.
-    w.wenigerBewegung =
-      typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
+    w.wenigerBewegung = wenigerBewegung()
 
-    let sicht: Sicht = { s: 1, dx: 0, dy: 0 }
-
-    const passeAn = () => {
-      const r = cv.getBoundingClientRect()
-      if (!r.width || !r.height) return
-      const dpr = Math.min(2, devicePixelRatio || 1)
-      cv.width = Math.round(r.width * dpr)
-      cv.height = Math.round(r.height * dpr)
+    let sicht = LEERE_SICHT
+    const endeBeobachten = beobachteLeinwand(cv, () => {
       sicht = berechneSicht(cv.width, cv.height)
-    }
-    passeAn()
-    const beobachter = new ResizeObserver(passeAn)
-    beobachter.observe(cv)
-
-    const zuLogisch = (e: { clientX: number; clientY: number }) => {
-      const r = cv.getBoundingClientRect()
-      return {
-        x: ((e.clientX - r.left) * (cv.width / r.width) - sicht.dx) / sicht.s,
-        y: ((e.clientY - r.top) * (cv.height / r.height) - sicht.dy) / sicht.s,
-      }
-    }
+    })
 
     /** Klang sofort (A1), Stimme nur bei eingeschaltetem Ton — das prüft `vorlesen` selbst (A4). */
     const melde = (ereignis: Ereignis | undefined) => {
@@ -85,7 +67,7 @@ export function Stadionfuehrung({
       if (pause.current) return
       // Der Klang braucht eine Nutzergeste, sonst bleibt der Kontext angehalten.
       weckeKlang()
-      const p = zuLogisch(e)
+      const p = zuLogisch(e, cv, sicht)
       w.geraet = geraetVon(e)
       melde(setzeAn(w, p.x, p.y))
       melde(schreibe(w, p.x, p.y, druckVon(e)))
@@ -97,7 +79,7 @@ export function Stadionfuehrung({
       if (!w.schreibt || pause.current) return
       // Volle Abtastrate des Pencils: der Strich soll so fein sein wie die Hand.
       for (const fein of feinEreignisse(e)) {
-        const q = zuLogisch(fein)
+        const q = zuLogisch(fein, cv, sicht)
         melde(schreibe(w, q.x, q.y, druckVon(fein)))
       }
     }
@@ -110,23 +92,16 @@ export function Stadionfuehrung({
     addEventListener('pointercancel', hoch)
     addEventListener('blur', hoch)
 
-    let letzteZeit = performance.now()
-    let raf = requestAnimationFrame(function bild(jetzt: number) {
-      const dt = Math.min(0.05, (jetzt - letzteZeit) / 1000)
-      letzteZeit = jetzt
+    const endeSchleife = starteBildschleife((dt) => {
       // Angehalten wird nur gerechnet, nicht gezeichnet.
       if (!pause.current) melde(aktualisiere(w, dt))
       zeichne(g, w, sicht, cv.width, cv.height)
-      if (!fertig.current && w.phase === 'fertig') {
-        fertig.current = true
-        beiFertig.current(ergebnis(w))
-      }
-      raf = requestAnimationFrame(bild)
+      if (w.phase === 'fertig') meldeFertig(() => ergebnis(w))
     })
 
     return () => {
-      cancelAnimationFrame(raf)
-      beobachter.disconnect()
+      endeSchleife()
+      endeBeobachten()
       schliesseKlang()
       cv.removeEventListener('pointerdown', runter)
       cv.removeEventListener('pointermove', bewegen)
@@ -134,14 +109,9 @@ export function Stadionfuehrung({
       removeEventListener('pointercancel', hoch)
       removeEventListener('blur', hoch)
     }
-  }, [])
+  }, [pause, meldeFertig])
 
   useEffect(() => {
-    beiFertig.current = onFertig
-  }, [onFertig])
-
-  useEffect(() => {
-    pause.current = angehalten
     // Angehalten liegt kein Stift mehr auf; sonst zöge der erste Punkt nach dem
     // Weiterspielen einen Strich quer über die Tafel.
     if (angehalten && weltRef.current) hebeAb(weltRef.current)

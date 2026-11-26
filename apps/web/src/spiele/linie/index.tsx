@@ -2,7 +2,10 @@ import { useEffect, useRef } from 'react'
 import type { SpielProps } from '../index'
 import { druckVon, feinEreignisse, geraetVon } from '../../eingabe'
 import { aktualisiere, ergebnis, neueWelt, ziehe, type Welt } from './welt'
-import { berechneSicht, zeichne, type Sicht } from './zeichnen'
+import { berechneSicht, zeichne } from './zeichnen'
+import {
+  LEERE_SICHT, beobachteLeinwand, starteBildschleife, useSpielSteuerung, wenigerBewegung, zuLogisch,
+} from '../leinwand'
 import { klang, schliesseKlang, weckeKlang } from './klang'
 
 /**
@@ -21,11 +24,7 @@ export function LinieMalen({
 }: SpielProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const weltRef = useRef<Welt | null>(null)
-  const fertig = useRef(false)
-  // Die Bildschleife liegt außerhalb von React und liest den Wert über diese Referenz.
-  const pause = useRef(angehalten)
-  const zeitAus = useRef(false)
-  const beiFertig = useRef(onFertig)
+  const { pause, zeitAus, meldeFertig } = useSpielSteuerung(angehalten, zeitAbgelaufen, onFertig)
   // Der Verein bringt die Farben mit — ein neuer Verein ist eine Content-Datei.
   weltRef.current ??= neueWelt(stufe, verein, regler)
 
@@ -36,30 +35,12 @@ export function LinieMalen({
     if (!cv || !g || !w) return
 
     // Wer weniger Bewegung wünscht, bekommt keine Funken.
-    w.wenigerBewegung =
-      typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
+    w.wenigerBewegung = wenigerBewegung()
 
-    let sicht: Sicht = { s: 1, dx: 0, dy: 0 }
-
-    const passeAn = () => {
-      const r = cv.getBoundingClientRect()
-      if (!r.width || !r.height) return
-      const dpr = Math.min(2, devicePixelRatio || 1)
-      cv.width = Math.round(r.width * dpr)
-      cv.height = Math.round(r.height * dpr)
+    let sicht = LEERE_SICHT
+    const endeBeobachten = beobachteLeinwand(cv, () => {
       sicht = berechneSicht(cv.width, cv.height)
-    }
-    passeAn()
-    const beobachter = new ResizeObserver(passeAn)
-    beobachter.observe(cv)
-
-    const zuLogisch = (e: { clientX: number; clientY: number }) => {
-      const r = cv.getBoundingClientRect()
-      return {
-        x: ((e.clientX - r.left) * (cv.width / r.width) - sicht.dx) / sicht.s,
-        y: ((e.clientY - r.top) * (cv.height / r.height) - sicht.dy) / sicht.s,
-      }
-    }
+    })
 
     /** Was `ziehe` meldet, klingt sofort — das ist die Rückmeldung unter 100 ms aus A1. */
     const melde = (ereignis: ReturnType<typeof ziehe>) => {
@@ -71,7 +52,7 @@ export function LinieMalen({
       if (pause.current) return
       // Der Klang braucht eine Nutzergeste, sonst bleibt der Kontext angehalten.
       weckeKlang()
-      const p = zuLogisch(e)
+      const p = zuLogisch(e, cv, sicht)
       w.zeiger = { x: p.x, y: p.y, drin: true }
       w.geraet = geraetVon(e)
       w.zieht = true
@@ -81,12 +62,12 @@ export function LinieMalen({
     }
 
     const bewegen = (e: PointerEvent) => {
-      const p = zuLogisch(e)
+      const p = zuLogisch(e, cv, sicht)
       w.zeiger = { x: p.x, y: p.y, drin: true }
       if (!w.zieht || pause.current) return
       // Volle Abtastrate des Pencils: jeder Zwischenwert zählt für die Genauigkeit.
       for (const fein of feinEreignisse(e)) {
-        const q = zuLogisch(fein)
+        const q = zuLogisch(fein, cv, sicht)
         melde(ziehe(w, q.x, q.y, druckVon(fein)))
       }
     }
@@ -106,23 +87,16 @@ export function LinieMalen({
     addEventListener('pointercancel', hoch)
     addEventListener('blur', hoch)
 
-    let letzteZeit = performance.now()
-    let raf = requestAnimationFrame(function bild(jetzt: number) {
-      const dt = Math.min(0.05, (jetzt - letzteZeit) / 1000)
-      letzteZeit = jetzt
+    const endeSchleife = starteBildschleife((dt) => {
       // Angehalten wird nur gerechnet, nicht gezeichnet.
       if (!pause.current) aktualisiere(w, dt)
       zeichne(g, w, sicht, cv.width, cv.height)
-      if (!fertig.current && zeitAus.current) {
-        fertig.current = true
-        beiFertig.current(ergebnis(w, Math.round(w.zeitGesamt * 1000), false))
-      }
-      raf = requestAnimationFrame(bild)
+      if (zeitAus.current) meldeFertig(() => ergebnis(w, Math.round(w.zeitGesamt * 1000), false))
     })
 
     return () => {
-      cancelAnimationFrame(raf)
-      beobachter.disconnect()
+      endeSchleife()
+      endeBeobachten()
       schliesseKlang()
       cv.removeEventListener('pointerdown', runter)
       cv.removeEventListener('pointermove', bewegen)
@@ -131,22 +105,13 @@ export function LinieMalen({
       removeEventListener('pointercancel', hoch)
       removeEventListener('blur', hoch)
     }
-  }, [])
+  }, [pause, zeitAus, meldeFertig])
 
   useEffect(() => {
-    beiFertig.current = onFertig
-  }, [onFertig])
-
-  useEffect(() => {
-    pause.current = angehalten
     // Angehalten liegt kein Stift mehr auf; sonst zöge der erste Punkt nach dem
     // Weiterspielen eine Gerade quer über den Platz.
     if (angehalten && weltRef.current) weltRef.current.zieht = false
   }, [angehalten])
-
-  useEffect(() => {
-    if (zeitAbgelaufen) zeitAus.current = true
-  }, [zeitAbgelaufen])
 
   return <canvas ref={canvasRef} className="block h-full w-full touch-none" />
 }

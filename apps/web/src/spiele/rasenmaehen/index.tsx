@@ -2,7 +2,10 @@ import { useEffect, useRef } from 'react'
 import type { SpielProps } from '../index'
 import { druckVon, feinEreignisse, geraetVon, tastenDruckLauscher } from '../../eingabe'
 import { aktualisiere, ergebnis, maehe, neueWelt, type Welt } from './welt'
-import { berechneSicht, zeichne, type Sicht } from './zeichnen'
+import { berechneSicht, zeichne } from './zeichnen'
+import {
+  LEERE_SICHT, beobachteLeinwand, starteBildschleife, useSpielSteuerung, wenigerBewegung, zuLogisch,
+} from '../leinwand'
 import { klang, schliesseKlang, weckeKlang } from './klang'
 
 /**
@@ -19,13 +22,7 @@ export function Platzwart({
 }: SpielProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const weltRef = useRef<Welt | null>(null)
-  const fertig = useRef(false)
-  // Die Bildschleife liegt außerhalb von React und liest den Wert über diese Referenz.
-  const pause = useRef(angehalten)
-  const zeitAus = useRef(false)
-  // Die Bildschleife läuft in einem Effekt ohne Abhängigkeiten und sieht `onFertig`
-  // deshalb nur über diese Referenz.
-  const beiFertig = useRef(onFertig)
+  const { pause, zeitAus, meldeFertig } = useSpielSteuerung(angehalten, zeitAbgelaufen, onFertig)
   // Der Verein bringt die Farben der Bande mit — ein neuer Verein ist eine Content-Datei.
   weltRef.current ??= neueWelt(stufe, verein, regler)
 
@@ -36,30 +33,12 @@ export function Platzwart({
     if (!cv || !g || !w) return
 
     // Wer weniger Bewegung wünscht, bekommt keine Funken.
-    w.wenigerBewegung =
-      typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
+    w.wenigerBewegung = wenigerBewegung()
 
-    let sicht: Sicht = { s: 1, dx: 0, dy: 0 }
-
-    const passeAn = () => {
-      const r = cv.getBoundingClientRect()
-      if (!r.width || !r.height) return
-      const dpr = Math.min(2, devicePixelRatio || 1)
-      cv.width = Math.round(r.width * dpr)
-      cv.height = Math.round(r.height * dpr)
+    let sicht = LEERE_SICHT
+    const endeBeobachten = beobachteLeinwand(cv, () => {
       sicht = berechneSicht(cv.width, cv.height)
-    }
-    passeAn()
-    const beobachter = new ResizeObserver(passeAn)
-    beobachter.observe(cv)
-
-    const zuLogisch = (e: { clientX: number; clientY: number }) => {
-      const r = cv.getBoundingClientRect()
-      return {
-        x: ((e.clientX - r.left) * (cv.width / r.width) - sicht.dx) / sicht.s,
-        y: ((e.clientY - r.top) * (cv.height / r.height) - sicht.dy) / sicht.s,
-      }
-    }
+    })
 
     /* Letzter gemähter Punkt — die Strecke dorthin wird beim nächsten Ereignis
        mitgemäht, damit eine schnelle Bewegung keine Streifen stehen lässt. */
@@ -80,7 +59,7 @@ export function Platzwart({
     const runter = (e: PointerEvent) => {
       // Der Klang braucht eine Nutzergeste, sonst bleibt der Kontext angehalten.
       weckeKlang()
-      const p = zuLogisch(e)
+      const p = zuLogisch(e, cv, sicht)
       w.maeher = { x: p.x, y: p.y, drin: true }
       w.geraet = geraetVon(e)
       w.druck = druckVon(e)
@@ -93,7 +72,7 @@ export function Platzwart({
     }
 
     const bewegen = (e: PointerEvent) => {
-      const p = zuLogisch(e)
+      const p = zuLogisch(e, cv, sicht)
       w.maeher = { x: p.x, y: p.y, drin: true }
       if (!w.maeht) {
         w.druck = druckVon(e)
@@ -101,7 +80,7 @@ export function Platzwart({
       }
       // Volle Abtastrate des Pencils: jeder Zwischenwert zählt für die Druckkurve.
       for (const fein of feinEreignisse(e)) {
-        const q = zuLogisch(fein)
+        const q = zuLogisch(fein, cv, sicht)
         const d = druckVon(fein)
         melde(maehe(w, letzter.x, letzter.y, q.x, q.y, d))
         letzter = q
@@ -128,25 +107,18 @@ export function Platzwart({
       w.druck = d
     })
 
-    let letzteZeit = performance.now()
-    let raf = requestAnimationFrame(function bild(jetzt: number) {
-      const dt = Math.min(0.05, (jetzt - letzteZeit) / 1000)
-      letzteZeit = jetzt
+    const endeSchleife = starteBildschleife((dt) => {
       // Angehalten wird nur gerechnet, nicht gezeichnet.
       if (!pause.current) melde(aktualisiere(w, dt))
       zeichne(g, w, sicht, cv.width, cv.height)
       // Nur die Uhr beendet das Spiel: ein geschaffter Platz wird gefeiert, dann kommt
       // der nächste. Kein Verliererzustand und kein vorzeitiges Ende (C2).
-      if (!fertig.current && zeitAus.current) {
-        fertig.current = true
-        beiFertig.current(ergebnis(w, Math.round(w.zeitGesamt * 1000), false))
-      }
-      raf = requestAnimationFrame(bild)
+      if (zeitAus.current) meldeFertig(() => ergebnis(w, Math.round(w.zeitGesamt * 1000), false))
     })
 
     return () => {
-      cancelAnimationFrame(raf)
-      beobachter.disconnect()
+      endeSchleife()
+      endeBeobachten()
       schliesseKlang()
       cv.removeEventListener('pointerdown', runter)
       cv.removeEventListener('pointermove', bewegen)
@@ -156,19 +128,7 @@ export function Platzwart({
       removeEventListener('blur', hoch)
       abTasten()
     }
-  }, [])
-
-  useEffect(() => {
-    beiFertig.current = onFertig
-  }, [onFertig])
-
-  useEffect(() => {
-    pause.current = angehalten
-  }, [angehalten])
-
-  useEffect(() => {
-    if (zeitAbgelaufen) zeitAus.current = true
-  }, [zeitAbgelaufen])
+  }, [pause, zeitAus, meldeFertig])
 
   return <canvas ref={canvasRef} className="block h-full w-full touch-none" />
 }

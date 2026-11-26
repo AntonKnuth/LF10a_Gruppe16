@@ -5,7 +5,10 @@ import {
   aktualisiere, beginneSchluss, ergebnis, hebeAb, istFertig, male, neueWelt, setzeAuf,
   verwirfStrich, type Ereignis, type Welt,
 } from './welt'
-import { berechneSicht, zeichne, type Sicht } from './zeichnen'
+import { berechneSicht, zeichne } from './zeichnen'
+import {
+  LEERE_SICHT, beobachteLeinwand, starteBildschleife, useSpielSteuerung, wenigerBewegung, zuLogisch,
+} from '../leinwand'
 import { klang, schliesseKlang, weckeKlang } from './klang'
 
 /**
@@ -24,10 +27,7 @@ export function PlatzAufraeumen({
 }: SpielProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const weltRef = useRef<Welt | null>(null)
-  const fertig = useRef(false)
-  // Die Bildschleife liegt außerhalb von React und liest die Werte über diese Referenzen.
-  const pause = useRef(angehalten)
-  const beiFertig = useRef(onFertig)
+  const { pause, meldeFertig } = useSpielSteuerung(angehalten, zeitAbgelaufen, onFertig)
   // Der Verein bringt Farben, Kader und Sprüche mit — ein neuer Verein ist eine Content-Datei.
   weltRef.current ??= neueWelt(stufe, verein, regler)
 
@@ -37,30 +37,12 @@ export function PlatzAufraeumen({
     const w = weltRef.current
     if (!cv || !g || !w) return
 
-    w.wenigerBewegung =
-      typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
+    w.wenigerBewegung = wenigerBewegung()
 
-    let sicht: Sicht = { s: 1, dx: 0, dy: 0 }
-
-    const passeAn = () => {
-      const r = cv.getBoundingClientRect()
-      if (!r.width || !r.height) return
-      const dpr = Math.min(2, devicePixelRatio || 1)
-      cv.width = Math.round(r.width * dpr)
-      cv.height = Math.round(r.height * dpr)
+    let sicht = LEERE_SICHT
+    const endeBeobachten = beobachteLeinwand(cv, () => {
       sicht = berechneSicht(cv.width, cv.height)
-    }
-    passeAn()
-    const beobachter = new ResizeObserver(passeAn)
-    beobachter.observe(cv)
-
-    const zuLogisch = (e: { clientX: number; clientY: number }) => {
-      const r = cv.getBoundingClientRect()
-      return {
-        x: ((e.clientX - r.left) * (cv.width / r.width) - sicht.dx) / sicht.s,
-        y: ((e.clientY - r.top) * (cv.height / r.height) - sicht.dy) / sicht.s,
-      }
-    }
+    })
 
     /** Was die Welt meldet, klingt sofort — das ist die Rückmeldung unter 100 ms aus A1. */
     const melde = (ereignis: Ereignis) => {
@@ -72,7 +54,7 @@ export function PlatzAufraeumen({
       // Der Klang braucht eine Nutzergeste, sonst bleibt der Kontext angehalten.
       weckeKlang()
       if (pause.current) return
-      const p = zuLogisch(e)
+      const p = zuLogisch(e, cv, sicht)
       setzeAuf(w, p.x, p.y, druckVon(e), geraetVon(e))
       cv.setPointerCapture(e.pointerId)
       e.preventDefault()
@@ -82,7 +64,7 @@ export function PlatzAufraeumen({
       if (pause.current || !w.strich) return
       // Volle Abtastrate des Pencils: der Strich folgt jedem Zwischenpunkt.
       for (const fein of feinEreignisse(e)) {
-        const q = zuLogisch(fein)
+        const q = zuLogisch(fein, cv, sicht)
         melde(male(w, q.x, q.y, druckVon(fein)))
       }
     }
@@ -97,25 +79,18 @@ export function PlatzAufraeumen({
     addEventListener('pointercancel', abgebrochen)
     addEventListener('blur', abgebrochen)
 
-    let letzteZeit = performance.now()
-    let raf = requestAnimationFrame(function bild(jetzt: number) {
-      const dt = Math.min(0.05, (jetzt - letzteZeit) / 1000)
-      letzteZeit = jetzt
+    const endeSchleife = starteBildschleife((dt) => {
       // Angehalten wird nur gezeichnet, nicht gerechnet.
       if (!pause.current) {
         melde(aktualisiere(w, dt))
-        if (!fertig.current && istFertig(w)) {
-          fertig.current = true
-          beiFertig.current(ergebnis(w, Math.round(w.zeitGesamt * 1000), false))
-        }
+        if (istFertig(w)) meldeFertig(() => ergebnis(w, Math.round(w.zeitGesamt * 1000), false))
       }
       zeichne(g, w, sicht, cv.width, cv.height)
-      raf = requestAnimationFrame(bild)
     })
 
     return () => {
-      cancelAnimationFrame(raf)
-      beobachter.disconnect()
+      endeSchleife()
+      endeBeobachten()
       schliesseKlang()
       cv.removeEventListener('pointerdown', runter)
       cv.removeEventListener('pointermove', bewegen)
@@ -123,16 +98,11 @@ export function PlatzAufraeumen({
       removeEventListener('pointercancel', abgebrochen)
       removeEventListener('blur', abgebrochen)
     }
-  }, [])
-
-  useEffect(() => {
-    beiFertig.current = onFertig
-  }, [onFertig])
+  }, [pause, meldeFertig])
 
   /* Angehalten liegt kein Stift mehr auf; der halbe Kreis verfällt. Sonst zöge der erste Punkt
      nach dem Weiterspielen eine Gerade quer über den Platz. */
   useEffect(() => {
-    pause.current = angehalten
     if (angehalten && weltRef.current) verwirfStrich(weltRef.current)
   }, [angehalten])
 

@@ -5,7 +5,10 @@ import {
   aktualisiere, beginneSchluss, bewege, ergebnis, hebeAb, istFertig, legeZurueck, neueWelt,
   setzeAuf, stelleDruck, type Ereignis, type Welt,
 } from './welt'
-import { berechneSicht, zeichne, type Sicht } from './zeichnen'
+import { berechneSicht, zeichne } from './zeichnen'
+import {
+  LEERE_SICHT, beobachteLeinwand, starteBildschleife, useSpielSteuerung, wenigerBewegung, zuLogisch,
+} from '../leinwand'
 import { klang, schliesseKlang, weckeKlang } from './klang'
 
 /**
@@ -22,12 +25,7 @@ export function Einlasskontrolle({
 }: SpielProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const weltRef = useRef<Welt | null>(null)
-  const fertig = useRef(false)
-  // Die Bildschleife liegt außerhalb von React und liest den Wert über diese Referenz.
-  const pause = useRef(angehalten)
-  // Die Bildschleife läuft in einem Effekt ohne Abhängigkeiten und sieht `onFertig`
-  // deshalb nur über diese Referenz.
-  const beiFertig = useRef(onFertig)
+  const { pause, meldeFertig } = useSpielSteuerung(angehalten, zeitAbgelaufen, onFertig)
   // Der Verein bringt Farben, Kader und Sprüche mit — ein neuer Verein ist eine Content-Datei.
   weltRef.current ??= neueWelt(stufe, verein, regler)
 
@@ -37,30 +35,12 @@ export function Einlasskontrolle({
     const w = weltRef.current
     if (!cv || !g || !w) return
 
-    w.wenigerBewegung =
-      typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
+    w.wenigerBewegung = wenigerBewegung()
 
-    let sicht: Sicht = { s: 1, dx: 0, dy: 0 }
-
-    const passeAn = () => {
-      const r = cv.getBoundingClientRect()
-      if (!r.width || !r.height) return
-      const dpr = Math.min(2, devicePixelRatio || 1)
-      cv.width = Math.round(r.width * dpr)
-      cv.height = Math.round(r.height * dpr)
+    let sicht = LEERE_SICHT
+    const endeBeobachten = beobachteLeinwand(cv, () => {
       sicht = berechneSicht(cv.width, cv.height)
-    }
-    passeAn()
-    const beobachter = new ResizeObserver(passeAn)
-    beobachter.observe(cv)
-
-    const zuLogisch = (e: { clientX: number; clientY: number }) => {
-      const r = cv.getBoundingClientRect()
-      return {
-        x: ((e.clientX - r.left) * (cv.width / r.width) - sicht.dx) / sicht.s,
-        y: ((e.clientY - r.top) * (cv.height / r.height) - sicht.dy) / sicht.s,
-      }
-    }
+    })
 
     const melde = (ereignis: Ereignis) => {
       if (ereignis) klang[ereignis]()
@@ -71,7 +51,7 @@ export function Einlasskontrolle({
       // Der Klang braucht eine Nutzergeste, sonst bleibt der Kontext angehalten.
       weckeKlang()
       if (pause.current) return
-      const p = zuLogisch(e)
+      const p = zuLogisch(e, cv, sicht)
       melde(setzeAuf(w, p.x, p.y, druckVon(e), geraetVon(e)))
       cv.setPointerCapture(e.pointerId)
       e.preventDefault()
@@ -81,7 +61,7 @@ export function Einlasskontrolle({
       if (pause.current) return
       // Volle Abtastrate des Pencils: jeder Zwischenwert zählt für die Druckkurve.
       for (const fein of feinEreignisse(e)) {
-        const q = zuLogisch(fein)
+        const q = zuLogisch(fein, cv, sicht)
         melde(bewege(w, q.x, q.y, druckVon(fein)))
       }
     }
@@ -98,25 +78,18 @@ export function Einlasskontrolle({
     // Zifferntaste ändert den Ersatzdruck sofort, auch wenn die Maus stillsteht.
     const abTasten = tastenDruckLauscher((d) => stelleDruck(w, d))
 
-    let letzteZeit = performance.now()
-    let raf = requestAnimationFrame(function bild(jetzt: number) {
-      const dt = Math.min(0.05, (jetzt - letzteZeit) / 1000)
-      letzteZeit = jetzt
+    const endeSchleife = starteBildschleife((dt) => {
       // Angehalten wird nur gezeichnet, nicht gerechnet.
       if (!pause.current) {
         melde(aktualisiere(w, dt))
-        if (!fertig.current && istFertig(w)) {
-          fertig.current = true
-          beiFertig.current(ergebnis(w, Math.round(w.zeitGesamt * 1000), false))
-        }
+        if (istFertig(w)) meldeFertig(() => ergebnis(w, Math.round(w.zeitGesamt * 1000), false))
       }
       zeichne(g, w, sicht, cv.width, cv.height)
-      raf = requestAnimationFrame(bild)
     })
 
     return () => {
-      cancelAnimationFrame(raf)
-      beobachter.disconnect()
+      endeSchleife()
+      endeBeobachten()
       schliesseKlang()
       cv.removeEventListener('pointerdown', runter)
       cv.removeEventListener('pointermove', bewegen)
@@ -125,16 +98,11 @@ export function Einlasskontrolle({
       removeEventListener('blur', abgebrochen)
       abTasten()
     }
-  }, [])
-
-  useEffect(() => {
-    beiFertig.current = onFertig
-  }, [onFertig])
+  }, [pause, meldeFertig])
 
   /* Beim Anhalten kommt ein gehaltenes Ding zurück in die Tasche. Sonst flöge es beim
      Weiterspielen mit dem ersten Punkt quer über den Tisch. */
   useEffect(() => {
-    pause.current = angehalten
     if (angehalten && weltRef.current) legeZurueck(weltRef.current)
   }, [angehalten])
 

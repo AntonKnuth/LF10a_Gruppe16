@@ -8,7 +8,10 @@ import {
   HILFE_TEXT, aktualisiere, beendePause, beginnePause, darfEnden, ergebnis, hebeAb, neueWelt,
   setzeAuf, ziehe, type Ereignis, type Welt,
 } from './welt'
-import { berechneSicht, zeichne, type Sicht } from './zeichnen'
+import { berechneSicht, zeichne } from './zeichnen'
+import {
+  LEERE_SICHT, beobachteLeinwand, starteBildschleife, useSpielSteuerung, zuLogisch,
+} from '../leinwand'
 
 /**
  * „Dribbeln mit Pfiff" (B2, Impulskontrolle; die Wellen sind Nebenaufgabe).
@@ -25,14 +28,10 @@ export function DribbelnMitPfiff({
 }: SpielProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const weltRef = useRef<Welt | null>(null)
+  const { pause, zeitAus, meldeFertig } = useSpielSteuerung(angehalten, zeitAbgelaufen, onFertig)
   // Die Uhr der Rohdaten beginnt, wenn der SpielScreen das Spiel zeigt — also mit diesem
   // Mount, auf wenige Millisekunden genau. Darauf liegen alle Zeiten im `extra`.
   const beginn = useRef(performance.now())
-  const fertig = useRef(false)
-  // Die Bildschleife liegt außerhalb von React und liest die Werte über diese Referenzen.
-  const pause = useRef(angehalten)
-  const zeitAus = useRef(false)
-  const beiFertig = useRef(onFertig)
   // Die Saat ist der einzige Zufall und steht im `extra`: jedes Spiel hat andere Pfiffe, sonst
   // lernte Ben sie auswendig, und trotzdem lässt sich jeder Plan nachrechnen.
   weltRef.current ??= neueWelt(stufe, verein, regler, Math.floor(Math.random() * 1_000_000))
@@ -43,28 +42,11 @@ export function DribbelnMitPfiff({
     const w = weltRef.current
     if (!cv || !g || !w) return
 
-    let sicht: Sicht = { s: 1, dx: 0, dy: 0 }
-
-    const passeAn = () => {
-      const r = cv.getBoundingClientRect()
-      if (!r.width || !r.height) return
-      const dpr = Math.min(2, devicePixelRatio || 1)
-      cv.width = Math.round(r.width * dpr)
-      cv.height = Math.round(r.height * dpr)
+    let sicht = LEERE_SICHT
+    const endeBeobachten = beobachteLeinwand(cv, (dpr) => {
       sicht = berechneSicht(cv.width, cv.height)
       w.cssPxProBuehnenPx = sicht.s / dpr
-    }
-    passeAn()
-    const beobachter = new ResizeObserver(passeAn)
-    beobachter.observe(cv)
-
-    const zuLogisch = (e: { clientX: number; clientY: number }) => {
-      const r = cv.getBoundingClientRect()
-      return {
-        x: ((e.clientX - r.left) * (cv.width / r.width) - sicht.dx) / sicht.s,
-        y: ((e.clientY - r.top) * (cv.height / r.height) - sicht.dy) / sicht.s,
-      }
-    }
+    })
 
     const zeitVon = (e: Event) => e.timeStamp - beginn.current
 
@@ -81,7 +63,7 @@ export function DribbelnMitPfiff({
       if (pause.current) return
       // Der Klang braucht eine Nutzergeste, sonst bleibt der Kontext angehalten.
       weckeKlang()
-      const p = zuLogisch(e)
+      const p = zuLogisch(e, cv, sicht)
       w.geraet = geraetVon(e)
       melde(setzeAuf(w, p.x, p.y, druckVon(e), zeitVon(e)))
       cv.setPointerCapture(e.pointerId)
@@ -92,7 +74,7 @@ export function DribbelnMitPfiff({
       if (!w.zieht || pause.current) return
       // Volle Abtastrate des Pencils: jeder Zwischenwert zählt für den Stillstand.
       for (const fein of feinEreignisse(e)) {
-        const p = zuLogisch(fein)
+        const p = zuLogisch(fein, cv, sicht)
         melde(ziehe(w, p.x, p.y, druckVon(fein), zeitVon(fein)))
       }
     }
@@ -106,27 +88,24 @@ export function DribbelnMitPfiff({
     addEventListener('pointercancel', hoch)
     addEventListener('blur', hoch)
 
-    let letzteZeit = performance.now()
-    let raf = requestAnimationFrame(function bild(jetzt: number) {
-      // Nie 0: der erste Zeitstempel kann vor `letzteZeit` liegen, und das Tempo teilt durch dt.
-      const dt = Math.min(0.05, Math.max(0.001, (jetzt - letzteZeit) / 1000))
-      letzteZeit = jetzt
+    const endeSchleife = starteBildschleife((dtBegrenzt, jetzt) => {
+      // Nie 0: der erste Zeitstempel kann vor dem Start der Schleife liegen, und das Tempo teilt
+      // durch dt. Nur dieses Spiel teilt durch dt, deshalb steht die Untergrenze hier.
+      const dt = Math.max(0.001, dtBegrenzt)
       // Angehalten wird nur gezeichnet: Ball, Jubel und Pfiff-Uhr stehen.
       if (!pause.current) {
         w.tonAn = tonLautstaerke() > 0
         melde(aktualisiere(w, dt, jetzt - beginn.current))
       }
       zeichne(g, w, sicht, cv.width, cv.height)
-      if (!fertig.current && zeitAus.current && darfEnden(w)) {
-        fertig.current = true
-        beiFertig.current(ergebnis(w, Math.round(w.zeitGesamt * 1000), false))
+      if (zeitAus.current && darfEnden(w)) {
+        meldeFertig(() => ergebnis(w, Math.round(w.zeitGesamt * 1000), false))
       }
-      raf = requestAnimationFrame(bild)
     })
 
     return () => {
-      cancelAnimationFrame(raf)
-      beobachter.disconnect()
+      endeSchleife()
+      endeBeobachten()
       schliesseKlang()
       cv.removeEventListener('pointerdown', runter)
       cv.removeEventListener('pointermove', bewegen)
@@ -135,14 +114,9 @@ export function DribbelnMitPfiff({
       removeEventListener('pointercancel', hoch)
       removeEventListener('blur', hoch)
     }
-  }, [])
+  }, [pause, zeitAus, meldeFertig])
 
   useEffect(() => {
-    beiFertig.current = onFertig
-  }, [onFertig])
-
-  useEffect(() => {
-    pause.current = angehalten
     const w = weltRef.current
     if (!w) return
     const tMs = performance.now() - beginn.current
@@ -150,10 +124,6 @@ export function DribbelnMitPfiff({
     if (angehalten) beginnePause(w, tMs)
     else beendePause(w, tMs)
   }, [angehalten])
-
-  useEffect(() => {
-    if (zeitAbgelaufen) zeitAus.current = true
-  }, [zeitAbgelaufen])
 
   return <canvas ref={canvasRef} className="block h-full w-full touch-none" />
 }

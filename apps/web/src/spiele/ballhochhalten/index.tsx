@@ -6,7 +6,10 @@ import {
   aktualisiere, beginneAbpfiff, beginneLaden, ergebnis, loslassen, neueWelt, stelleDruck,
   zieleLaden, type Welt,
 } from './welt'
-import { berechneSicht, zeichne, type Sicht } from './zeichnen'
+import { berechneSicht, zeichne } from './zeichnen'
+import {
+  LEERE_SICHT, beobachteLeinwand, starteBildschleife, useSpielSteuerung, wenigerBewegung, zuLogisch,
+} from '../leinwand'
 
 /**
  * „Ball hochhalten" (B2, Hand-Auge + Kraftdosierung).
@@ -22,12 +25,7 @@ export function BallHochhalten({
 }: SpielProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const weltRef = useRef<Welt | null>(null)
-  const fertig = useRef(false)
-  // Die Bildschleife liegt außerhalb von React und liest den Wert über diese Referenz.
-  const pause = useRef(angehalten)
-  // Die Bildschleife läuft in einem Effekt ohne Abhängigkeiten und sieht `onFertig`
-  // deshalb nur über diese Referenz.
-  const beiFertig = useRef(onFertig)
+  const { pause, meldeFertig } = useSpielSteuerung(angehalten, zeitAbgelaufen, onFertig)
   // Der Verein bringt Kulisse und Jubelrufe mit — ein neuer Verein ist eine Content-Datei.
   weltRef.current ??= neueWelt(stufe, verein, regler)
 
@@ -37,45 +35,28 @@ export function BallHochhalten({
     const w = weltRef.current
     if (!cv || !g || !w) return
 
-    w.wenigerBewegung = matchMedia('(prefers-reduced-motion: reduce)').matches
-    let sicht: Sicht = { s: 1, dx: 0, dy: 0 }
-
-    const passeAn = () => {
-      const r = cv.getBoundingClientRect()
-      if (!r.width || !r.height) return
-      const dpr = Math.min(2, devicePixelRatio || 1)
-      cv.width = Math.round(r.width * dpr)
-      cv.height = Math.round(r.height * dpr)
+    w.wenigerBewegung = wenigerBewegung()
+    let sicht = LEERE_SICHT
+    const endeBeobachten = beobachteLeinwand(cv, () => {
       sicht = berechneSicht(cv.width, cv.height)
-    }
-    passeAn()
-    const beobachter = new ResizeObserver(passeAn)
-    beobachter.observe(cv)
-
-    const zuLogisch = (e: { clientX: number; clientY: number }) => {
-      const r = cv.getBoundingClientRect()
-      return {
-        x: ((e.clientX - r.left) * (cv.width / r.width) - sicht.dx) / sicht.s,
-        y: ((e.clientY - r.top) * (cv.height / r.height) - sicht.dy) / sicht.s,
-      }
-    }
+    })
 
     /* Stift auf den Ball — bei der Maus tut das die gedrückte Maustaste. */
     const runter = (e: PointerEvent) => {
       weckeKlang()
-      const p = zuLogisch(e)
+      const p = zuLogisch(e, cv, sicht)
       if (!beginneLaden(w, p.x, p.y, druckVon(e), geraetVon(e))) return
       cv.setPointerCapture(e.pointerId)
       e.preventDefault()
     }
 
     const bewegen = (e: PointerEvent) => {
-      const p = zuLogisch(e)
+      const p = zuLogisch(e, cv, sicht)
       w.zeiger = { x: p.x, y: p.y, drin: true }
       if (!w.laden.an) return
       // Volle Abtastrate des Pencils: jeder Zwischenwert zählt für die Druckkurve.
       for (const fein of feinEreignisse(e)) {
-        const q = zuLogisch(fein)
+        const q = zuLogisch(fein, cv, sicht)
         zieleLaden(w, q.x, q.y, druckVon(fein))
       }
     }
@@ -94,25 +75,20 @@ export function BallHochhalten({
     // Zifferntaste ändert den Ersatzdruck sofort, auch wenn die Maus stillsteht.
     const abTasten = tastenDruckLauscher((d) => stelleDruck(w, d))
 
-    let letzte = performance.now()
-    let raf = requestAnimationFrame(function bild(jetzt: number) {
-      const dt = Math.min(0.05, (jetzt - letzte) / 1000)
-      letzte = jetzt
+    const endeSchleife = starteBildschleife((dt) => {
       // Angehalten wird nur gerechnet, nicht gezeichnet: das Bild bleibt stehen, die Uhr des
       // Spiels läuft nicht weiter.
       if (!pause.current) aktualisiere(w, dt)
       zeichne(g, w, sicht, cv.width, cv.height)
       // Erst wenn der Schlussjubel durch ist, geht das Ergebnis weiter.
-      if (w.abpfiff && w.abpfiffUhr <= 0 && !fertig.current) {
-        fertig.current = true
-        beiFertig.current(ergebnis(w, Math.round(w.zeitGesamt * 1000), false))
+      if (w.abpfiff && w.abpfiffUhr <= 0) {
+        meldeFertig(() => ergebnis(w, Math.round(w.zeitGesamt * 1000), false))
       }
-      raf = requestAnimationFrame(bild)
     })
 
     return () => {
-      cancelAnimationFrame(raf)
-      beobachter.disconnect()
+      endeSchleife()
+      endeBeobachten()
       cv.removeEventListener('pointerdown', runter)
       cv.removeEventListener('pointermove', bewegen)
       cv.removeEventListener('pointerleave', raus)
@@ -122,15 +98,7 @@ export function BallHochhalten({
       abTasten()
       schliesseKlang()
     }
-  }, [])
-
-  useEffect(() => {
-    beiFertig.current = onFertig
-  }, [onFertig])
-
-  useEffect(() => {
-    pause.current = angehalten
-  }, [angehalten])
+  }, [pause, meldeFertig])
 
   /* Zeit um: erst pfeift der Schiedsrichter ab und das Stadion jubelt, dann meldet
      die Bildschleife das Ergebnis. */
