@@ -390,7 +390,7 @@ der Content bleibt unversehrt und updatebar.
 Jeder Dialogtext hat ein **optionales Audio-Feld** (A5 verlangt Vorlesen). Phase 1: Text groß +
 Web Speech API. Später echte Aufnahmen: MP3 reinlegen, kein Codeumbau.
 
-**Vereinsassets:** Echte Bezüge erstmal drin, Reise **1. FC Köln → HSV → Ajax Amsterdam**. Sie
+**Vereinsassets:** Echte Bezüge erstmal drin, Reise **HSV → 1. FC Köln → Ajax Amsterdam**. Sie
 werden später ersetzt (Wappen sind Marken, Spielernamen Persönlichkeitsrechte). Deshalb ist ein Verein nur ein Datenpaket — der
 Austausch gegen fiktive Vereine darf keinen Code anfassen, nur Content-Dateien.
 

@@ -1,6 +1,6 @@
 import type { Verein } from '../typen'
 
-/** Zweiter Verein — zeigt, dass ein Verein nur eine Datei plus Bilderordner ist. */
+/** Dritter Verein — zeigt, dass ein Verein nur eine Datei plus Bilderordner ist. */
 export const ajax = {
   id: 'ajax',
   name: 'Ajax Amsterdam',

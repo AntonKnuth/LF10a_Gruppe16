@@ -1,6 +1,8 @@
 import type { Verein } from '../typen'
 
 /**
+ * Erster Verein der Reise.
+ *
  * Platzhalter mit echten Bezügen. Wappen sind Marken, Spielernamen Persönlichkeits-
  * rechte — vor einer Veröffentlichung durch einen fiktiven Verein ersetzen. Weil ein
  * Verein nur Daten ist, kostet der Austausch keine Codeänderung.
