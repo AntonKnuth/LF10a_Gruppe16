@@ -6,47 +6,19 @@
  * gelesen: die Bildschleife läuft außerhalb von React, eine zwischengespeicherte Kopie wäre
  * nach einer Änderung im Pausenmenü sofort veraltet.
  *
- * `ton()` und `rauschen()` stehen bewusst auch in den Klängen der anderen Spiele: die Minispiele
- * sollen einzeln baubar bleiben (CLAUDE.md, Arbeitsteilung).
+ * `ton()` kommt aus `../ton.ts`, geteilt von allen Minispielen. `rauschen()` ist je Spiel
+ * leicht anders und bleibt deshalb hier.
  *
  * Es gibt keinen Ton für ein falsches Tempo oder einen falschen Start (C2).
  */
 
 import { tonLautstaerke } from '../../bedienung'
+import { ton as tonBasis, type TonOptionen, weckeKlang } from '../ton'
+export { weckeKlang, schliesseKlang } from '../ton'
 
-let actx: AudioContext | null = null
-
-/** Muss aus einer Nutzergeste heraus laufen, sonst bleibt der Kontext angehalten. */
-export function weckeKlang() {
-  if (typeof AudioContext === 'undefined') return null
-  actx ??= new AudioContext()
-  if (actx.state === 'suspended') void actx.resume()
-  return actx
-}
-
-export function schliesseKlang() {
-  void actx?.close()
-  actx = null
-}
-
-function ton(freq: number, dauer: number, art: OscillatorType = 'sine', laut = 0.14) {
-  const pegel = laut * tonLautstaerke()
-  if (pegel <= 0) return
-  const a = weckeKlang()
-  if (!a) return
-  const t0 = a.currentTime
-  const o = a.createOscillator()
-  const g = a.createGain()
-  o.type = art
-  o.frequency.setValueAtTime(freq, t0)
-  g.gain.setValueAtTime(0.0001, t0)
-  g.gain.exponentialRampToValueAtTime(pegel, t0 + 0.01)
-  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dauer)
-  o.connect(g)
-  g.connect(a.destination)
-  o.start(t0)
-  o.stop(t0 + dauer + 0.03)
-}
+/** Wie `ton()`, aber mit 0.01 s Einblenden: dieses Spiel hat es immer so gehabt. */
+const ton = (hz: number, dauer: number, opt: TonOptionen = {}) =>
+  tonBasis(hz, dauer, { anlauf: 0.01, ...opt })
 
 /** Klatschende Menge: Rauschen ohne tiefe Anteile, das leiser wird. */
 function rauschen(dauer: number, laut: number) {
@@ -76,9 +48,10 @@ const LEITER = [523, 587, 659, 784, 880, 1047]
 
 export const klang = {
   /** Strich fertig: leises Klicken der Tafel. */
-  strich: () => ton(440, 0.05, 'triangle', 0.1),
+  strich: () => ton(440, 0.05, { art: 'triangle', laut: 0.1 }),
   /** Zeichen fertig: jedes im Wort eine Stufe höher. */
-  zeichen: (nr: number) => ton(LEITER[Math.min(nr, LEITER.length - 1)], 0.18, 'triangle', 0.15),
+  zeichen: (nr: number) =>
+    ton(LEITER[Math.min(nr, LEITER.length - 1)], 0.18, { art: 'triangle', laut: 0.15 }),
   /** Wort fertig: Applaus. Danach liest der Stadionsprecher den Fakt vor. */
   wort: () => {
     ton(1047, 0.25)

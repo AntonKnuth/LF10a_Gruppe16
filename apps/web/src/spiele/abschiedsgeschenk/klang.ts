@@ -6,26 +6,13 @@
  * gelesen: die Bildschleife läuft außerhalb von React, eine zwischengespeicherte Kopie wäre
  * nach einer Änderung im Pausenmenü sofort veraltet.
  *
- * `rauschen()` steht so ähnlich auch in `ballhochhalten/klang.ts` — bewusst doppelt, damit die
- * Minispiele einzeln baubar bleiben (siehe `aufwaermen/klang.ts`).
+ * `rauschen()` ist in jedem Spiel leicht anders und steht deshalb hier; Kontext und Lautstärke
+ * kommen wie bei `ton()` aus `../ton.ts`.
  */
 
 import { tonLautstaerke } from '../../bedienung'
-
-let actx: AudioContext | null = null
-
-/** Muss aus einer Nutzergeste heraus laufen, sonst bleibt der Kontext angehalten. */
-export function weckeKlang() {
-  if (typeof AudioContext === 'undefined') return null
-  actx ??= new AudioContext()
-  if (actx.state === 'suspended') void actx.resume()
-  return actx
-}
-
-export function schliesseKlang() {
-  void actx?.close()
-  actx = null
-}
+import { weckeKlang } from '../ton'
+export { weckeKlang, schliesseKlang } from '../ton'
 
 /** Gefiltertes Rauschen, das ausklingt. `anstieg` blendet es ein. */
 function rauschen(dauer: number, laut: number, hp: number, anstieg = 0) {
