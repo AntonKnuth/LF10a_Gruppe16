@@ -41,13 +41,13 @@ public class VorfuehrungTests
         var (thomasId, benId) = t.MitBetreuung("thomas@test");
         var (fremderId, _) = t.MitBetreuung("fremd@test");
 
-        Assert.False(await Klienten.VorfuehrmodusSetzen(t.Db, fremderId, benId, true));
+        Assert.False(await Einstellungen.VorfuehrmodusSetzen(t.Db, fremderId, benId, true));
         Assert.False((await t.Db.Klienten.AsNoTracking().SingleAsync(k => k.Id == benId)).Vorfuehrmodus);
 
-        Assert.True(await Klienten.VorfuehrmodusSetzen(t.Db, thomasId, benId, true));
+        Assert.True(await Einstellungen.VorfuehrmodusSetzen(t.Db, thomasId, benId, true));
         Assert.True((await t.Db.Klienten.AsNoTracking().SingleAsync(k => k.Id == benId)).Vorfuehrmodus);
 
-        Assert.True(await Klienten.VorfuehrmodusSetzen(t.Db, thomasId, benId, false));
+        Assert.True(await Einstellungen.VorfuehrmodusSetzen(t.Db, thomasId, benId, false));
         Assert.False((await t.Db.Klienten.AsNoTracking().SingleAsync(k => k.Id == benId)).Vorfuehrmodus);
     }
 

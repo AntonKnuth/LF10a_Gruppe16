@@ -87,6 +87,8 @@ app.UseAuthorization();
 
 app.MapKonten();
 app.MapKlienten();
+app.MapEinstellungen();
+app.MapGeraete();
 app.MapTablet();
 app.MapBericht();
 
