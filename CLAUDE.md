@@ -366,7 +366,8 @@ werden, und wer das vergisst, hebt die Obergrenze dauerhaft auf.
 **Vorführmodus (für Präsentationen).** Ein Haken je Kind (`Klient.Vorfuehrmodus`, sofort
 gespeichert, `GET /api/kind` liefert ihn mit). Gesetzt, spielt die Kind-App bei jedem Start
 `vorfuehrPlan` aus `engine/tagesplan.ts`: alle spielbaren Spiele genau einmal (Aufwärmen, die
-normalen in Katalogreihenfolge, zuletzt die Urkunde mit Abschied), je 30 s, Pausen 5 s, Stufe und
+normalen in Katalogreihenfolge, zuletzt die Urkunde mit Abschied; ausgenommen sind die Spiele in
+`NICHT_IN_VORFUEHRUNG`, im normalen Training bleiben sie), je 30 s, Pausen 5 s, Stufe und
 Regler aus den Einstellungen, C3-Ablauf unverändert. Keine Tagesobergrenze, die Einheit zählt nicht
 mit, Bestwerte (C5) werden weder geprüft noch gespeichert, und danach geht es mit der Reise zum
 nächsten Verein (Tag 1), egal an welchem Tag. Die Session kommt mit `Vorfuehrung = true` an: im

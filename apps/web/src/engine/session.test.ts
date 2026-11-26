@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { aktuellesSegment, session, starteSession } from './session'
 import {
   ansageText, hatUebung, spieleDesTages, standardEinstellungen, tagesplan, vorfuehrPlan,
-  VORFUEHR_PAUSE_SEK, VORFUEHR_SPIEL_SEK, type Einstellungen,
+  NICHT_IN_VORFUEHRUNG, VORFUEHR_PAUSE_SEK, VORFUEHR_SPIEL_SEK, type Einstellungen,
 } from './tagesplan'
 import { KATALOG, spieleMitRolle } from '../spiele/katalog'
+import { vereine } from '../content'
 import type { SpielErgebnis } from './segmente'
 
 const ergebnis: SpielErgebnis = {
@@ -253,12 +254,24 @@ describe('ansageText', () => {
 
 describe('vorfuehrPlan', () => {
   // Bewusst nur ein Spiel aktiv und die Vorgabe-Anzahlen: beides darf keine Rolle spielen.
-  const e = nur(['linie'])
-  e.spiele.linie = { ...e.spiele.linie, stufe: 2, toleranz: 1.7 }
+  const e = nur(['elfmeter'])
+  e.spiele.elfmeter = { ...e.spiele.elfmeter, stufe: 2, toleranz: 1.7 }
 
-  const spielbar = Object.keys(KATALOG).filter((id) => !KATALOG[id].inArbeit)
+  const spielbar = Object.keys(KATALOG).filter(
+    (id) => !KATALOG[id].inArbeit && !NICHT_IN_VORFUEHRUNG.includes(id),
+  )
 
-  it('zeigt jedes spielbare Spiel genau einmal: Aufwärmen, Übungen, Urkunde zuletzt', () => {
+  it('lässt die ausgenommenen Spiele weg, der normale Tagesplan behält sie', () => {
+    const vorfuehrung = spieleVon(vorfuehrPlan(1, e, false))
+    for (const id of NICHT_IN_VORFUEHRUNG) expect(vorfuehrung).not.toContain(id)
+
+    const normal = new Set(
+      vereine.flatMap((v) => [1, 2, 3, 4, 5].flatMap((t) => spieleDesTages(v.id, t, E))),
+    )
+    for (const id of NICHT_IN_VORFUEHRUNG) expect(normal).toContain(id)
+  })
+
+  it('zeigt jedes übrige Spiel genau einmal: Aufwärmen, Übungen, Urkunde zuletzt', () => {
     const plan = vorfuehrPlan(2, e, false)
     expect(spieleVon(plan)).toEqual([
       ...spielbar.filter((id) => KATALOG[id].rolle === 'aufwaermen'),
@@ -275,8 +288,8 @@ describe('vorfuehrPlan', () => {
       if (s.art === 'pause') expect(s.dauerSek).toBe(VORFUEHR_PAUSE_SEK)
     }
     expect([VORFUEHR_SPIEL_SEK, VORFUEHR_PAUSE_SEK]).toEqual([30, 5])
-    const linie = plan.find((s) => s.art === 'spiel' && s.spielId === 'linie')
-    expect(linie).toMatchObject({ stufe: 2, regler: { toleranz: 1.7 } })
+    const elfmeter = plan.find((s) => s.art === 'spiel' && s.spielId === 'elfmeter')
+    expect(elfmeter).toMatchObject({ stufe: 2, regler: { toleranz: 1.7 } })
   })
 
   it('behält den Ablauf: Selbsteinschätzung vor Lob (C3), Fragebogen am Ende', () => {

@@ -306,8 +306,9 @@ export function Einstellungen({ klient }: { klient: KlientDetail }) {
             className="mt-0.5 size-5"
           />
           <span className="text-sm text-slate-600">
-            <strong>Vorführmodus</strong> — für Präsentationen: jede Einheit zeigt alle Spiele
-            einmal für 30 Sekunden mit 5 Sekunden Pause, ohne Tageslimit, und danach reist Ben
+            <strong>Vorführmodus</strong> — für Präsentationen: jede Einheit zeigt die Spiele
+            einmal für 30 Sekunden mit 5 Sekunden Pause (ohne Linie malen, Autogrammstunde,
+            Dribbeln mit Pfiff, Platzwart und Brezelverkauf), ohne Tageslimit, und danach reist Ben
             zum nächsten Verein. Solche Einheiten sind im Verlauf markiert und zählen im
             Wochenbericht und in der Verlaufskurve nicht mit. Der Haken wird sofort gespeichert.
           </span>

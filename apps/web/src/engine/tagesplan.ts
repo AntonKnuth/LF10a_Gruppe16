@@ -187,8 +187,14 @@ export const VORFUEHR_SPIEL_SEK = 30
 export const VORFUEHR_PAUSE_SEK = 5
 
 /**
+ * Diese Spiele fehlen in der Vorführung, damit der Durchlauf kürzer wird. Im normalen Training
+ * kommen sie weiter dran — die Liste wirkt nur hier.
+ */
+export const NICHT_IN_VORFUEHRUNG = ['linie', 'autogramme', 'dribbeln', 'rasenmaehen', 'brezelverkauf']
+
+/**
  * Der Plan im Vorführmodus: alle spielbaren Spiele genau einmal, damit sich in einer
- * Präsentation alles in einem Durchlauf zeigen lässt.
+ * Präsentation alles in einem Durchlauf zeigen lässt — bis auf `NICHT_IN_VORFUEHRUNG`.
  *
  * Erst das Aufwärmen, dann alle normalen Übungen in Katalogreihenfolge, zum Schluss das
  * Sonderspiel mit dem Abschied — an jedem Tag, nicht nur am fünften. Aktiv-Haken und Anzahlen
@@ -202,7 +208,7 @@ export function vorfuehrPlan(tag: number, e: Einstellungen, ersterStartUeberhaup
     ...spieleMitRolle('aufwaermen'),
     ...spieleMitRolle('normal'),
     ...spieleMitRolle('sonder'),
-  ]
+  ].filter((id) => !NICHT_IN_VORFUEHRUNG.includes(id))
   const kurz: Einstellungen = {
     ...e,
     pauseDauerSek: VORFUEHR_PAUSE_SEK,
