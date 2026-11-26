@@ -34,6 +34,11 @@ Tablet bleibt nur ein kleines, per Langdruck erreichbares **Gerätemenü** (Kopp
 Speicherwarnung, lokale Daten löschen) — das ist kein Therapeutenbereich und darf im Bericht auch
 nicht so heißen, sonst liest sich D1 wie nicht erfüllt.
 
+> **Überholt (November 2026):** Das Gerätemenü per Langdruck gibt es nicht mehr, ebenso keine
+> Sync-Anzeige oder lokale Löschfunktion auf dem Tablet. Heute: ein offenes Pausenmenü
+> (`ui/PausenMenue.tsx`), Löschen und Sperren in der Therapeuten-App — siehe Abschnitt 10 und
+> `CLAUDE.md`. Die Begründung oben bleibt als Herleitung stehen.
+
 Ein PowerShell-Skript startet alle Teile für die Vorführung.
 
 ### Warum React statt Razor für die Therapeuten-App
@@ -49,12 +54,18 @@ Eine Origin, ein Zertifikat, kein CORS, Cookie-Authentifizierung ohne Token-Hand
 einem Zertifikat, das diesen Namen im SAN führt. Grund: die Origin ist der Schlüssel von IndexedDB
 und der Service-Worker-Registrierung. Ändert sie sich, verliert das Tablet seine lokalen Daten.
 
+> **Überholt (November 2026):** IndexedDB und Service Worker gibt es nicht mehr (Abschnitt 3 und
+> 11). Lokal liegen nur noch `localStorage`-Einträge, darunter das Gerätetoken; auch die gehören
+> zur Origin, der feste Name bleibt deshalb richtig. Der Ist-Stand steht in `CLAUDE.md`.
+
 **Verifiziert und wichtig:** `apps/web/src/engine/session.ts` ruft `crypto.randomUUID()` auf. Das ist
 auf einer unsicheren Origin `undefined` — über `http://` auf eine LAN-IP **stürzt die App ab**, sie
 installiert sich nicht bloß nicht.
 
 Wenn die Kind-App PWA bleibt, braucht der Service Worker eine `navigateFallbackDenylist` für
 `/api` und `/therapeut`, sonst fängt er die Navigation zur Therapeuten-App ab.
+
+> **Überholt:** Es gibt keinen Service Worker mehr (Abschnitt 3). Die Denylist ist gegenstandslos.
 
 ## 3. Online statt Offline — geänderte Entscheidung
 
@@ -142,6 +153,11 @@ kann. Kein OAuth Device Grant, kein JWT mit Refresh-Token.
 - **Die Erstkopplung passiert in der Praxis**, bevor das Tablet mitgegeben wird.
 
 ## 6. Verifizierte Befunde im bestehenden Code
+
+> **Überholt (November 2026):** Die Befunde dieses Abschnitts sind behoben — der Lauf liegt als
+> Schnappschuss `tk.lauf` in `localStorage`, Löschen passiert in der Therapeuten-App, `dexie`
+> ist entfernt, die Namenszeichnung wird nicht gespeichert (`CLAUDE.md`, „Erstlauf"). Der
+> Abschnitt bleibt als Begründung stehen, nicht als offene Aufgabenliste.
 
 Beides ist geprüft, nicht vermutet, und beides muss repariert werden:
 
@@ -326,6 +342,10 @@ Der Katalog liegt jetzt zweimal: `apps/web/src/spiele/katalog.ts` (Daten, ohne R
 Engine ihn ohne Canvas und WebAudio lesen kann) und `apps/api/Auswertung/Spielkatalog.cs` (Rolle
 und Bereiche für Prüfung und Bericht). Ein vergessener Eintrag fällt auf, statt still zu wirken.
 
+> **Überholt (November 2026):** Der Katalog liegt inzwischen dreimal — dazu kommen Titel, Rolle
+> und Regler in `apps/therapeut/src/api.ts`. Vergessene oder abweichende Einträge findet der
+> Test `apps/web/src/spiele/katalogAbgleich.test.ts`.
+
 ## 9. Offen
 
 - Aufteilung der Arbeitspakete: regelt die Gruppe selbst. **Eine Regel bleibt technisch bindend:**
@@ -334,6 +354,8 @@ und Bereiche für Prüfung und Bericht). Ein vergessener Eintrag fällt auf, sta
   „Razor-View + CSS `@media print`", Dexie als lokaler Puffer, „Sync-fähig von Anfang an" mit
   Outbox, der Abschnitt „Speicher-Fallstricke", die Erwähnungen von Offline, `.NET 8`-Begründung,
   Namensabfrage im Erstlauf, PIN und Therapeutenmodus.
+  **Überholt (November 2026):** `CLAUDE.md` ist inzwischen angepasst und führt den Ist-Stand;
+  die Liste bleibt als Verlauf stehen.
 
 ## 10. Kindmodus: Namen, Menü, Ton, Pause
 

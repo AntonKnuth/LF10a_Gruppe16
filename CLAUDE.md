@@ -20,10 +20,9 @@ damit nicht dieselben Fragen erneut aufgemacht werden.
 > **Zwei Quelldokumente liegen nicht im Repo** und waren zuletzt nur auf einem anderen Rechner
 > vorhanden: die **LN1-Kurzfassung** (der volle Wortlaut von A1–D4; hier steht nur die
 > Zusammenfassung in der Tabelle unten) und die **Ideensammlung** des Users (`Übungs Ideen.md`,
-> `Generelle Ideen.md`) mit Mechanik-Details zu weiteren Minispielen. Unter „Offene Punkte" sind
-> die daraus bekannten Spiele mit ihren Mechaniken festgehalten — genannt, aber ohne Details, sind
-> außerdem *Security*, *UFO/Müll einsammeln* und *Startelf-Namen schreiben*. Wer Zugriff auf die
-> Dateien hat: nach `docs/` legen und diesen Absatz ersetzen.
+> `Generelle Ideen.md`) mit Mechanik-Details zu weiteren Minispielen. Die daraus entstandenen
+> Spiele sind alle gebaut (Security als Einlasskontrolle, UFO/Müll als Platz aufräumen). Wer
+> Zugriff auf die Dateien hat: nach `docs/` legen und diesen Absatz ersetzen.
 
 **Design-Referenz:** `docs/mockup-startbildschirm.png` (vom User erstellt).
 
@@ -118,7 +117,7 @@ umgesetzt und müssen **im Bericht begründet werden** (Details in `docs/entsche
 keinen .NET-Prozess hosten), Razor auch für die Therapeuten-App (die Gruppe kann React, eine
 Technologie genügt), Blazor WASM (Interop-Latenz gegen A1), SQLite-WASM im Browser, Unity,
 Cloud-DB, Dexie/IndexedDB (ohne Offline kein Puffer nötig), Service Worker (war nur für Offline
-da und liefert sonst veraltete Builds aus), OpenAPI-Codegenerator (zwölf Endpunkte sind von Hand
+da und liefert sonst veraltete Builds aus), OpenAPI-Codegenerator (gut zwanzig Endpunkte sind von Hand
 kürzer als die Werkzeugkette), CORS (entfällt bei einer Origin), Docker (ein Ausfallrisiko am
 Prüfungstag ohne Punktgewinn).
 
